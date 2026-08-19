@@ -12,6 +12,15 @@ public final class Main {
 
     public static final int DEFAULT_PORT = 8080;
 
+    private static final String WORDMARK = String.join(
+        "\n",
+        "          _   _",
+        "     /\\  | | | |",
+        "    /  \\ | |_| | __ _ ___",
+        "   / /\\ \\| __| |/ _` / __|",
+        "  / ____ \\ |_| | (_| \\__ \\",
+        " /_/    \\_\\__|_|\\__,_|___/");
+
     private Main() {}
 
     public static void main(String[] args) throws IOException {
@@ -29,7 +38,7 @@ public final class Main {
 
     private static String banner(int port) {
         return StartupBanner
-            .named("Atlas")
+            .showing(WORDMARK)
             .with("JDK", StartupBanner.jdkVersion())
             .with("Port", String.valueOf(port))
             .with("PID", StartupBanner.processId())

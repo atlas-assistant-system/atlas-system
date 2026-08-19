@@ -1250,7 +1250,7 @@ function renderAuthenticationStatus(failedResponse) {
     if (state.authentication.enrolledProfiles === 0) {
         message.textContent = state.authentication.maintenanceMode
             ? 'Mira a cámara y registra el primer rostro.'
-            : 'No hay un rostro registrado. Reinicia Presence en modo mantenimiento.';
+            : 'No hay un rostro registrado. Reinicia Atlas en modo mantenimiento.';
         return;
     }
     message.textContent = state.cameraReady
@@ -1318,7 +1318,7 @@ async function enrollProfile() {
     });
     if (response.status < 300) {
         document.getElementById('display-name').value = '';
-        setAuthFeedback('Rostro registrado. Reinicia Presence sin --maintenance para autenticarte.');
+        setAuthFeedback('Rostro registrado. Reinicia Atlas sin --maintenance para autenticarte.');
         await refreshAuthentication();
     } else {
         setAuthFeedback(presenceError(response), true);
