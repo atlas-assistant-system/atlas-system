@@ -403,23 +403,23 @@ function recognizedHandGesture(result) {
         return null;
     }
 
+    const pose = result.worldLandmarks?.[0] || landmarks;
     const gesture = result.gestures?.[0]?.[0];
     let type = null;
-    if (isSwipePose(landmarks)) {
+    if (isPinch(pose)) {
+        resetSwipe();
+        type = 'PINCH';
+    } else if (isSwipePose(pose)) {
         type = trackSwipe(landmarks);
         if (!type) {
             return null;
         }
     } else {
         resetSwipe();
-        if (isPinch(landmarks)) {
-            type = 'PINCH';
-        } else {
-            type = ({
-                Closed_Fist: 'FIST', Open_Palm: 'OPEN_PALM', Pointing_Up: 'POINT',
-                Thumb_Up: 'THUMBS_UP', Victory: 'VICTORY',
-            })[gesture?.categoryName] || null;
-        }
+        type = ({
+            Closed_Fist: 'FIST', Open_Palm: 'OPEN_PALM', Pointing_Up: 'POINT',
+            Thumb_Up: 'THUMBS_UP', Victory: 'VICTORY',
+        })[gesture?.categoryName] || null;
     }
 
     return type ? {
@@ -453,23 +453,24 @@ function jointAngle(first, middle, last) {
     const a = pointCoordinates(first);
     const b = pointCoordinates(middle);
     const c = pointCoordinates(last);
-    const ab = Math.hypot(a.x - b.x, a.y - b.y);
-    const cb = Math.hypot(c.x - b.x, c.y - b.y);
+    const ab = Math.hypot(a.x - b.x, a.y - b.y, (a.z || 0) - (b.z || 0));
+    const cb = Math.hypot(c.x - b.x, c.y - b.y, (c.z || 0) - (b.z || 0));
     if (!ab || !cb) {
         return 0;
     }
-    const cosine = ((a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y)) / (ab * cb);
+    const cosine = ((a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y)
+        + ((a.z || 0) - (b.z || 0)) * ((c.z || 0) - (b.z || 0))) / (ab * cb);
     return Math.acos(Math.max(-1, Math.min(1, cosine))) * 180 / Math.PI;
 }
 
 function pointDistance(first, second) {
     const a = pointCoordinates(first);
     const b = pointCoordinates(second);
-    return Math.hypot(a.x - b.x, a.y - b.y);
+    return Math.hypot(a.x - b.x, a.y - b.y, (a.z || 0) - (b.z || 0));
 }
 
 function pointCoordinates(point) {
-    return Array.isArray(point) ? { x: point[0], y: point[1] } : point;
+    return Array.isArray(point) ? { x: point[0], y: point[1], z: point[2] || 0 } : point;
 }
 
 function trackSwipe(landmarks) {
@@ -671,6 +672,41 @@ function stopVoiceInput() {
     state.voice = { recognition: null, target: null, listening: false };
 }
 
+const SKY_ICONS = {
+    clear: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.6M12 19v2.6M4.2 12H1.6M22.4 12h-2.6'
+        + 'M6.5 6.5 4.6 4.6M19.4 19.4l-1.9-1.9M17.5 6.5l1.9-1.9M4.6 19.4l1.9-1.9"/>',
+    partly: '<circle cx="8.4" cy="7.6" r="3.2"/><path d="M8.4 1.6v1.8M2.8 7.6H1M4.4 3.6 3.1 2.3"/>'
+        + '<path d="M7.4 20.4h9.8a3.6 3.6 0 0 0 .4-7.2 5.2 5.2 0 0 0-10.2 1 3.1 3.1 0 0 0 0 6.2Z"/>',
+    cloudy: '<path d="M6.8 17.4h10.4a3.8 3.8 0 0 0 .4-7.6 5.6 5.6 0 0 0-10.8 1 3.3 3.3 0 0 0 0 6.6Z"/>',
+    fog: '<path d="M6.8 14.4h10.4a3.8 3.8 0 0 0 .4-7.6 5.6 5.6 0 0 0-10.8 1 3.3 3.3 0 0 0 0 6.6Z"/>'
+        + '<path d="M4 18h16M6.5 21.4h11"/>',
+    rain: '<path d="M6.8 14.6h10.4a3.8 3.8 0 0 0 .4-7.6 5.6 5.6 0 0 0-10.8 1 3.3 3.3 0 0 0 0 6.6Z"/>'
+        + '<path d="M8.6 17.6 7.4 21M12.6 17.6l-1.2 3.4M16.6 17.6l-1.2 3.4"/>',
+    snow: '<path d="M6.8 14.6h10.4a3.8 3.8 0 0 0 .4-7.6 5.6 5.6 0 0 0-10.8 1 3.3 3.3 0 0 0 0 6.6Z"/>'
+        + '<path d="M8 19.4h.02M12 18.4h.02M16 19.4h.02M10 22h.02M14 22h.02"/>',
+    thunder: '<path d="M6.8 14.2h10.4a3.8 3.8 0 0 0 .4-7.6 5.6 5.6 0 0 0-10.8 1 3.3 3.3 0 0 0 0 6.6Z"/>'
+        + '<path d="M13.6 15.6 10.6 20h3.1L11.6 23.4"/>',
+};
+
+const SKY_ICON_FOR = {
+    0: 'clear', 1: 'partly', 2: 'partly', 3: 'cloudy',
+    45: 'fog', 48: 'fog',
+    51: 'rain', 53: 'rain', 55: 'rain', 56: 'rain', 57: 'rain',
+    61: 'rain', 63: 'rain', 65: 'rain', 66: 'rain', 67: 'rain',
+    80: 'rain', 81: 'rain', 82: 'rain',
+    71: 'snow', 73: 'snow', 75: 'snow', 77: 'snow', 85: 'snow', 86: 'snow',
+    95: 'thunder', 96: 'thunder', 99: 'thunder',
+};
+
+function renderSkyIcon(code) {
+    const icon = document.getElementById('weather-icon');
+    const shape = SKY_ICONS[SKY_ICON_FOR[code]];
+    icon.hidden = !shape;
+    if (shape) {
+        icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + shape + '</svg>';
+    }
+}
+
 const SKY = {
     0: 'Despejado', 1: 'Casi despejado', 2: 'Parcialmente nublado', 3: 'Nublado',
     45: 'Niebla', 48: 'Niebla helada',
@@ -710,6 +746,7 @@ async function refreshWeather() {
         }
         const data = await response.json();
         document.getElementById('weather-now').textContent = degrees(data.current.temperature_2m);
+        renderSkyIcon(data.current.weather_code);
         const sky = SKY[data.current.weather_code];
         const range = degrees(data.daily.temperature_2m_max[0]) + ' / ' + degrees(data.daily.temperature_2m_min[0]);
         document.getElementById('weather-detail').textContent = sky ? sky + ' · ' + range : range;

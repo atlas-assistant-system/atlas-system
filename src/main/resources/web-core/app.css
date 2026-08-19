@@ -190,6 +190,31 @@ nav {
     font-variant-numeric: tabular-nums;
 }
 
+.weather-now {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.18em;
+}
+
+.weather-icon {
+    display: inline-flex;
+}
+
+.weather-icon[hidden] {
+    display: none;
+}
+
+.weather-icon svg {
+    width: 0.62em;
+    height: 0.62em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .clock-date,
 .weather-detail {
     color: var(--ink-dim);
