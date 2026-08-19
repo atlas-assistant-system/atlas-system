@@ -1,4 +1,6 @@
-package atlas.presentation.common.web;
+package atlas.presentation.presence.web;
+
+import atlas.presentation.common.web.StaticResources;
 
 import java.util.Map;
 import sharedkernel.presentation.http.HttpRequest;

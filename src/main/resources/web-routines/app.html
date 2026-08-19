@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rutinas</title>
+    <link rel="stylesheet" href="/app.css">
+    <script defer src="/app.js"></script>
+</head>
+<body>
+<header>
+    <h1>Rutinas</h1>
+    <p id="today-date" class="date"></p>
+    <nav>
+        <button class="nav-link active" data-view="hoy">Hoy</button>
+        <button class="nav-link" data-view="gestion">Gestion</button>
+    </nav>
+</header>
+
+<p id="status" class="status" role="status" aria-live="polite" hidden></p>
+
+<main id="view-hoy" class="view">
+    <section>
+        <h2>Lo que toca hoy</h2>
+        <ul id="today-list" class="cards"></ul>
+        <p id="today-empty" class="empty" hidden>Hoy no toca nada. Define una rutina en Gestion.</p>
+    </section>
+</main>
+
+<main id="view-gestion" class="view" hidden>
+    <section>
+        <h2>Nueva rutina</h2>
+        <form id="define-form" class="form">
+            <label>
+                Nombre
+                <input name="name" required maxlength="80" placeholder="Correr">
+            </label>
+            <label>
+                Cuota
+                <input name="target" type="number" step="any" min="0.01" value="1" required>
+            </label>
+            <label>
+                Unidad
+                <input name="unit" maxlength="16" placeholder="veces, L, paginas">
+            </label>
+            <label>
+                Periodo
+                <select name="period">
+                    <option value="DAY">Cada dia</option>
+                    <option value="WEEK" selected>Por semana</option>
+                    <option value="MONTH">Por mes</option>
+                </select>
+            </label>
+            <fieldset id="weekdays" hidden>
+                <legend>Dias de la semana</legend>
+                <label><input type="checkbox" name="activeDays" value="MONDAY" checked> L</label>
+                <label><input type="checkbox" name="activeDays" value="TUESDAY" checked> M</label>
+                <label><input type="checkbox" name="activeDays" value="WEDNESDAY" checked> X</label>
+                <label><input type="checkbox" name="activeDays" value="THURSDAY" checked> J</label>
+                <label><input type="checkbox" name="activeDays" value="FRIDAY" checked> V</label>
+                <label><input type="checkbox" name="activeDays" value="SATURDAY" checked> S</label>
+                <label><input type="checkbox" name="activeDays" value="SUNDAY" checked> D</label>
+            </fieldset>
+            <label id="days-of-month" hidden>
+                Dias del mes
+                <input name="daysOfMonth" placeholder="1, 15, 0">
+                <small>Separados por comas. El <strong>0</strong> es el ultimo dia del mes, sea 28, 29, 30 o 31.</small>
+            </label>
+            <button type="submit">Definir</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Todas las rutinas</h2>
+        <label class="inline">
+            <input type="checkbox" id="include-archived"> Ver archivadas
+        </label>
+        <ul id="routine-list" class="cards"></ul>
+    </section>
+</main>
+</body>
+</html>

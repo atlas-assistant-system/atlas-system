@@ -1,0 +1,498 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Rutinas API",
+    "version": "1.0.0",
+    "description": "Habitos diarios y su seguimiento. Una rutina es una cuota dentro de un periodo: binaria es objetivo 1, y \"3 veces por semana\" es objetivo 3 con periodo WEEK. Solo se marca lo hecho; el fallo se deduce al leer."
+  },
+  "servers": [{ "url": "/" }],
+  "tags": [
+    { "name": "routines", "description": "Definicion y gestion de rutinas" },
+    { "name": "progress", "description": "Marcas, progreso, historial y rachas" }
+  ],
+  "paths": {
+    "/routines": {
+      "post": {
+        "tags": ["routines"],
+        "summary": "Define una rutina",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DefineRoutineRequest" },
+              "examples": {
+                "diaria": {
+                  "summary": "Pastillas cada dia",
+                  "value": {
+                    "name": "Tomar pastillas",
+                    "target": 1,
+                    "period": "DAY",
+                    "activeDays": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+                  }
+                },
+                "semanal": {
+                  "summary": "Correr 3 veces por semana",
+                  "value": { "name": "Correr", "target": 3, "period": "WEEK" }
+                },
+                "finDeMes": {
+                  "summary": "Cierre de cuentas el ultimo dia del mes",
+                  "value": { "name": "Cierre de cuentas", "target": 1, "period": "MONTH", "daysOfMonth": [0] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creada",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Routine" } } }
+          },
+          "400": { "$ref": "#/components/responses/Invalid" }
+        }
+      },
+      "get": {
+        "tags": ["routines"],
+        "summary": "Lista las rutinas",
+        "parameters": [{ "$ref": "#/components/parameters/IncludeArchived" }],
+        "responses": {
+          "200": {
+            "description": "Rutinas ordenadas por nombre",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/RoutineSummary" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/routines/today": {
+      "get": {
+        "tags": ["progress"],
+        "summary": "Las rutinas que tocan hoy, con el progreso de su periodo",
+        "description": "El progreso es del periodo entero, no del dia: en una rutina de 3 veces por semana se ve 2/3 de la semana.",
+        "responses": {
+          "200": {
+            "description": "Pendientes de hoy",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/TodayRoutine" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/routines/stats": {
+      "get": {
+        "tags": ["progress"],
+        "summary": "Porcentaje de periodos cumplidos por rutina",
+        "description": "Solo cuentan los periodos cerrados y con ocurrencia. Un periodo abierto todavia puede cumplirse y uno sin dia elegible nunca llego a existir.",
+        "parameters": [
+          { "$ref": "#/components/parameters/From" },
+          { "$ref": "#/components/parameters/To" },
+          { "$ref": "#/components/parameters/IncludeArchived" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estadisticas",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ComplianceStats" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/routines/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/RoutineId" }],
+      "get": {
+        "tags": ["routines"],
+        "summary": "Detalle de una rutina",
+        "responses": {
+          "200": {
+            "description": "Rutina",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Routine" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["routines"],
+        "summary": "Borra la rutina y todo su historial",
+        "description": "Es el unico sitio donde se pierden registros. Para conservarlos, archiva en vez de borrar.",
+        "responses": {
+          "204": { "description": "Borrada" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/routines/{id}/details": {
+      "parameters": [{ "$ref": "#/components/parameters/RoutineId" }],
+      "put": {
+        "tags": ["routines"],
+        "summary": "Cambia nombre y descripcion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChangeRoutineDetailsRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rutina",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Routine" } } }
+          },
+          "400": { "$ref": "#/components/responses/Invalid" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/routines/{id}/schedule": {
+      "parameters": [{ "$ref": "#/components/parameters/RoutineId" }],
+      "put": {
+        "tags": ["routines"],
+        "summary": "Cambia la cuota y la periodicidad",
+        "description": "No reescribe el pasado: los registros son hechos. El historial anterior se evalua con la definicion actual.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChangeRoutineScheduleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rutina",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Routine" } } }
+          },
+          "400": { "$ref": "#/components/responses/Invalid" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/routines/{id}/archive": {
+      "parameters": [{ "$ref": "#/components/parameters/RoutineId" }],
+      "post": {
+        "tags": ["routines"],
+        "summary": "Archiva la rutina conservando su historial",
+        "responses": {
+          "204": { "description": "Archivada" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/routines/{id}/unarchive": {
+      "parameters": [{ "$ref": "#/components/parameters/RoutineId" }],
+      "post": {
+        "tags": ["routines"],
+        "summary": "Devuelve al uso una rutina archivada",
+        "responses": {
+          "204": { "description": "Desarchivada" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/routines/{id}/entries": {
+      "parameters": [{ "$ref": "#/components/parameters/RoutineId" }],
+      "post": {
+        "tags": ["progress"],
+        "summary": "Marca lo hecho un dia",
+        "description": "Admite dias pasados sin limite. Marcar dos veces el mismo dia suma sobre lo que habia. Devuelve el progreso del periodo entero.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LogProgressRequest" },
+              "examples": {
+                "hoy": { "summary": "Marcar hoy", "value": {} },
+                "unDiaConcreto": { "summary": "Rellenar el lunes", "value": { "day": "2026-02-09", "amount": 1.5 } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Progreso del periodo",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PeriodProgress" } } }
+          },
+          "400": { "$ref": "#/components/responses/Invalid" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/routines/{id}/entries/{day}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RoutineId" },
+        {
+          "name": "day",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string", "format": "date" },
+          "example": "2026-02-09"
+        }
+      ],
+      "delete": {
+        "tags": ["progress"],
+        "summary": "Desmarca un dia",
+        "responses": {
+          "204": { "description": "Desmarcado" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/routines/{id}/progress": {
+      "parameters": [{ "$ref": "#/components/parameters/RoutineId" }],
+      "get": {
+        "tags": ["progress"],
+        "summary": "Progreso de un periodo",
+        "parameters": [
+          {
+            "name": "day",
+            "in": "query",
+            "description": "Cualquier dia del periodo que se quiere ver. Por defecto, hoy.",
+            "schema": { "type": "string", "format": "date" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progreso",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PeriodProgress" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/routines/{id}/history": {
+      "parameters": [{ "$ref": "#/components/parameters/RoutineId" }],
+      "get": {
+        "tags": ["progress"],
+        "summary": "Rejilla dia a dia",
+        "description": "Devuelve todos los dias del rango, tambien los vacios y los que no tocaban.",
+        "parameters": [
+          { "$ref": "#/components/parameters/From" },
+          { "$ref": "#/components/parameters/To" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dias",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/HistoryDay" } }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/routines/{id}/streak": {
+      "parameters": [{ "$ref": "#/components/parameters/RoutineId" }],
+      "get": {
+        "tags": ["progress"],
+        "summary": "Racha actual y mejor racha",
+        "description": "En periodos cumplidos consecutivos, no en dias. Un periodo sin ocurrencia se salta; el periodo abierto suma solo si ya esta cumplido.",
+        "responses": {
+          "200": {
+            "description": "Rachas",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Streak" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "tags": ["progress"],
+        "summary": "Stream de eventos (SSE)",
+        "description": "Emite routineDefined, routineDetailsChanged, routineScheduleChanged, routineArchived, routineUnarchived, routineDeleted, progressLogged y dayCleared.",
+        "responses": { "200": { "description": "text/event-stream" } }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "RoutineId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "pattern": "^R[0-9]{8}$" },
+        "example": "R00000001"
+      },
+      "IncludeArchived": {
+        "name": "includeArchived",
+        "in": "query",
+        "schema": { "type": "boolean", "default": false }
+      },
+      "From": {
+        "name": "from",
+        "in": "query",
+        "description": "Primer dia del rango, incluido.",
+        "schema": { "type": "string", "format": "date" }
+      },
+      "To": {
+        "name": "to",
+        "in": "query",
+        "description": "Ultimo dia del rango, incluido.",
+        "schema": { "type": "string", "format": "date" }
+      }
+    },
+    "responses": {
+      "Invalid": {
+        "description": "Datos invalidos",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "No existe",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Conflict": {
+        "description": "Estado incompatible con la operacion",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "RecurrencePeriod": { "type": "string", "enum": ["DAY", "WEEK", "MONTH"] },
+      "DayOfWeek": {
+        "type": "string",
+        "enum": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+      },
+      "DaysOfMonth": {
+        "type": "array",
+        "description": "Dias del mes elegibles, de 1 a 31. El 0 significa el ultimo dia del mes, sea 28, 29, 30 o 31. Un 31 pedido no se aclara: en febrero esa rutina no toca. Vacio significa el mes entero.",
+        "items": { "type": "integer", "minimum": 0, "maximum": 31 }
+      },
+      "DefineRoutineRequest": {
+        "type": "object",
+        "required": ["name", "target", "period"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 80 },
+          "description": { "type": "string", "maxLength": 1000, "nullable": true },
+          "target": { "type": "number", "exclusiveMinimum": 0, "description": "Cuota del periodo. Admite decimales." },
+          "unit": { "type": "string", "maxLength": 16, "nullable": true, "example": "L" },
+          "period": { "$ref": "#/components/schemas/RecurrencePeriod" },
+          "activeDays": {
+            "type": "array",
+            "description": "Solo en periodo DAY, donde es obligatorio.",
+            "items": { "$ref": "#/components/schemas/DayOfWeek" }
+          },
+          "daysOfMonth": { "$ref": "#/components/schemas/DaysOfMonth" }
+        }
+      },
+      "ChangeRoutineDetailsRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 80 },
+          "description": { "type": "string", "maxLength": 1000, "nullable": true }
+        }
+      },
+      "ChangeRoutineScheduleRequest": {
+        "type": "object",
+        "required": ["target", "period"],
+        "properties": {
+          "target": { "type": "number", "exclusiveMinimum": 0 },
+          "unit": { "type": "string", "maxLength": 16, "nullable": true },
+          "period": { "$ref": "#/components/schemas/RecurrencePeriod" },
+          "activeDays": { "type": "array", "items": { "$ref": "#/components/schemas/DayOfWeek" } },
+          "daysOfMonth": { "$ref": "#/components/schemas/DaysOfMonth" }
+        }
+      },
+      "LogProgressRequest": {
+        "type": "object",
+        "properties": {
+          "day": { "type": "string", "format": "date", "description": "Por defecto, hoy." },
+          "amount": { "type": "number", "exclusiveMinimum": 0, "default": 1 }
+        }
+      },
+      "Routine": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "R00000001" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "target": { "type": "string", "example": "3" },
+          "unit": { "type": "string", "nullable": true },
+          "period": { "$ref": "#/components/schemas/RecurrencePeriod" },
+          "activeDays": { "type": "array", "items": { "$ref": "#/components/schemas/DayOfWeek" } },
+          "daysOfMonth": { "$ref": "#/components/schemas/DaysOfMonth" },
+          "archived": { "type": "boolean" }
+        }
+      },
+      "RoutineSummary": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "target": { "type": "string" },
+          "unit": { "type": "string", "nullable": true },
+          "period": { "$ref": "#/components/schemas/RecurrencePeriod" },
+          "archived": { "type": "boolean" }
+        }
+      },
+      "PeriodProgress": {
+        "type": "object",
+        "properties": {
+          "routineId": { "type": "string" },
+          "periodStart": { "type": "string", "format": "date" },
+          "periodEnd": { "type": "string", "format": "date", "description": "Excluido." },
+          "logged": { "type": "string" },
+          "target": { "type": "string" },
+          "unit": { "type": "string", "nullable": true },
+          "met": { "type": "boolean" },
+          "closed": { "type": "boolean" },
+          "failed": { "type": "boolean", "description": "Solo puede ser cierto en un periodo cerrado." }
+        }
+      },
+      "TodayRoutine": {
+        "type": "object",
+        "properties": {
+          "routine": { "$ref": "#/components/schemas/RoutineSummary" },
+          "progress": { "$ref": "#/components/schemas/PeriodProgress" }
+        }
+      },
+      "HistoryDay": {
+        "type": "object",
+        "properties": {
+          "day": { "type": "string", "format": "date" },
+          "logged": { "type": "string" },
+          "scheduled": { "type": "boolean", "description": "false significa que ese dia no tocaba." }
+        }
+      },
+      "Streak": {
+        "type": "object",
+        "properties": {
+          "routineId": { "type": "string" },
+          "current": { "type": "integer" },
+          "best": { "type": "integer" }
+        }
+      },
+      "ComplianceStats": {
+        "type": "object",
+        "properties": {
+          "routineId": { "type": "string" },
+          "name": { "type": "string" },
+          "periodsClosed": { "type": "integer" },
+          "periodsMet": { "type": "integer" },
+          "ratio": { "type": "number", "format": "double" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "example": "Routine.DayNotScheduled" },
+          "message": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      }
+    }
+  }
+}

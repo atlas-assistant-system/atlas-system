@@ -1,6 +1,6 @@
 package atlas.presentation.presence.requests;
 
-import atlas.presentation.common.web.Values;
+import atlas.presentation.presence.web.Values;
 import java.time.Instant;
 import java.util.Map;
 

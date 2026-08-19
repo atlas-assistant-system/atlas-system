@@ -1,4 +1,4 @@
-package atlas.presentation.common.web;
+package atlas.presentation.presence.web;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;

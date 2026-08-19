@@ -6,7 +6,7 @@ import atlas.application.presence.queries.getactivesession.GetActiveSessionQuery
 import atlas.domain.presence.PresenceErrors;
 import atlas.domain.presence.SessionId;
 import atlas.presentation.common.web.Json;
-import atlas.presentation.common.web.Values;
+import atlas.presentation.presence.web.Values;
 import java.util.Map;
 import java.util.Set;
 import sharedkernel.application.cqrs.CommandBus;

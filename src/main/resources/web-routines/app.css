@@ -1,0 +1,248 @@
+:root {
+    color-scheme: light dark;
+    --bg: #101418;
+    --surface: #191f26;
+    --surface-raised: #212a33;
+    --border: #2d3742;
+    --text: #e6edf3;
+    --muted: #8b98a5;
+    --accent: #4aa3df;
+    --met: #3fb950;
+    --failed: #d9534f;
+    --radius: 10px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0 1rem 3rem;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    max-width: 46rem;
+    margin-inline: auto;
+}
+
+header {
+    padding: 1.5rem 0 1rem;
+}
+
+h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+}
+
+h2 {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 2rem 0 0.75rem;
+}
+
+.date {
+    margin: 0.25rem 0 1rem;
+    color: var(--muted);
+}
+
+nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+    font: inherit;
+}
+
+.nav-link.active {
+    background: var(--surface-raised);
+    color: var(--text);
+    border-color: var(--accent);
+}
+
+.status {
+    background: var(--surface-raised);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    margin: 0 0 1rem;
+    padding: 0.6rem 0.9rem;
+}
+
+.status[data-kind="error"] {
+    border-left-color: var(--failed);
+}
+
+.cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.card.met {
+    border-color: var(--met);
+}
+
+.card.archived {
+    opacity: 0.55;
+}
+
+.card-main {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.card-name {
+    font-weight: 600;
+}
+
+.card-meta {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.quota {
+    font-variant-numeric: tabular-nums;
+    font-size: 1.1rem;
+    white-space: nowrap;
+}
+
+.quota.met {
+    color: var(--met);
+}
+
+.bar {
+    flex: 1 1 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+}
+
+.bar.met > span {
+    background: var(--met);
+}
+
+button {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    font: inherit;
+}
+
+button:hover {
+    border-color: var(--accent);
+}
+
+button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #07121a;
+    font-weight: 600;
+}
+
+button.danger:hover {
+    border-color: var(--failed);
+    color: var(--failed);
+}
+
+.form {
+    display: grid;
+    gap: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+}
+
+.form label {
+    display: grid;
+    gap: 0.3rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.form input,
+.form select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 0.5rem 0.6rem;
+    font: inherit;
+}
+
+.form small {
+    color: var(--muted);
+}
+
+fieldset {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+fieldset legend {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+fieldset label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--text);
+}
+
+.inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.empty {
+    color: var(--muted);
+    font-style: italic;
+}
+
+.streak {
+    color: var(--muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}

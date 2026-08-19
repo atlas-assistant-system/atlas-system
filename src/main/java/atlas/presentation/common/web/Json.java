@@ -18,6 +18,14 @@ public final class Json {
         }
     }
 
+    public static Map<String, Object> parseOptional(String body) {
+        if (body == null || body.isBlank()) {
+            return Map.of();
+        }
+
+        return parse(body);
+    }
+
     public static Map<String, Object> parse(String body) {
         if (body == null || body.isBlank()) {
             throw new FormatException("The request body must be a JSON object.");
