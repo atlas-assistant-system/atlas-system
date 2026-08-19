@@ -120,6 +120,26 @@ body {
     opacity: 1;
 }
 
+#voice-control {
+    position: fixed;
+    right: 2rem;
+    bottom: 5.2rem;
+    z-index: 10;
+    color: var(--ink);
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid var(--hairline);
+    font: inherit;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    padding: 0.65rem 0.9rem;
+    text-transform: uppercase;
+}
+
+#voice-control.listening {
+    border-color: var(--ink);
+    box-shadow: var(--halo), 0 0 0 0.25rem rgba(255, 255, 255, 0.16);
+}
+
 .gesture-target {
     outline: 2px solid var(--ink) !important;
     outline-offset: 0.25rem;
@@ -351,13 +371,14 @@ body.locked .next-block,
 body.locked #view-agenda,
 body.locked #view-rutinas,
 body.locked #panel,
-body.locked #toasts {
+body.locked #toasts,
+body.locked #voice-control {
     display: none !important;
 }
 
 .next-block {
     position: absolute;
-    bottom: 2.5rem;
+    top: 18.5rem;
     left: 3.5rem;
     max-width: 34rem;
 }

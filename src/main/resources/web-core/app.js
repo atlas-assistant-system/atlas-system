@@ -392,6 +392,9 @@ function setPointerTarget(target) {
     state.pointer.target = target;
     state.pointer.candidate = target;
     state.pointer.frames = 0;
+    if (isTextField(target)) {
+        state.voice.target = target;
+    }
     if (target) {
         target.classList.add('gesture-target');
     }
@@ -631,24 +634,65 @@ function startVoiceInput(target) {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     state.voice = { recognition, target, listening: true };
-    recognition.onstart = () => setInteractionStatus('Escuchando…');
+    recognition.onstart = () => {
+        updateVoiceControl();
+        setInteractionStatus('Escuchando…');
+    };
     recognition.onresult = event => appendDictation(target, event.results[0][0].transcript);
     recognition.onerror = event => {
         if (event.error !== 'aborted') {
-            setInteractionStatus('No se pudo reconocer la voz.');
+            setInteractionStatus(voiceErrorMessage(event.error));
         }
     };
     recognition.onend = () => {
         if (state.voice.recognition === recognition) {
-            state.voice = { recognition: null, target: null, listening: false };
+            state.voice = { recognition: null, target, listening: false };
+            updateVoiceControl();
         }
     };
     try {
         recognition.start();
     } catch (_) {
-        state.voice = { recognition: null, target: null, listening: false };
+        state.voice = { recognition: null, target, listening: false };
+        updateVoiceControl();
         setInteractionStatus('No se pudo iniciar el dictado.');
     }
+}
+
+function voiceErrorMessage(error) {
+    return ({
+        'not-allowed': 'Permite el micrófono en el navegador y vuelve a pulsar Dictar.',
+        'service-not-allowed': 'Este navegador no permite usar su servicio de voz.',
+        'audio-capture': 'No se encuentra un micrófono disponible.',
+        'no-speech': 'No se ha detectado voz. Inténtalo de nuevo.',
+        'network': 'El servicio de voz no tiene conexión.',
+        'language-not-supported': 'El reconocimiento no admite español.',
+    })[error] || 'No se pudo reconocer la voz.';
+}
+
+function toggleVoiceInput() {
+    if (state.voice.listening) {
+        stopVoiceInput();
+        return;
+    }
+    const target = isTextField(document.activeElement) ? document.activeElement
+        : isTextField(state.pointer.target) ? state.pointer.target : state.voice.target;
+    if (!target?.isConnected) {
+        setInteractionStatus('Selecciona primero un campo de texto.');
+        return;
+    }
+    target.focus();
+    startVoiceInput(target);
+}
+
+function updateVoiceControl() {
+    const control = document.getElementById('voice-control');
+    const supported = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+    control.hidden = false;
+    control.disabled = !supported;
+    control.classList.toggle('listening', state.voice.listening);
+    control.setAttribute('aria-pressed', String(state.voice.listening));
+    control.textContent = supported ? state.voice.listening ? 'Detener voz' : 'Dictar' : 'Voz no disponible';
 }
 
 function appendDictation(target, transcript) {
@@ -666,10 +710,12 @@ function appendDictation(target, transcript) {
 }
 
 function stopVoiceInput() {
+    const target = state.voice.target;
     if (state.voice.recognition) {
         state.voice.recognition.abort();
     }
-    state.voice = { recognition: null, target: null, listening: false };
+    state.voice = { recognition: null, target, listening: false };
+    updateVoiceControl();
 }
 
 const SKY_ICONS = {
@@ -1704,6 +1750,13 @@ function switchPeriod(period) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateVoiceControl();
+    document.getElementById('voice-control').addEventListener('click', toggleVoiceInput);
+    document.addEventListener('focusin', event => {
+        if (isTextField(event.target)) {
+            state.voice.target = event.target;
+        }
+    });
     startCamera();
     tickClock();
     setInterval(tickClock, 1000);
