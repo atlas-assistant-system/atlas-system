@@ -147,6 +147,10 @@ public final class PresenceApplication {
         return router;
     }
 
+    public boolean hasActiveSession() {
+        return queries.dispatch(new GetActiveSessionQuery()).value().isPresent();
+    }
+
     public void stop() {
         poller.close();
         hub.closeAll();

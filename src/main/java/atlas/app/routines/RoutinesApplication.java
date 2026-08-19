@@ -52,7 +52,6 @@ import atlas.infrastructure.sharedkernel.persistence.SqliteConnections;
 import atlas.presentation.routines.handlers.RoutineHandlers;
 import atlas.presentation.routines.sse.RoutineEventsBroadcaster;
 import atlas.presentation.routines.web.DocsHandlers;
-import atlas.presentation.routines.web.UiHandlers;
 import atlas.presentation.sharedkernel.http.Router;
 import atlas.presentation.sharedkernel.http.Routes;
 import atlas.presentation.sharedkernel.http.SseEndpoint;
@@ -180,6 +179,8 @@ public final class RoutinesApplication {
                 .get("/", handlers::list)
                 .get("/today", handlers::today)
                 .get("/stats", handlers::complianceStats)
+                .get("/docs", DocsHandlers::docs)
+                .get("/openapi.json", DocsHandlers::openapi)
                 .get("/{id}", handlers::detail)
                 .delete("/{id}", handlers::delete)
                 .put("/{id}/details", handlers::changeDetails)
@@ -191,12 +192,6 @@ public final class RoutinesApplication {
                 .get("/{id}/streak", handlers::streak)
                 .post("/{id}/entries", handlers::logProgress)
                 .delete("/{id}/entries/{day}", handlers::clearDay))
-            .mount(Routes.at("/")
-                .get("/", UiHandlers::index)
-                .get("/app.css", UiHandlers::styles)
-                .get("/app.js", UiHandlers::script)
-                .get("/docs", DocsHandlers::docs)
-                .get("/openapi.json", DocsHandlers::openapi))
             .build();
     }
 
