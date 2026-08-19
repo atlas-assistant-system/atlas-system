@@ -1,0 +1,1 @@
+CREATE INDEX idx_appointment_reminders_by_appointment ON appointment_reminders (appointment_id)

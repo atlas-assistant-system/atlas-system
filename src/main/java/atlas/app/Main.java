@@ -19,7 +19,7 @@ public final class Main {
 
         var application = Application
             .wire(LogEntryRenderers.forCurrentConsole(), PresenceSettings.fromEnvironment(args),
-                Clock.systemDefaultZone())
+                Clock.systemDefaultZone(), DEFAULT_PORT)
             .start(DEFAULT_PORT);
 
         Runtime.getRuntime().addShutdownHook(new Thread(application::stop));

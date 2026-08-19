@@ -34,12 +34,12 @@ El proyecto es **un único módulo JPMS** y cada bounded context es un subpaquet
 cada anillo. La convención de `architecture.md` aplicada a varios contextos:
 
 ```
-atlas/domain/sharedkernel/          presence/   routines/
-atlas/application/sharedkernel/     presence/   routines/
-atlas/infrastructure/sharedkernel/  presence/   routines/
-atlas/presentation/sharedkernel/    presence/   routines/
-atlas/app/presence/   atlas/app/routines/    cableado de cada contexto
-atlas/app/Application.java                   composition root que los monta
+atlas/domain/sharedkernel/          appointments/   presence/   routines/
+atlas/application/sharedkernel/     appointments/   presence/   routines/
+atlas/infrastructure/sharedkernel/  appointments/   presence/   routines/
+atlas/presentation/sharedkernel/    appointments/   presence/   routines/
+atlas/app/appointments/  presence/  routines/    cableado de cada contexto
+atlas/app/Application.java                       composition root que los monta
 ```
 
 **Lo que está en `common` es genérico de verdad, no un cajón compartido.** `Json` y
@@ -54,11 +54,14 @@ físico— y su propio bus de comandos y consultas.
 
 ## Estado actual
 
+- **`appointments` migrado** — citas, recordatorios y calendario. Trae la UI espejo, así que se
+  monta en `/` y su SSE en `/events`. Su API va detrás de la guardia de sesión de `presence`.
 - **`presence` migrado** — identidad biométrica facial con prueba de vida e interacción por
-  gesto. Cuatro capas completas, se monta en `/` y su SSE en `/events`.
+  gesto. Se monta en sus propios prefijos (`/profiles`, `/sessions`, `/authentication`...) y su
+  SSE en `/events/presence`.
 - **`routines` migrado** — hábitos como cuota dentro de un periodo. Cuatro capas completas, se
   monta en `/routines` y su SSE en `/events/routines`.
-- **871 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
+- **1127 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
   ArchUnit.
 - **El Shared Kernel es un contexto más**, repartido por sus anillos igual que los demás
   (`atlas.domain.sharedkernel`, `atlas.application.sharedkernel`...). Ya no es una dependencia
@@ -66,9 +69,11 @@ físico— y su propio bus de comandos y consultas.
   interviene. Las reglas de ArchUnit lo excluyen por el patrón `..sharedkernel..`, y viven en
   `src/test/java/atlas/architecture/rules/` — no pueden ser un subproyecto porque importan
   `ValueObject` del propio kernel y se formaría un ciclo.
-- **Pendiente** — migrar el contexto `appointments` (citas, recordatorios y calendario), que
-  es además quien trae la UI espejo y la cámara. Y unificar la puerta de sesión: hoy la API de
-  `presence` devuelve 401 sin sesión y la de `routines` responde abierta.
+- **Pendiente** — unificar la puerta de sesión: `appointments` y `presence` devuelven 401 sin
+  sesión y `routines` responde abierta. Y quitar el salto de loopback: `appointments` sigue
+  hablando con `presence` por HTTP contra este mismo proceso, cuando ya comparten JVM y basta
+  con implementar el acceso a la sesión en memoria (marcado con `ponytail:` en
+  `atlas/app/Application.java`).
 - **Conocido** — la UI de `routines` no es alcanzable: montado en `/routines`, ese path lo
   ocupa su endpoint de listado. Se resolverá al componer las pestañas del espejo.
 

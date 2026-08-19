@@ -1,0 +1,442 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Agenda",
+    "description": "Gestion de citas, recordatorios y calendario personal. IDs de cita con prefijo legible (A00000001); franjas semiabiertas [start, end): dos citas encadenadas no se solapan.",
+    "version": "0.1.0"
+  },
+  "servers": [{ "url": "/" }],
+  "tags": [
+    { "name": "commands", "description": "Escritura: agendar, reprogramar, cancelar, detalles y recordatorios" },
+    { "name": "queries", "description": "Lectura: detalle, calendario, conteos, huecos y avisos" }
+  ],
+  "paths": {
+    "/appointments": {
+      "post": {
+        "tags": ["commands"],
+        "summary": "Agendar una cita",
+        "description": "Falla con 409 si la franja solapa con otra cita activa, salvo que allowOverlap sea true; en ese caso responde 201 y conflictingAppointmentIds lista con quien choca.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScheduleAppointmentRequest" },
+              "example": {
+                "title": "Dentista",
+                "description": "Llevar radiografia",
+                "start": "2026-08-20T11:00",
+                "end": "2026-08-20T12:00",
+                "reminderLeadTimesMinutes": [15, 1440],
+                "allowOverlap": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Cita creada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Appointment" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "get": {
+        "tags": ["queries"],
+        "summary": "Listar citas por periodo (paginado)",
+        "parameters": [
+          { "name": "period", "in": "query", "schema": { "type": "string", "enum": ["DAY", "WEEK", "MONTH", "YEAR"], "default": "DAY" } },
+          { "name": "anchor", "in": "query", "description": "Fecha ancla del periodo; por defecto hoy", "schema": { "type": "string", "format": "date", "example": "2026-08-17" } },
+          { "name": "includeCancelled", "in": "query", "schema": { "type": "boolean", "default": false } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1, "minimum": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 20, "maximum": 100 } }
+        ],
+        "responses": {
+          "200": { "description": "Pagina de citas con anclas de navegacion", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AppointmentPage" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/appointments/{id}": {
+      "get": {
+        "tags": ["queries"],
+        "summary": "Detalle de una cita",
+        "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }],
+        "responses": {
+          "200": { "description": "La cita con sus recordatorios", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Appointment" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["commands"],
+        "summary": "Eliminar una cita definitivamente",
+        "description": "Borrado fisico: la cita y sus recordatorios desaparecen y no se pueden recuperar. Para dejar rastro y poder deshacer, usa /cancel en su lugar.",
+        "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }],
+        "responses": {
+          "204": { "description": "Cita eliminada" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/appointments/{id}/reschedule": {
+      "post": {
+        "tags": ["commands"],
+        "summary": "Reprogramar una cita",
+        "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RescheduleAppointmentRequest" },
+              "example": { "newStart": "2026-08-21T09:00", "newEnd": "2026-08-21T10:00", "allowOverlap": false }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cita reprogramada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Appointment" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/appointments/{id}/cancel": {
+      "post": {
+        "tags": ["commands"],
+        "summary": "Cancelar una cita",
+        "description": "Cancelar no borra: la cita sigue existiendo y libera su franja.",
+        "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }],
+        "responses": {
+          "204": { "description": "Cita cancelada" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/appointments/{id}/restore": {
+      "post": {
+        "tags": ["commands"],
+        "summary": "Recuperar una cita cancelada",
+        "description": "Devuelve la cita a SCHEDULED con su franja original y sus recordatorios. Falla con 409 si la cita no esta cancelada, si su franja ya empezo, o si otra cita ocupo la franja mientras estaba cancelada; en este ultimo caso allowOverlap=true la recupera igualmente y conflictingAppointmentIds lista con quien choca.",
+        "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RestoreAppointmentRequest" },
+              "example": { "allowOverlap": false }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cita recuperada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Appointment" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/appointments/{id}/details": {
+      "put": {
+        "tags": ["commands"],
+        "summary": "Cambiar titulo y descripcion",
+        "description": "Permitido tambien en citas ya pasadas (corregir el historial es legitimo). No dispara chequeo de solapamiento.",
+        "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChangeDetailsRequest" },
+              "example": { "title": "Dentista con el Dr. Ruiz", "description": null }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Detalles actualizados", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Appointment" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/appointments/{id}/reminders": {
+      "post": {
+        "tags": ["commands"],
+        "summary": "Añadir un recordatorio",
+        "description": "Maximo 5 por cita, sin antelacion repetida, y nunca sobre una cita que ya ocurrio.",
+        "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddReminderRequest" },
+              "example": { "leadTimeMinutes": 30 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cita con el recordatorio añadido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Appointment" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/appointments/{id}/reminders/{reminderId}": {
+      "delete": {
+        "tags": ["commands"],
+        "summary": "Quitar un recordatorio",
+        "parameters": [
+          { "$ref": "#/components/parameters/AppointmentId" },
+          { "$ref": "#/components/parameters/ReminderId" }
+        ],
+        "responses": {
+          "204": { "description": "Recordatorio eliminado" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/appointments/{id}/reminders/{reminderId}/acknowledge": {
+      "post": {
+        "tags": ["commands"],
+        "summary": "Marcar un aviso como visto",
+        "description": "Idempotente: reconocerlo dos veces no es un error y conserva el primer instante.",
+        "parameters": [
+          { "$ref": "#/components/parameters/AppointmentId" },
+          { "$ref": "#/components/parameters/ReminderId" }
+        ],
+        "responses": {
+          "204": { "description": "Aviso reconocido" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/appointments/counts/by-month": {
+      "get": {
+        "tags": ["queries"],
+        "summary": "Conteo de citas por mes de un año",
+        "description": "Siempre 12 buckets, con cero en los meses vacios. Una cita a caballo de dos meses cuenta en ambos.",
+        "parameters": [
+          { "name": "year", "in": "query", "required": true, "schema": { "type": "string", "example": "2026" } },
+          { "name": "includeCancelled", "in": "query", "schema": { "type": "boolean", "default": false } }
+        ],
+        "responses": {
+          "200": { "description": "12 buckets mensuales", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/MonthlyCount" } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/appointments/counts/by-day": {
+      "get": {
+        "tags": ["queries"],
+        "summary": "Conteo de citas por dia de un mes",
+        "parameters": [
+          { "name": "month", "in": "query", "required": true, "schema": { "type": "string", "example": "2026-08" } },
+          { "name": "includeCancelled", "in": "query", "schema": { "type": "boolean", "default": false } }
+        ],
+        "responses": {
+          "200": { "description": "Un bucket por dia del mes", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/DailyCount" } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/appointments/overlapping": {
+      "get": {
+        "tags": ["queries"],
+        "summary": "Con que chocaria una franja",
+        "description": "Para preguntar antes de agendar y ofrecer el override en la UI. La decision final sigue siendo del command.",
+        "parameters": [
+          { "name": "start", "in": "query", "required": true, "schema": { "type": "string", "example": "2026-08-20T11:00" } },
+          { "name": "end", "in": "query", "required": true, "schema": { "type": "string", "example": "2026-08-20T12:00" } },
+          { "name": "exclude", "in": "query", "description": "Cita a excluir (al reprogramarla)", "schema": { "type": "string", "example": "A00000001" } }
+        ],
+        "responses": {
+          "200": { "description": "Citas activas que intersectan la franja", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AppointmentSummary" } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/appointments/free-slots": {
+      "get": {
+        "tags": ["queries"],
+        "summary": "Huecos libres de un dia",
+        "parameters": [
+          { "name": "day", "in": "query", "required": true, "schema": { "type": "string", "format": "date", "example": "2026-08-20" } },
+          { "name": "from", "in": "query", "schema": { "type": "string", "default": "09:00" } },
+          { "name": "to", "in": "query", "schema": { "type": "string", "default": "18:00" } },
+          { "name": "minDurationMinutes", "in": "query", "schema": { "type": "integer", "default": 30 } }
+        ],
+        "responses": {
+          "200": { "description": "Huecos de al menos la duracion pedida", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/FreeSlot" } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/appointments/upcoming": {
+      "get": {
+        "tags": ["queries"],
+        "summary": "Las proximas N citas",
+        "description": "Incluye una cita en curso (aun no terminada). Pensada para el arranque de la UI.",
+        "parameters": [{ "name": "limit", "in": "query", "schema": { "type": "integer", "default": 5 } }],
+        "responses": {
+          "200": { "description": "Proximas citas activas en orden cronologico", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AppointmentSummary" } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/reminders/due": {
+      "get": {
+        "tags": ["queries"],
+        "summary": "Avisos que tocan ahora",
+        "description": "Recordatorios sin reconocer cuya hora de disparo ya llego y cuya cita aun no empieza. Es la query que alimenta el push SSE.",
+        "parameters": [{ "name": "at", "in": "query", "description": "Instante a evaluar; por defecto ahora", "schema": { "type": "string", "example": "2026-08-20T10:50" } }],
+        "responses": {
+          "200": { "description": "Avisos pendientes", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/DueReminder" } } } } }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "tags": ["queries"],
+        "summary": "Stream SSE de eventos",
+        "description": "text/event-stream. Eventos: appointmentScheduled, appointmentRescheduled, appointmentCancelled, appointmentDetailsChanged, reminderAdded, reminderRemoved, reminderAcknowledged, reminderDue. Swagger UI no puede consumirlo; usar EventSource o curl.",
+        "responses": { "200": { "description": "Stream de eventos" } }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "AppointmentId": {
+        "name": "id", "in": "path", "required": true,
+        "schema": { "type": "string", "pattern": "^A[0-9]{8}$", "example": "A00000001" }
+      },
+      "ReminderId": {
+        "name": "reminderId", "in": "path", "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      }
+    },
+    "responses": {
+      "BadRequest": { "description": "Entrada invalida", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } },
+      "NotFound": { "description": "No existe", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } },
+      "Conflict": { "description": "Conflicto con el estado actual (solapamiento, cancelada, pasada...)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "schemas": {
+      "ScheduleAppointmentRequest": {
+        "type": "object",
+        "required": ["title", "start", "end"],
+        "properties": {
+          "title": { "type": "string", "maxLength": 120 },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true },
+          "start": { "type": "string", "example": "2026-08-20T11:00" },
+          "end": { "type": "string", "example": "2026-08-20T12:00" },
+          "reminderLeadTimesMinutes": { "type": "array", "items": { "type": "integer", "minimum": 1, "maximum": 10080 }, "maxItems": 5 },
+          "allowOverlap": { "type": "boolean", "default": false }
+        }
+      },
+      "RestoreAppointmentRequest": {
+        "type": "object",
+        "properties": {
+          "allowOverlap": { "type": "boolean", "default": false }
+        }
+      },
+      "RescheduleAppointmentRequest": {
+        "type": "object",
+        "required": ["newStart", "newEnd"],
+        "properties": {
+          "newStart": { "type": "string", "example": "2026-08-21T09:00" },
+          "newEnd": { "type": "string", "example": "2026-08-21T10:00" },
+          "allowOverlap": { "type": "boolean", "default": false }
+        }
+      },
+      "ChangeDetailsRequest": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string", "maxLength": 120 },
+          "description": { "type": "string", "maxLength": 2000, "nullable": true }
+        }
+      },
+      "AddReminderRequest": {
+        "type": "object",
+        "required": ["leadTimeMinutes"],
+        "properties": { "leadTimeMinutes": { "type": "integer", "minimum": 1, "maximum": 10080 } }
+      },
+      "Appointment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "A00000001" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "start": { "type": "string" },
+          "end": { "type": "string" },
+          "status": { "type": "string", "enum": ["SCHEDULED", "CANCELLED"] },
+          "reminders": { "type": "array", "items": { "$ref": "#/components/schemas/Reminder" } },
+          "conflictingAppointmentIds": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Reminder": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "leadTimeMinutes": { "type": "integer" },
+          "acknowledgedAt": { "type": "string", "nullable": true }
+        }
+      },
+      "AppointmentSummary": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "start": { "type": "string" },
+          "end": { "type": "string" },
+          "status": { "type": "string", "enum": ["SCHEDULED", "CANCELLED"] }
+        }
+      },
+      "AppointmentPage": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/AppointmentSummary" } },
+          "pageNumber": { "type": "integer" },
+          "pageSize": { "type": "integer" },
+          "totalCount": { "type": "integer" },
+          "totalPages": { "type": "integer" },
+          "anchor": { "type": "string", "format": "date" },
+          "previousAnchor": { "type": "string", "format": "date" },
+          "nextAnchor": { "type": "string", "format": "date" }
+        }
+      },
+      "MonthlyCount": {
+        "type": "object",
+        "properties": { "month": { "type": "string", "example": "2026-08" }, "count": { "type": "integer" } }
+      },
+      "DailyCount": {
+        "type": "object",
+        "properties": { "day": { "type": "string", "format": "date" }, "count": { "type": "integer" } }
+      },
+      "FreeSlot": {
+        "type": "object",
+        "properties": { "start": { "type": "string" }, "end": { "type": "string" } }
+      },
+      "DueReminder": {
+        "type": "object",
+        "properties": {
+          "appointmentId": { "type": "string" },
+          "reminderId": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "start": { "type": "string" },
+          "leadTimeMinutes": { "type": "integer" }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "integer" },
+          "code": { "type": "string", "example": "Appointment.Overlaps" },
+          "message": { "type": "string" },
+          "correlationId": { "type": "string" },
+          "fieldErrors": { "type": "array", "items": { "type": "object", "properties": { "field": { "type": "string" }, "message": { "type": "string" } } } }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agenda</title>
+    <link rel="stylesheet" href="/app.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/dist/human.js"
+            integrity="sha384-vASLsXJSh9FIgw41jM2fwBSF2MoEPlegwV4SO9G3NeyRMcWf7XjSdYvU6MlwOfQl"
+            crossorigin="anonymous"></script>
+    <script defer src="/app.js"></script>
+</head>
+<body class="locked">
+<video id="mirror" autoplay playsinline muted></video>
+<div class="scrim"></div>
+<div id="gesture-pointer" data-gesture="TRACKING" aria-hidden="true"></div>
+<p id="interaction-status" role="status" aria-live="polite"></p>
+
+<nav>
+    <button class="nav-link active" data-view="inicio">Inicio</button>
+    <button class="nav-link" data-view="agenda">Agenda</button>
+    <button id="lock-agenda" class="nav-link">Bloquear</button>
+</nav>
+
+<main id="view-inicio" class="view">
+    <section class="clock-block">
+        <p class="label">Hora</p>
+        <p id="clock" class="clock">--:--</p>
+        <p id="clock-date" class="clock-date"></p>
+    </section>
+
+    <section id="access-lock" class="access-lock">
+        <p class="label">Acceso bloqueado</p>
+        <p id="access-message" aria-live="polite">Preparando el reconocimiento facial&hellip;</p>
+        <div id="auth-challenge" class="auth-challenge" hidden>
+            <span>Código gestual</span>
+            <strong id="challenge-instruction"></strong>
+            <small id="challenge-time"></small>
+        </div>
+        <button id="authenticate" class="auth-action" type="button" disabled>Autenticarme</button>
+        <p id="auth-feedback" class="auth-feedback" aria-live="assertive"></p>
+
+        <section id="enrollment" class="enrollment" hidden>
+            <p class="label">Alta inicial</p>
+            <p>Presence est&aacute; en mantenimiento. Registra desde aqu&iacute; el rostro autorizado.</p>
+            <div class="enrollment-form">
+                <input id="display-name" maxlength="60" autocomplete="name" placeholder="Nombre">
+                <button id="enroll" class="auth-action" type="button" disabled>Registrar rostro</button>
+            </div>
+            <ul id="profiles" class="profiles"></ul>
+        </section>
+    </section>
+
+    <section class="next-block">
+        <p class="label">Lo siguiente</p>
+        <p id="next-when" class="next-when">Nada previsto</p>
+        <p id="next-title" class="next-title"></p>
+
+        <p class="label today-label">Hoy</p>
+        <ul id="today-list" class="plain-list"></ul>
+    </section>
+</main>
+
+<main id="view-agenda" class="view" hidden>
+    <header class="month-nav">
+        <button id="month-prev" class="month-arrow" aria-label="Anterior">&#8249;</button>
+        <h1 id="month-title"></h1>
+        <button id="month-next" class="month-arrow" aria-label="Siguiente">&#8250;</button>
+        <div class="period-switch">
+            <button class="period-link active" data-period="MONTH">Mes</button>
+            <button class="period-link" data-period="WEEK">Semana</button>
+        </div>
+    </header>
+
+    <div id="year-strip" class="year-strip"></div>
+
+    <div class="weekdays">
+        <span>Lun</span><span>Mar</span><span>Mi&eacute;</span><span>Jue</span>
+        <span>Vie</span><span>S&aacute;b</span><span>Dom</span>
+    </div>
+    <div id="month-grid" class="month-grid"></div>
+
+    <div class="composer">
+        <form id="add-form" autocomplete="off">
+            <input id="add-title" type="text" placeholder="Qu&eacute; hay que hacer" required maxlength="120">
+            <input id="add-date" type="date" required>
+            <input id="add-time" type="time" required>
+            <select id="add-duration">
+                <option value="30">30 min</option>
+                <option value="60" selected>1 h</option>
+                <option value="90">1,5 h</option>
+                <option value="120">2 h</option>
+            </select>
+            <select id="add-reminder">
+                <option value="">Sin aviso</option>
+                <option value="10">10 min antes</option>
+                <option value="30" selected>30 min antes</option>
+                <option value="60">1 h antes</option>
+                <option value="1440">1 d&iacute;a antes</option>
+            </select>
+            <button type="submit">A&ntilde;adir</button>
+        </form>
+        <p id="add-hint" class="add-hint"></p>
+        <p id="add-feedback" class="add-feedback" hidden></p>
+    </div>
+</main>
+
+<aside id="panel" class="panel" hidden></aside>
+<aside id="toasts"></aside>
+
+</body>
+</html>
