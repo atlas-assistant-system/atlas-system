@@ -7,7 +7,6 @@ plugins {
 description = "Lo que necesitas ver, cuando levantas la vista"
 
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
@@ -18,7 +17,7 @@ java {
 }
 
 dependencies {
-    implementation("dev.sharedkernel:sharedkernel:0.19.0")
+    implementation(project(":sharedkernel"))
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
     implementation("com.fasterxml.jackson.jr:jackson-jr-objects:2.22.2")
 
@@ -27,7 +26,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("org.mockito:mockito-core:5.23.0")
-    testImplementation("dev.sharedkernel:sharedkernel-archunit:0.2.0")
+    testImplementation(project(":sharedkernel-archunit"))
 }
 
 application {
