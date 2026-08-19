@@ -2,6 +2,7 @@ package atlas.app;
 
 import atlas.app.appointments.AppointmentsApplication;
 import atlas.app.core.CoreApplication;
+import atlas.app.core.CoreSettings;
 import atlas.app.presence.PresenceApplication;
 import atlas.app.presence.PresenceSettings;
 import atlas.app.routines.RoutinesApplication;
@@ -35,7 +36,7 @@ public final class Application {
         var presence = PresenceApplication.wire(renderer, presenceSettings, clock);
 
         return new Application(
-            CoreApplication.wire(),
+            CoreApplication.wire(CoreSettings.fromEnvironment()),
             AppointmentsApplication.wire(renderer, data, clock, presence::hasActiveSession),
             presence,
             RoutinesApplication.wire(renderer, data, clock));

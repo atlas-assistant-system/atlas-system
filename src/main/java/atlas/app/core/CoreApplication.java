@@ -12,12 +12,13 @@ public final class CoreApplication {
         this.router = router;
     }
 
-    public static CoreApplication wire() {
+    public static CoreApplication wire(CoreSettings settings) {
         return new CoreApplication(Router.builder()
             .mount(Routes.at("/")
                 .get("/", UiHandlers::index)
                 .get("/assets/app.css", UiHandlers::styles)
                 .get("/assets/app.js", UiHandlers::script)
+                .get("/assets/config.js", request -> UiHandlers.config(settings.latitude(), settings.longitude()))
                 .get("/assets/routines.css", UiHandlers::routinesStyles)
                 .get("/assets/routines.js", UiHandlers::routinesScript))
             .build());
