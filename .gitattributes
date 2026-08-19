@@ -1,0 +1,20 @@
+# Normaliza a LF dentro del repositorio y tambien en el checkout: el formatter
+# esta configurado con LineEnding.UNIX, asi que un CRLF colado genera diffs falsos.
+* text=auto eol=lf
+
+# Scripts que ejecuta un shell POSIX. Con CRLF no arrancan en Linux ni en WSL,
+# y el fallo es dificil de diagnosticar porque el error habla de un caracter invisible.
+gradlew text eol=lf
+*.sh text eol=lf
+
+# Scripts de Windows: al reves.
+gradlew.bat text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binarios: nunca se convierten.
+*.jar binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.db binary
