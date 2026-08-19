@@ -1,11 +1,11 @@
 package atlas.infrastructure.presence.persistence;
 
 import atlas.application.presence.ports.AuthenticationGateRepository;
+import atlas.application.sharedkernel.unitofwork.AggregateChanges;
 import atlas.domain.presence.AuthenticationGate;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import sharedkernel.application.unitofwork.AggregateChanges;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class SqliteAuthenticationGateRepository implements AuthenticationGateRepository {
 

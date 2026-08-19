@@ -1,12 +1,12 @@
 package atlas.domain.presence.vos;
 
 import atlas.domain.presence.PresenceErrors;
+import atlas.domain.sharedkernel.ddd.ValueObject;
+import atlas.domain.sharedkernel.exceptions.GuardException;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.results.Result;
 import java.util.Arrays;
 import java.util.Objects;
-import sharedkernel.domain.ddd.ValueObject;
-import sharedkernel.domain.exceptions.GuardException;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.results.Result;
 
 public record FaceDescriptor(ModelVersion modelVersion, float[] values) implements ValueObject {
 

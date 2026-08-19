@@ -1,9 +1,9 @@
 package atlas.domain.routines.vos;
 
 import atlas.domain.routines.RoutineErrors;
-import sharedkernel.domain.ddd.SingleValueObject;
-import sharedkernel.domain.guards.StringGuard;
-import sharedkernel.domain.results.Result;
+import atlas.domain.sharedkernel.ddd.SingleValueObject;
+import atlas.domain.sharedkernel.guards.StringGuard;
+import atlas.domain.sharedkernel.results.Result;
 
 public record RoutineName(String value) implements SingleValueObject<String> {
 

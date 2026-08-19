@@ -1,11 +1,11 @@
 package atlas.support.builders;
 
+import atlas.infrastructure.sharedkernel.persistence.Migrations;
+import atlas.infrastructure.sharedkernel.persistence.SchemaMigrator;
+import atlas.infrastructure.sharedkernel.persistence.SqliteConnections;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.time.Clock;
-import sharedkernel.infrastructure.persistence.Migrations;
-import sharedkernel.infrastructure.persistence.SchemaMigrator;
-import sharedkernel.infrastructure.persistence.SqliteConnections;
 
 public final class RoutinesTestDatabase {
 

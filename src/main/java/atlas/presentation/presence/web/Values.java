@@ -1,11 +1,11 @@
 package atlas.presentation.presence.web;
 
+import atlas.domain.sharedkernel.exceptions.FormatException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import sharedkernel.domain.exceptions.FormatException;
 
 public final class Values {
 

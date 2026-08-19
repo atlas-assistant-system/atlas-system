@@ -2,6 +2,7 @@ package atlas.presentation.routines.sse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
 import atlas.domain.routines.RoutineId;
 import atlas.domain.routines.enums.RecurrencePeriod;
 import atlas.domain.routines.events.DayClearedEvent;
@@ -12,14 +13,13 @@ import atlas.domain.routines.events.RoutineDeletedEvent;
 import atlas.domain.routines.events.RoutineScheduleChangedEvent;
 import atlas.domain.routines.vos.RoutineName;
 import atlas.domain.routines.vos.Schedule;
+import atlas.presentation.sharedkernel.sse.SseHub;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import sharedkernel.application.events.SimpleDomainEventPublisher;
-import sharedkernel.presentation.sse.SseHub;
 
 class RoutineEventsBroadcasterTest {
 

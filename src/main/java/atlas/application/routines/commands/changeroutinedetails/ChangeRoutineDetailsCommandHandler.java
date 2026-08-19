@@ -3,14 +3,14 @@ package atlas.application.routines.commands.changeroutinedetails;
 import atlas.application.routines.dto.RoutineDto;
 import atlas.application.routines.mappers.RoutineMapper;
 import atlas.application.routines.ports.RoutineUnitOfWork;
+import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.routines.RoutineErrors;
 import atlas.domain.routines.RoutineId;
 import atlas.domain.routines.vos.RoutineDescription;
 import atlas.domain.routines.vos.RoutineName;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
 import java.time.Instant;
-import sharedkernel.application.cqrs.CommandHandler;
-import sharedkernel.domain.results.Result;
 
 public final class ChangeRoutineDetailsCommandHandler
     implements CommandHandler<ChangeRoutineDetailsCommand, Result<RoutineDto>> {

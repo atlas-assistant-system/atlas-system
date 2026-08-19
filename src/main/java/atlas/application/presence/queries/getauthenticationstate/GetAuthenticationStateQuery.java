@@ -1,7 +1,7 @@
 package atlas.application.presence.queries.getauthenticationstate;
 
 import atlas.application.presence.dto.AuthenticationStateDto;
-import sharedkernel.application.cqrs.Query;
-import sharedkernel.domain.results.Result;
+import atlas.application.sharedkernel.cqrs.Query;
+import atlas.domain.sharedkernel.results.Result;
 
 public record GetAuthenticationStateQuery() implements Query<Result<AuthenticationStateDto>> {}

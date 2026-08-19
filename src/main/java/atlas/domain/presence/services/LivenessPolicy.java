@@ -4,9 +4,9 @@ import atlas.domain.presence.LivenessChallenge;
 import atlas.domain.presence.LivenessChallengeId;
 import atlas.domain.presence.enums.LivenessChallengeType;
 import atlas.domain.presence.vos.ChallengeNonce;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
 import java.time.Instant;
 import java.util.random.RandomGenerator;
-import sharedkernel.domain.guards.ObjectGuard;
 
 public final class LivenessPolicy {
 

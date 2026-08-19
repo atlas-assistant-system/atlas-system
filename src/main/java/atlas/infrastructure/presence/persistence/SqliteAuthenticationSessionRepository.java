@@ -5,6 +5,9 @@ import atlas.domain.presence.AuthenticationSession;
 import atlas.domain.presence.BiometricProfileId;
 import atlas.domain.presence.SessionId;
 import atlas.domain.presence.enums.SessionStatus;
+import atlas.infrastructure.sharedkernel.SequenceGenerator;
+import atlas.infrastructure.sharedkernel.persistence.AbstractSqlRepository;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,9 +16,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import sharedkernel.infrastructure.SequenceGenerator;
-import sharedkernel.infrastructure.persistence.AbstractSqlRepository;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class SqliteAuthenticationSessionRepository
     extends AbstractSqlRepository<AuthenticationSession, SessionId>

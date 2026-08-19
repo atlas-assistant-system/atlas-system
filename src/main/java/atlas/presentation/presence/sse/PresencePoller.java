@@ -2,13 +2,13 @@ package atlas.presentation.presence.sse;
 
 import atlas.application.presence.commands.expirestalesessions.ExpireStaleSessionsCommand;
 import atlas.application.presence.ports.LivenessChallengeRepository;
+import atlas.application.sharedkernel.cqrs.CommandBus;
+import atlas.presentation.sharedkernel.sse.SseHub;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import sharedkernel.application.cqrs.CommandBus;
-import sharedkernel.presentation.sse.SseHub;
 
 public final class PresencePoller implements AutoCloseable {
 

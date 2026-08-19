@@ -6,13 +6,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import atlas.application.presence.ports.LivenessChallengeRepository;
+import atlas.application.sharedkernel.cqrs.CommandBus;
+import atlas.domain.sharedkernel.results.Result;
+import atlas.presentation.sharedkernel.sse.SseHub;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
-import sharedkernel.application.cqrs.CommandBus;
-import sharedkernel.domain.results.Result;
-import sharedkernel.presentation.sse.SseHub;
 
 class PresencePollerTest {
 

@@ -1,8 +1,8 @@
 package atlas.domain.presence.vos;
 
 import atlas.domain.presence.entities.FaceTemplateId;
-import sharedkernel.domain.ddd.ValueObject;
-import sharedkernel.domain.guards.ObjectGuard;
+import atlas.domain.sharedkernel.ddd.ValueObject;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
 
 public record Match(FaceTemplateId templateId, SimilarityScore score) implements ValueObject {
 

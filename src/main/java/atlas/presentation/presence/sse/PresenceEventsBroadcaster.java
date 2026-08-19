@@ -1,14 +1,14 @@
 package atlas.presentation.presence.sse;
 
+import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
 import atlas.domain.presence.events.SessionClosedEvent;
 import atlas.domain.presence.events.SessionExpiredEvent;
 import atlas.domain.presence.events.SessionOpenedEvent;
 import atlas.domain.presence.events.SessionRefreshedEvent;
 import atlas.presentation.common.web.Json;
+import atlas.presentation.sharedkernel.sse.SseEvent;
+import atlas.presentation.sharedkernel.sse.SseHub;
 import java.util.Map;
-import sharedkernel.application.events.SimpleDomainEventPublisher;
-import sharedkernel.presentation.sse.SseEvent;
-import sharedkernel.presentation.sse.SseHub;
 
 public final class PresenceEventsBroadcaster {
 

@@ -1,10 +1,10 @@
 package atlas.domain.presence.vos;
 
 import atlas.domain.presence.PresenceErrors;
-import sharedkernel.domain.ddd.SingleValueObject;
-import sharedkernel.domain.exceptions.GuardException;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.results.Result;
+import atlas.domain.sharedkernel.ddd.SingleValueObject;
+import atlas.domain.sharedkernel.exceptions.GuardException;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.results.Result;
 
 public record SimilarityScore(Double value) implements SingleValueObject<Double> {
 

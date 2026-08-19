@@ -4,13 +4,13 @@ import atlas.application.presence.ports.AuthenticationGateRepository;
 import atlas.application.presence.ports.AuthenticationSessionRepository;
 import atlas.application.presence.ports.BiometricProfileRepository;
 import atlas.application.presence.ports.PresenceUnitOfWork;
+import atlas.application.sharedkernel.events.EventDelivery;
+import atlas.application.sharedkernel.unitofwork.AbstractUnitOfWork;
+import atlas.infrastructure.sharedkernel.SequenceGenerator;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.locks.ReentrantLock;
-import sharedkernel.application.events.EventDelivery;
-import sharedkernel.application.unitofwork.AbstractUnitOfWork;
-import sharedkernel.infrastructure.SequenceGenerator;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class SqlitePresenceUnitOfWork extends AbstractUnitOfWork implements PresenceUnitOfWork {
 

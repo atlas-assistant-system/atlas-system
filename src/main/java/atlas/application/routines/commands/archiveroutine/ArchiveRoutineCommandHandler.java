@@ -1,12 +1,12 @@
 package atlas.application.routines.commands.archiveroutine;
 
 import atlas.application.routines.ports.RoutineUnitOfWork;
+import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.routines.RoutineErrors;
 import atlas.domain.routines.RoutineId;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
 import java.time.Instant;
-import sharedkernel.application.cqrs.CommandHandler;
-import sharedkernel.domain.results.Result;
 
 public final class ArchiveRoutineCommandHandler implements CommandHandler<ArchiveRoutineCommand, Result<Void>> {
 

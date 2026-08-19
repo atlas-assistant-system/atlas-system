@@ -2,8 +2,8 @@ package atlas.domain.presence.events;
 
 import atlas.domain.presence.LivenessChallengeId;
 import atlas.domain.presence.enums.LivenessChallengeType;
+import atlas.domain.sharedkernel.events.DomainEvent;
 import java.time.Instant;
-import sharedkernel.domain.events.DomainEvent;
 
 public record LivenessChallengeIssuedEvent(
     LivenessChallengeId challengeId, LivenessChallengeType type, Instant occurredOn)

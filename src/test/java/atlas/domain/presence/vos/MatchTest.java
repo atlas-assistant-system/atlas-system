@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import atlas.domain.presence.entities.FaceTemplateId;
+import atlas.domain.sharedkernel.exceptions.GuardException;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.exceptions.GuardException;
 
 class MatchTest {
 

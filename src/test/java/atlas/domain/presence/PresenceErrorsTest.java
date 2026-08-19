@@ -3,9 +3,9 @@ package atlas.domain.presence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import atlas.domain.presence.entities.FaceTemplateId;
+import atlas.domain.sharedkernel.results.ErrorType;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.results.ErrorType;
 
 class PresenceErrorsTest {
 

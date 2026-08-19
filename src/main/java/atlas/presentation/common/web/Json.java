@@ -1,10 +1,10 @@
 package atlas.presentation.common.web;
 
+import atlas.domain.sharedkernel.exceptions.FormatException;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import com.fasterxml.jackson.jr.ob.JSON;
 import java.io.IOException;
 import java.util.Map;
-import sharedkernel.domain.exceptions.FormatException;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class Json {
 

@@ -1,9 +1,9 @@
 package atlas.domain.presence.vos;
 
 import atlas.domain.presence.PresenceErrors;
-import sharedkernel.domain.ddd.SingleValueObject;
-import sharedkernel.domain.guards.StringGuard;
-import sharedkernel.domain.results.Result;
+import atlas.domain.sharedkernel.ddd.SingleValueObject;
+import atlas.domain.sharedkernel.guards.StringGuard;
+import atlas.domain.sharedkernel.results.Result;
 
 public record ModelVersion(String value) implements SingleValueObject<String> {
 

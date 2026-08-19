@@ -1,10 +1,9 @@
 package atlas.presentation.routines.web;
 
 import atlas.presentation.common.web.StaticResources;
-
+import atlas.presentation.sharedkernel.http.HttpRequest;
+import atlas.presentation.sharedkernel.http.HttpResponse;
 import java.util.Map;
-import sharedkernel.presentation.http.HttpRequest;
-import sharedkernel.presentation.http.HttpResponse;
 
 public final class DocsHandlers {
 

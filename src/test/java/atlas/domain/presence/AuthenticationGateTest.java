@@ -6,11 +6,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import atlas.domain.presence.enums.VerificationOutcome;
 import atlas.domain.presence.events.AuthenticationFailedEvent;
 import atlas.domain.presence.events.AuthenticationSucceededEvent;
+import atlas.domain.sharedkernel.exceptions.GuardException;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import sharedkernel.domain.exceptions.GuardException;
 
 class AuthenticationGateTest {
 

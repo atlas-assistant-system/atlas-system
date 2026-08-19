@@ -3,11 +3,11 @@ package atlas.application.presence.commands.refreshsession;
 import atlas.application.presence.dto.SessionDto;
 import atlas.application.presence.mappers.PresenceMapper;
 import atlas.application.presence.ports.PresenceUnitOfWork;
+import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.presence.PresenceErrors;
 import atlas.domain.presence.vos.SessionDuration;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
-import sharedkernel.application.cqrs.CommandHandler;
-import sharedkernel.domain.results.Result;
 
 public final class RefreshSessionCommandHandler
     implements CommandHandler<RefreshSessionCommand, Result<SessionDto>> {

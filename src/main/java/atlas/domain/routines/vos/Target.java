@@ -1,11 +1,11 @@
 package atlas.domain.routines.vos;
 
 import atlas.domain.routines.RoutineErrors;
+import atlas.domain.sharedkernel.ddd.ValueObject;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.results.Result;
 import java.math.BigDecimal;
 import java.util.Optional;
-import sharedkernel.domain.ddd.ValueObject;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.results.Result;
 
 public record Target(BigDecimal amount, Optional<Unit> unit) implements ValueObject {
 

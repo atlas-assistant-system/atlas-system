@@ -14,24 +14,24 @@ import atlas.application.presence.queries.getauthenticationstate.GetAuthenticati
 import atlas.application.presence.queries.getprofile.GetProfileQuery;
 import atlas.application.presence.queries.listauthenticationattempts.ListAuthenticationAttemptsQuery;
 import atlas.application.presence.queries.listprofiles.ListProfilesQuery;
+import atlas.application.sharedkernel.cqrs.CommandBus;
+import atlas.application.sharedkernel.cqrs.QueryBus;
+import atlas.application.sharedkernel.paging.PageRequest;
 import atlas.domain.presence.BiometricProfileId;
 import atlas.domain.presence.LivenessChallengeId;
 import atlas.domain.presence.PresenceErrors;
 import atlas.domain.presence.SessionId;
 import atlas.domain.presence.entities.FaceTemplateId;
+import atlas.domain.sharedkernel.exceptions.FormatException;
+import atlas.domain.sharedkernel.results.Result;
 import atlas.presentation.common.web.Json;
 import atlas.presentation.presence.requests.PresenceRequests;
 import atlas.presentation.presence.responses.PresenceResponses;
 import atlas.presentation.presence.web.Values;
+import atlas.presentation.sharedkernel.http.HttpRequest;
+import atlas.presentation.sharedkernel.http.HttpResponse;
 import java.util.UUID;
 import java.util.function.Function;
-import sharedkernel.application.cqrs.CommandBus;
-import sharedkernel.application.cqrs.QueryBus;
-import sharedkernel.application.paging.PageRequest;
-import sharedkernel.domain.exceptions.FormatException;
-import sharedkernel.domain.results.Result;
-import sharedkernel.presentation.http.HttpRequest;
-import sharedkernel.presentation.http.HttpResponse;
 
 public final class PresenceHandlers {
 

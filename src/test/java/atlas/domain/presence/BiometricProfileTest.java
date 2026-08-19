@@ -11,11 +11,11 @@ import atlas.domain.presence.events.ProfileEnrolledEvent;
 import atlas.domain.presence.vos.FaceDescriptor;
 import atlas.domain.presence.vos.ModelVersion;
 import atlas.domain.presence.vos.ProfileName;
+import atlas.domain.sharedkernel.exceptions.GuardException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.exceptions.GuardException;
 
 class BiometricProfileTest {
 

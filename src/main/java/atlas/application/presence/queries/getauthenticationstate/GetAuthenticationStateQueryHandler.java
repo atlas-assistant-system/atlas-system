@@ -5,9 +5,9 @@ import atlas.application.presence.mappers.PresenceMapper;
 import atlas.application.presence.ports.AuthenticationGateRepository;
 import atlas.application.presence.ports.AuthenticationSessionRepository;
 import atlas.application.presence.ports.BiometricProfileRepository;
+import atlas.application.sharedkernel.cqrs.QueryHandler;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
-import sharedkernel.application.cqrs.QueryHandler;
-import sharedkernel.domain.results.Result;
 
 public final class GetAuthenticationStateQueryHandler
     implements QueryHandler<GetAuthenticationStateQuery, Result<AuthenticationStateDto>> {

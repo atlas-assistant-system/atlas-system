@@ -1,7 +1,7 @@
 package atlas.domain.routines;
 
+import atlas.domain.sharedkernel.ddd.SingleValueObject;
 import java.util.UUID;
-import sharedkernel.domain.ddd.SingleValueObject;
 
 public record RoutineEntryId(UUID value) implements SingleValueObject<UUID> {
 

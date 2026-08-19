@@ -10,6 +10,8 @@ import atlas.domain.routines.vos.RoutineName;
 import atlas.domain.routines.vos.Schedule;
 import atlas.domain.routines.vos.Target;
 import atlas.domain.routines.vos.Unit;
+import atlas.domain.sharedkernel.results.Result;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,8 +23,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import sharedkernel.domain.results.Result;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class RoutineRows {
 

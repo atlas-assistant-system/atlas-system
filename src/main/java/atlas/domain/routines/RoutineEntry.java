@@ -3,12 +3,12 @@ package atlas.domain.routines;
 import atlas.domain.routines.events.DayClearedEvent;
 import atlas.domain.routines.events.ProgressLoggedEvent;
 import atlas.domain.routines.vos.Target;
+import atlas.domain.sharedkernel.ddd.AggregateRoot;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.results.Result;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import sharedkernel.domain.ddd.AggregateRoot;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.results.Result;
 
 public final class RoutineEntry extends AggregateRoot<RoutineEntryId> {
 

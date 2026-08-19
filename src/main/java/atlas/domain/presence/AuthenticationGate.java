@@ -3,11 +3,11 @@ package atlas.domain.presence;
 import atlas.domain.presence.enums.VerificationOutcome;
 import atlas.domain.presence.events.AuthenticationFailedEvent;
 import atlas.domain.presence.events.AuthenticationSucceededEvent;
+import atlas.domain.sharedkernel.ddd.AggregateRoot;
+import atlas.domain.sharedkernel.exceptions.GuardException;
+import atlas.domain.sharedkernel.guards.NumberGuard;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
 import java.time.Instant;
-import sharedkernel.domain.ddd.AggregateRoot;
-import sharedkernel.domain.exceptions.GuardException;
-import sharedkernel.domain.guards.NumberGuard;
-import sharedkernel.domain.guards.ObjectGuard;
 
 public final class AuthenticationGate extends AggregateRoot<AuthenticationGateId> {
 

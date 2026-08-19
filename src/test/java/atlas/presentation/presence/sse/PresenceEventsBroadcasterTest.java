@@ -2,17 +2,17 @@ package atlas.presentation.presence.sse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
 import atlas.domain.presence.SessionId;
 import atlas.domain.presence.events.SessionClosedEvent;
 import atlas.domain.presence.events.SessionExpiredEvent;
 import atlas.domain.presence.events.SessionOpenedEvent;
 import atlas.domain.presence.events.SessionRefreshedEvent;
+import atlas.presentation.sharedkernel.sse.SseHub;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
-import sharedkernel.application.events.SimpleDomainEventPublisher;
-import sharedkernel.presentation.sse.SseHub;
 
 class PresenceEventsBroadcasterTest {
 

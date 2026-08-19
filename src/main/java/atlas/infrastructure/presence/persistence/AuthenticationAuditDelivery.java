@@ -1,15 +1,15 @@
 package atlas.infrastructure.presence.persistence;
 
+import atlas.application.sharedkernel.events.EventDelivery;
+import atlas.application.sharedkernel.events.PendingEventDispatcher;
 import atlas.domain.presence.enums.VerificationOutcome;
 import atlas.domain.presence.events.AuthenticationFailedEvent;
 import atlas.domain.presence.events.AuthenticationSucceededEvent;
+import atlas.domain.sharedkernel.ddd.AggregateRoot;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import sharedkernel.application.events.EventDelivery;
-import sharedkernel.application.events.PendingEventDispatcher;
-import sharedkernel.domain.ddd.AggregateRoot;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class AuthenticationAuditDelivery implements EventDelivery {
 

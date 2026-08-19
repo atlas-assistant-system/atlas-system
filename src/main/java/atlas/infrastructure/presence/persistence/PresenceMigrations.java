@@ -1,8 +1,8 @@
 package atlas.infrastructure.presence.persistence;
 
+import atlas.infrastructure.sharedkernel.persistence.Migration;
+import atlas.infrastructure.sharedkernel.persistence.Migrations;
 import java.util.List;
-import sharedkernel.infrastructure.persistence.Migration;
-import sharedkernel.infrastructure.persistence.Migrations;
 
 public final class PresenceMigrations {
 

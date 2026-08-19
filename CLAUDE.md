@@ -34,12 +34,12 @@ El proyecto es **un único módulo JPMS** y cada bounded context es un subpaquet
 cada anillo. La convención de `architecture.md` aplicada a varios contextos:
 
 ```
-atlas/domain/presence/        atlas/domain/routines/
-atlas/application/presence/   atlas/application/routines/
-atlas/infrastructure/presence/ atlas/infrastructure/routines/
-atlas/presentation/presence/  atlas/presentation/routines/
-atlas/app/presence/           atlas/app/routines/       cableado de cada contexto
-atlas/app/Application.java                              composition root que los monta
+atlas/domain/sharedkernel/          presence/   routines/
+atlas/application/sharedkernel/     presence/   routines/
+atlas/infrastructure/sharedkernel/  presence/   routines/
+atlas/presentation/sharedkernel/    presence/   routines/
+atlas/app/presence/   atlas/app/routines/    cableado de cada contexto
+atlas/app/Application.java                   composition root que los monta
 ```
 
 **Lo que está en `common` es genérico de verdad, no un cajón compartido.** `Json` y
@@ -58,10 +58,14 @@ físico— y su propio bus de comandos y consultas.
   gesto. Cuatro capas completas, se monta en `/` y su SSE en `/events`.
 - **`routines` migrado** — hábitos como cuota dentro de un periodo. Cuatro capas completas, se
   monta en `/routines` y su SSE en `/events/routines`.
-- **594 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
+- **871 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
   ArchUnit.
-- **El Shared Kernel es un subproyecto** (`sharedkernel/`, `sharedkernel-archunit/`), no una
-  dependencia de `mavenLocal`. El build ya no necesita nada publicado a mano.
+- **El Shared Kernel es un contexto más**, repartido por sus anillos igual que los demás
+  (`atlas.domain.sharedkernel`, `atlas.application.sharedkernel`...). Ya no es una dependencia
+  externa ni un subproyecto: el build no necesita nada publicado a mano, y `mavenLocal` no
+  interviene. Las reglas de ArchUnit lo excluyen por el patrón `..sharedkernel..`, y viven en
+  `src/test/java/atlas/architecture/rules/` — no pueden ser un subproyecto porque importan
+  `ValueObject` del propio kernel y se formaría un ciclo.
 - **Pendiente** — migrar el contexto `appointments` (citas, recordatorios y calendario), que
   es además quien trae la UI espejo y la cámara. Y unificar la puerta de sesión: hoy la API de
   `presence` devuelve 401 sin sesión y la de `routines` responde abierta.

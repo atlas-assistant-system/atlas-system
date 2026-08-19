@@ -5,6 +5,8 @@ import atlas.domain.routines.Routine;
 import atlas.domain.routines.RoutineEntry;
 import atlas.domain.routines.RoutineId;
 import atlas.infrastructure.routines.persistence.mappers.RoutineRows;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
+import atlas.infrastructure.sharedkernel.persistence.RowMapper;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -13,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import sharedkernel.infrastructure.persistence.PersistenceException;
-import sharedkernel.infrastructure.persistence.RowMapper;
 
 public final class SqliteRoutineReadModel implements RoutineReadModel {
 

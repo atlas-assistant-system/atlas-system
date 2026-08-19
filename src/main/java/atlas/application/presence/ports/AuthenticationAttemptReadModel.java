@@ -1,7 +1,7 @@
 package atlas.application.presence.ports;
 
-import sharedkernel.application.paging.Page;
-import sharedkernel.application.paging.PageRequest;
+import atlas.application.sharedkernel.paging.Page;
+import atlas.application.sharedkernel.paging.PageRequest;
 
 public interface AuthenticationAttemptReadModel {
 

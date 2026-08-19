@@ -10,12 +10,12 @@ import atlas.domain.routines.vos.RoutineDescription;
 import atlas.domain.routines.vos.RoutineName;
 import atlas.domain.routines.vos.Schedule;
 import atlas.domain.routines.vos.Target;
+import atlas.domain.sharedkernel.ddd.AggregateRoot;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
-import sharedkernel.domain.ddd.AggregateRoot;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.results.Result;
 
 public final class Routine extends AggregateRoot<RoutineId> {
 

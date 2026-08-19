@@ -3,10 +3,10 @@ package atlas.application.presence.queries.getactivesession;
 import atlas.application.presence.dto.SessionDto;
 import atlas.application.presence.mappers.PresenceMapper;
 import atlas.application.presence.ports.AuthenticationSessionRepository;
+import atlas.application.sharedkernel.cqrs.QueryHandler;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
 import java.util.Optional;
-import sharedkernel.application.cqrs.QueryHandler;
-import sharedkernel.domain.results.Result;
 
 public final class GetActiveSessionQueryHandler
     implements QueryHandler<GetActiveSessionQuery, Result<Optional<SessionDto>>> {

@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import atlas.domain.presence.enums.LivenessChallengeType;
+import atlas.domain.sharedkernel.exceptions.GuardException;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.exceptions.GuardException;
 
 class LivenessEvidenceTest {
 

@@ -7,12 +7,12 @@ import atlas.application.presence.dto.FaceTemplateDto;
 import atlas.application.presence.dto.ProfileDto;
 import atlas.application.presence.dto.ProfileSummaryDto;
 import atlas.application.presence.dto.SessionDto;
+import atlas.application.sharedkernel.paging.Page;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import sharedkernel.application.paging.Page;
 
 public final class PresenceResponses {
 

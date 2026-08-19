@@ -1,10 +1,10 @@
 package atlas.domain.routines.vos;
 
 import atlas.domain.routines.RoutineErrors;
+import atlas.domain.sharedkernel.ddd.SingleValueObject;
+import atlas.domain.sharedkernel.guards.StringGuard;
+import atlas.domain.sharedkernel.results.Result;
 import java.util.Optional;
-import sharedkernel.domain.ddd.SingleValueObject;
-import sharedkernel.domain.guards.StringGuard;
-import sharedkernel.domain.results.Result;
 
 public record RoutineDescription(String value) implements SingleValueObject<String> {
 

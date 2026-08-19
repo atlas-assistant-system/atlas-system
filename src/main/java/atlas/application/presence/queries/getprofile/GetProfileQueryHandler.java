@@ -3,9 +3,9 @@ package atlas.application.presence.queries.getprofile;
 import atlas.application.presence.dto.ProfileDto;
 import atlas.application.presence.mappers.PresenceMapper;
 import atlas.application.presence.ports.BiometricProfileRepository;
+import atlas.application.sharedkernel.cqrs.QueryHandler;
 import atlas.domain.presence.PresenceErrors;
-import sharedkernel.application.cqrs.QueryHandler;
-import sharedkernel.domain.results.Result;
+import atlas.domain.sharedkernel.results.Result;
 
 public final class GetProfileQueryHandler implements QueryHandler<GetProfileQuery, Result<ProfileDto>> {
 

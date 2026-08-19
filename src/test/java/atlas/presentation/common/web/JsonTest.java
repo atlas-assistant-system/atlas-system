@@ -3,13 +3,13 @@ package atlas.presentation.common.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import atlas.domain.sharedkernel.exceptions.FormatException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import sharedkernel.domain.exceptions.FormatException;
 
 class JsonTest {
 

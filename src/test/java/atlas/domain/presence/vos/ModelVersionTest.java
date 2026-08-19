@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import atlas.domain.presence.PresenceErrors;
+import atlas.domain.sharedkernel.exceptions.GuardException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import sharedkernel.domain.exceptions.GuardException;
 
 class ModelVersionTest {
 

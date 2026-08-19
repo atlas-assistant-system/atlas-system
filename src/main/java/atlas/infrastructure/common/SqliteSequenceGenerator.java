@@ -1,9 +1,9 @@
 package atlas.infrastructure.common;
 
+import atlas.infrastructure.sharedkernel.SequenceGenerator;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import sharedkernel.infrastructure.SequenceGenerator;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class SqliteSequenceGenerator implements SequenceGenerator {
 

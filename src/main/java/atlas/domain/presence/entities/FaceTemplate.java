@@ -2,9 +2,9 @@ package atlas.domain.presence.entities;
 
 import atlas.domain.presence.vos.FaceDescriptor;
 import atlas.domain.presence.vos.ModelVersion;
+import atlas.domain.sharedkernel.ddd.Entity;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
 import java.time.Instant;
-import sharedkernel.domain.ddd.Entity;
-import sharedkernel.domain.guards.ObjectGuard;
 
 public final class FaceTemplate extends Entity<FaceTemplateId> {
 

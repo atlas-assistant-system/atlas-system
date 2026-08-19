@@ -1,5 +1,6 @@
 package atlas.presentation.routines.web;
 
+import atlas.domain.sharedkernel.exceptions.FormatException;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -9,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import sharedkernel.domain.exceptions.FormatException;
 
 public final class Values {
 

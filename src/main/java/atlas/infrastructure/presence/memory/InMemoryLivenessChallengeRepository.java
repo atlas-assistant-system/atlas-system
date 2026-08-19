@@ -1,14 +1,14 @@
 package atlas.infrastructure.presence.memory;
 
 import atlas.application.presence.ports.LivenessChallengeRepository;
+import atlas.application.sharedkernel.unitofwork.AggregateChanges;
 import atlas.domain.presence.LivenessChallenge;
 import atlas.domain.presence.LivenessChallengeId;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import sharedkernel.application.unitofwork.AggregateChanges;
-import sharedkernel.domain.guards.ObjectGuard;
 
 public final class InMemoryLivenessChallengeRepository implements LivenessChallengeRepository {
 

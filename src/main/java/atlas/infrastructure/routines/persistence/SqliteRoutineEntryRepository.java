@@ -5,6 +5,8 @@ import atlas.domain.routines.RoutineEntry;
 import atlas.domain.routines.RoutineEntryId;
 import atlas.domain.routines.RoutineId;
 import atlas.infrastructure.routines.persistence.mappers.RoutineRows;
+import atlas.infrastructure.sharedkernel.persistence.AbstractSqlRepository;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,8 +15,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import sharedkernel.infrastructure.persistence.AbstractSqlRepository;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class SqliteRoutineEntryRepository extends AbstractSqlRepository<RoutineEntry, RoutineEntryId>
     implements RoutineEntryRepository {

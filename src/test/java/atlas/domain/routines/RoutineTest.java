@@ -18,12 +18,12 @@ import atlas.domain.routines.vos.RoutineDescription;
 import atlas.domain.routines.vos.RoutineName;
 import atlas.domain.routines.vos.Schedule;
 import atlas.domain.routines.vos.Target;
+import atlas.domain.sharedkernel.results.Result;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.results.Result;
 
 class RoutineTest {
 

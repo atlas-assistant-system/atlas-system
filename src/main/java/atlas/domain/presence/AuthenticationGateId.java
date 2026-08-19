@@ -1,7 +1,7 @@
 package atlas.domain.presence;
 
+import atlas.domain.sharedkernel.types.PrefixedIds;
 import java.util.Optional;
-import sharedkernel.domain.types.PrefixedIds;
 
 public record AuthenticationGateId(long value) {
 

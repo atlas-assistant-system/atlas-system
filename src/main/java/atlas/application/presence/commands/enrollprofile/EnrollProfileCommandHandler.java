@@ -4,14 +4,14 @@ import atlas.application.presence.dto.ProfileDto;
 import atlas.application.presence.mappers.PresenceMapper;
 import atlas.application.presence.ports.FaceTemplateIdGenerator;
 import atlas.application.presence.ports.PresenceUnitOfWork;
+import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.presence.BiometricProfile;
 import atlas.domain.presence.PresenceErrors;
 import atlas.domain.presence.vos.FaceDescriptor;
 import atlas.domain.presence.vos.ModelVersion;
 import atlas.domain.presence.vos.ProfileName;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
-import sharedkernel.application.cqrs.CommandHandler;
-import sharedkernel.domain.results.Result;
 
 public final class EnrollProfileCommandHandler
     implements CommandHandler<EnrollProfileCommand, Result<ProfileDto>> {

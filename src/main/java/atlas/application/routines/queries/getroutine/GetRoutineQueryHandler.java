@@ -3,9 +3,9 @@ package atlas.application.routines.queries.getroutine;
 import atlas.application.routines.dto.RoutineDto;
 import atlas.application.routines.mappers.RoutineMapper;
 import atlas.application.routines.ports.RoutineReadModel;
+import atlas.application.sharedkernel.cqrs.QueryHandler;
 import atlas.domain.routines.RoutineErrors;
-import sharedkernel.application.cqrs.QueryHandler;
-import sharedkernel.domain.results.Result;
+import atlas.domain.sharedkernel.results.Result;
 
 public final class GetRoutineQueryHandler implements QueryHandler<GetRoutineQuery, Result<RoutineDto>> {
 

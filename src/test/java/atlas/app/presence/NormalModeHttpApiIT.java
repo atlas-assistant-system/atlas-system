@@ -3,6 +3,7 @@ package atlas.app.presence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import atlas.application.presence.commands.enrollprofile.EnrollProfileCommand;
+import atlas.application.sharedkernel.logging.PlainLogEntryRenderer;
 import atlas.domain.presence.vos.MatchThreshold;
 import atlas.domain.presence.vos.SessionDuration;
 import com.fasterxml.jackson.jr.ob.JSON;
@@ -18,7 +19,6 @@ import java.time.ZoneOffset;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import sharedkernel.application.logging.PlainLogEntryRenderer;
 
 class NormalModeHttpApiIT {
 

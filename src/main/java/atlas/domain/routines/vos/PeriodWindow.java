@@ -1,10 +1,10 @@
 package atlas.domain.routines.vos;
 
+import atlas.domain.sharedkernel.ddd.ValueObject;
+import atlas.domain.sharedkernel.exceptions.GuardException;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
 import java.time.LocalDate;
 import java.util.stream.Stream;
-import sharedkernel.domain.ddd.ValueObject;
-import sharedkernel.domain.exceptions.GuardException;
-import sharedkernel.domain.guards.ObjectGuard;
 
 public record PeriodWindow(LocalDate start, LocalDate end) implements ValueObject {
 

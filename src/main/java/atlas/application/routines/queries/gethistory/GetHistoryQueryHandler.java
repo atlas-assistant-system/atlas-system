@@ -2,13 +2,13 @@ package atlas.application.routines.queries.gethistory;
 
 import atlas.application.routines.dto.HistoryDayDto;
 import atlas.application.routines.ports.RoutineReadModel;
+import atlas.application.sharedkernel.cqrs.QueryHandler;
 import atlas.domain.routines.RoutineErrors;
+import atlas.domain.sharedkernel.results.Result;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
-import sharedkernel.application.cqrs.QueryHandler;
-import sharedkernel.domain.results.Result;
 
 public final class GetHistoryQueryHandler implements QueryHandler<GetHistoryQuery, Result<List<HistoryDayDto>>> {
 

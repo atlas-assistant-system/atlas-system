@@ -1,7 +1,7 @@
 package atlas.domain.routines;
 
+import atlas.domain.sharedkernel.results.Error;
 import java.time.LocalDate;
-import sharedkernel.domain.results.Error;
 
 public final class RoutineErrors {
 

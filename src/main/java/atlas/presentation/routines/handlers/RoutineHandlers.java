@@ -17,7 +17,10 @@ import atlas.application.routines.queries.getroutine.GetRoutineQuery;
 import atlas.application.routines.queries.getstreak.GetStreakQuery;
 import atlas.application.routines.queries.gettoday.GetTodayQuery;
 import atlas.application.routines.queries.listroutines.ListRoutinesQuery;
+import atlas.application.sharedkernel.cqrs.CommandBus;
+import atlas.application.sharedkernel.cqrs.QueryBus;
 import atlas.domain.routines.RoutineId;
+import atlas.domain.sharedkernel.results.Result;
 import atlas.presentation.common.web.Json;
 import atlas.presentation.routines.requests.ChangeRoutineDetailsRequest;
 import atlas.presentation.routines.requests.ChangeRoutineScheduleRequest;
@@ -25,13 +28,10 @@ import atlas.presentation.routines.requests.DefineRoutineRequest;
 import atlas.presentation.routines.requests.LogProgressRequest;
 import atlas.presentation.routines.responses.RoutineResponses;
 import atlas.presentation.routines.web.Values;
+import atlas.presentation.sharedkernel.http.HttpRequest;
+import atlas.presentation.sharedkernel.http.HttpResponse;
 import java.time.Clock;
 import java.time.LocalDate;
-import sharedkernel.application.cqrs.CommandBus;
-import sharedkernel.application.cqrs.QueryBus;
-import sharedkernel.domain.results.Result;
-import sharedkernel.presentation.http.HttpRequest;
-import sharedkernel.presentation.http.HttpResponse;
 
 public final class RoutineHandlers {
 

@@ -2,6 +2,8 @@ package atlas.infrastructure.routines.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import atlas.application.sharedkernel.events.ImmediateEventDelivery;
+import atlas.application.sharedkernel.events.PendingEventDispatcher;
 import atlas.domain.routines.Routine;
 import atlas.domain.routines.RoutineEntry;
 import atlas.domain.routines.RoutineEntryId;
@@ -25,8 +27,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import sharedkernel.application.events.ImmediateEventDelivery;
-import sharedkernel.application.events.PendingEventDispatcher;
 
 class SqliteRoutineReadModelIT {
 

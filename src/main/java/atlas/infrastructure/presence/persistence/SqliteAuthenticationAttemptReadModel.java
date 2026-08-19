@@ -2,14 +2,14 @@ package atlas.infrastructure.presence.persistence;
 
 import atlas.application.presence.ports.AuthenticationAttempt;
 import atlas.application.presence.ports.AuthenticationAttemptReadModel;
+import atlas.application.sharedkernel.paging.Page;
+import atlas.application.sharedkernel.paging.PageRequest;
 import atlas.domain.presence.enums.VerificationOutcome;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
-import sharedkernel.application.paging.Page;
-import sharedkernel.application.paging.PageRequest;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class SqliteAuthenticationAttemptReadModel implements AuthenticationAttemptReadModel {
 

@@ -2,6 +2,7 @@ package atlas.app.routines;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import atlas.infrastructure.sharedkernel.logging.LogEntryRenderers;
 import com.fasterxml.jackson.jr.ob.JSON;
 import java.io.IOException;
 import java.net.URI;
@@ -18,7 +19,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import sharedkernel.infrastructure.logging.LogEntryRenderers;
 
 class HttpApiIT {
 

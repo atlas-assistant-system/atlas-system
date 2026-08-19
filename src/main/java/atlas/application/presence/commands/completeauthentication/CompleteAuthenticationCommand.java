@@ -1,10 +1,10 @@
 package atlas.application.presence.commands.completeauthentication;
 
 import atlas.application.presence.dto.SessionDto;
+import atlas.application.sharedkernel.cqrs.Command;
 import atlas.domain.presence.LivenessChallengeId;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Instant;
-import sharedkernel.application.cqrs.Command;
-import sharedkernel.domain.results.Result;
 
 public record CompleteAuthenticationCommand(
     LivenessChallengeId challengeId,

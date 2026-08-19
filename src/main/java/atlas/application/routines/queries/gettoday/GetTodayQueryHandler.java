@@ -3,14 +3,14 @@ package atlas.application.routines.queries.gettoday;
 import atlas.application.routines.dto.TodayRoutineDto;
 import atlas.application.routines.mappers.RoutineMapper;
 import atlas.application.routines.ports.RoutineReadModel;
+import atlas.application.sharedkernel.cqrs.QueryHandler;
 import atlas.domain.routines.Routine;
 import atlas.domain.routines.services.RoutineProgress;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
-import sharedkernel.application.cqrs.QueryHandler;
-import sharedkernel.domain.results.Result;
 
 public final class GetTodayQueryHandler implements QueryHandler<GetTodayQuery, Result<List<TodayRoutineDto>>> {
 

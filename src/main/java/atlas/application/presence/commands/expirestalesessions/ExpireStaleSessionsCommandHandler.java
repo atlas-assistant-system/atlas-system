@@ -1,9 +1,9 @@
 package atlas.application.presence.commands.expirestalesessions;
 
 import atlas.application.presence.ports.PresenceUnitOfWork;
+import atlas.application.sharedkernel.cqrs.CommandHandler;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
-import sharedkernel.application.cqrs.CommandHandler;
-import sharedkernel.domain.results.Result;
 
 public final class ExpireStaleSessionsCommandHandler
     implements CommandHandler<ExpireStaleSessionsCommand, Result<Integer>> {

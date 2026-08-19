@@ -6,10 +6,10 @@ import atlas.domain.presence.events.SessionExpiredEvent;
 import atlas.domain.presence.events.SessionOpenedEvent;
 import atlas.domain.presence.events.SessionRefreshedEvent;
 import atlas.domain.presence.vos.SessionDuration;
+import atlas.domain.sharedkernel.ddd.AggregateRoot;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Instant;
-import sharedkernel.domain.ddd.AggregateRoot;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.results.Result;
 
 public final class AuthenticationSession extends AggregateRoot<SessionId> {
 

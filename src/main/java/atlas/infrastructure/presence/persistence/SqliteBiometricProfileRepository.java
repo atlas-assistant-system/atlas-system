@@ -8,6 +8,9 @@ import atlas.domain.presence.entities.FaceTemplateId;
 import atlas.domain.presence.vos.FaceDescriptor;
 import atlas.domain.presence.vos.ModelVersion;
 import atlas.domain.presence.vos.ProfileName;
+import atlas.infrastructure.sharedkernel.SequenceGenerator;
+import atlas.infrastructure.sharedkernel.persistence.AbstractSqlRepository;
+import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,9 +19,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import sharedkernel.infrastructure.SequenceGenerator;
-import sharedkernel.infrastructure.persistence.AbstractSqlRepository;
-import sharedkernel.infrastructure.persistence.PersistenceException;
 
 public final class SqliteBiometricProfileRepository
     extends AbstractSqlRepository<BiometricProfile, BiometricProfileId>

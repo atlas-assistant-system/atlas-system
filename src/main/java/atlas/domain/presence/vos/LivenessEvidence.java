@@ -1,9 +1,9 @@
 package atlas.domain.presence.vos;
 
 import atlas.domain.presence.enums.LivenessChallengeType;
+import atlas.domain.sharedkernel.ddd.ValueObject;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
 import java.time.Instant;
-import sharedkernel.domain.ddd.ValueObject;
-import sharedkernel.domain.guards.ObjectGuard;
 
 public record LivenessEvidence(ChallengeNonce nonce, LivenessChallengeType observedType, Instant capturedAt)
     implements ValueObject {

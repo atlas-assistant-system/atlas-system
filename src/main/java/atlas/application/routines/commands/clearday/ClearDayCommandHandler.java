@@ -1,13 +1,13 @@
 package atlas.application.routines.commands.clearday;
 
 import atlas.application.routines.ports.RoutineUnitOfWork;
+import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.routines.RoutineErrors;
 import atlas.domain.routines.RoutineId;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import sharedkernel.application.cqrs.CommandHandler;
-import sharedkernel.domain.results.Result;
 
 public final class ClearDayCommandHandler implements CommandHandler<ClearDayCommand, Result<Void>> {
 

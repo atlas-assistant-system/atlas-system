@@ -7,11 +7,11 @@ import static org.mockito.Mockito.when;
 
 import atlas.application.presence.ports.AuthenticationAttempt;
 import atlas.application.presence.ports.AuthenticationAttemptReadModel;
+import atlas.application.sharedkernel.paging.Page;
+import atlas.application.sharedkernel.paging.PageRequest;
 import atlas.domain.presence.enums.VerificationOutcome;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import sharedkernel.application.paging.Page;
-import sharedkernel.application.paging.PageRequest;
 
 class ListAuthenticationAttemptsQueryHandlerTest {
 

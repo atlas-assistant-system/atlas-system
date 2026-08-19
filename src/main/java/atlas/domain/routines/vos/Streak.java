@@ -1,6 +1,6 @@
 package atlas.domain.routines.vos;
 
-import sharedkernel.domain.ddd.ValueObject;
+import atlas.domain.sharedkernel.ddd.ValueObject;
 
 public record Streak(int current, int best) implements ValueObject {
 

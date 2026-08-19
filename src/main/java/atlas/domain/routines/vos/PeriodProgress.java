@@ -1,9 +1,9 @@
 package atlas.domain.routines.vos;
 
+import atlas.domain.sharedkernel.ddd.ValueObject;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import sharedkernel.domain.ddd.ValueObject;
-import sharedkernel.domain.guards.ObjectGuard;
 
 public record PeriodProgress(PeriodWindow window, BigDecimal logged, Target target) implements ValueObject {
 

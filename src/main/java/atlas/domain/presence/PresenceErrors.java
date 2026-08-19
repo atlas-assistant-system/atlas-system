@@ -1,7 +1,7 @@
 package atlas.domain.presence;
 
 import atlas.domain.presence.entities.FaceTemplateId;
-import sharedkernel.domain.results.Error;
+import atlas.domain.sharedkernel.results.Error;
 
 public final class PresenceErrors {
 

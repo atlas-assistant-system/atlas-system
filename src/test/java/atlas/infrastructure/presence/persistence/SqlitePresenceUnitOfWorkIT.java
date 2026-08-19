@@ -3,6 +3,9 @@ package atlas.infrastructure.presence.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import atlas.application.presence.ports.AuthenticationAttemptReadModel;
+import atlas.application.sharedkernel.events.PendingEventDispatcher;
+import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
+import atlas.application.sharedkernel.paging.PageRequest;
 import atlas.domain.presence.AuthenticationSession;
 import atlas.domain.presence.BiometricProfile;
 import atlas.domain.presence.BiometricProfileId;
@@ -16,8 +19,11 @@ import atlas.domain.presence.vos.FaceDescriptor;
 import atlas.domain.presence.vos.ModelVersion;
 import atlas.domain.presence.vos.ProfileName;
 import atlas.domain.presence.vos.SessionDuration;
+import atlas.domain.sharedkernel.events.DomainEvent;
+import atlas.domain.sharedkernel.results.Result;
 import atlas.infrastructure.common.SqliteSequenceGenerator;
 import atlas.infrastructure.presence.memory.InMemoryLivenessChallengeRepository;
+import atlas.infrastructure.sharedkernel.persistence.SchemaMigrator;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -33,12 +39,6 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import sharedkernel.application.events.PendingEventDispatcher;
-import sharedkernel.application.events.SimpleDomainEventPublisher;
-import sharedkernel.application.paging.PageRequest;
-import sharedkernel.domain.events.DomainEvent;
-import sharedkernel.domain.results.Result;
-import sharedkernel.infrastructure.persistence.SchemaMigrator;
 
 class SqlitePresenceUnitOfWorkIT {
 

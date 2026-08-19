@@ -1,8 +1,8 @@
 package atlas.domain.presence.entities;
 
+import atlas.domain.sharedkernel.ddd.SingleValueObject;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
 import java.util.UUID;
-import sharedkernel.domain.ddd.SingleValueObject;
-import sharedkernel.domain.guards.ObjectGuard;
 
 public record FaceTemplateId(UUID value) implements SingleValueObject<UUID> {
 

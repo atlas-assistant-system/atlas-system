@@ -1,10 +1,10 @@
 package atlas.application.presence.commands.deleteprofile;
 
 import atlas.application.presence.ports.PresenceUnitOfWork;
+import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.presence.PresenceErrors;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
-import sharedkernel.application.cqrs.CommandHandler;
-import sharedkernel.domain.results.Result;
 
 public final class DeleteProfileCommandHandler
     implements CommandHandler<DeleteProfileCommand, Result<Void>> {

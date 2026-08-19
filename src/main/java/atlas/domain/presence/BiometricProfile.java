@@ -8,15 +8,15 @@ import atlas.domain.presence.events.ProfileEnrolledEvent;
 import atlas.domain.presence.vos.FaceDescriptor;
 import atlas.domain.presence.vos.ModelVersion;
 import atlas.domain.presence.vos.ProfileName;
+import atlas.domain.sharedkernel.ddd.AggregateRoot;
+import atlas.domain.sharedkernel.guards.CollectionGuard;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import sharedkernel.domain.ddd.AggregateRoot;
-import sharedkernel.domain.guards.CollectionGuard;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.results.Result;
 
 public final class BiometricProfile extends AggregateRoot<BiometricProfileId> {
 

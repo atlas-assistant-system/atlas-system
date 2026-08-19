@@ -8,6 +8,8 @@ import atlas.application.presence.commands.enrollprofile.EnrollProfileCommand;
 import atlas.application.presence.queries.getauthenticationstate.GetAuthenticationStateQuery;
 import atlas.application.presence.queries.listauthenticationattempts.ListAuthenticationAttemptsQuery;
 import atlas.application.presence.queries.listprofiles.ListProfilesQuery;
+import atlas.application.sharedkernel.logging.PlainLogEntryRenderer;
+import atlas.application.sharedkernel.paging.PageRequest;
 import atlas.domain.presence.LivenessChallengeId;
 import atlas.domain.presence.enums.VerificationOutcome;
 import atlas.domain.presence.vos.MatchThreshold;
@@ -19,8 +21,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import sharedkernel.application.logging.PlainLogEntryRenderer;
-import sharedkernel.application.paging.PageRequest;
 
 class ApplicationIT {
 

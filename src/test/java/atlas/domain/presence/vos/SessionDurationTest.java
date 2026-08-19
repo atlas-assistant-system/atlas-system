@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import atlas.domain.presence.PresenceErrors;
+import atlas.domain.sharedkernel.exceptions.GuardException;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.exceptions.GuardException;
 
 class SessionDurationTest {
 

@@ -3,9 +3,9 @@ package atlas.domain.routines.vos;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import atlas.domain.sharedkernel.exceptions.GuardException;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.exceptions.GuardException;
 
 class PeriodWindowTest {
 

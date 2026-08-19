@@ -3,9 +3,9 @@ package atlas.domain.presence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import atlas.domain.sharedkernel.exceptions.FormatException;
+import atlas.domain.sharedkernel.exceptions.GuardException;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.exceptions.FormatException;
-import sharedkernel.domain.exceptions.GuardException;
 
 class SessionIdTest {
 

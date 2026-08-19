@@ -17,7 +17,6 @@ java {
 }
 
 dependencies {
-    implementation(project(":sharedkernel"))
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
     implementation("com.fasterxml.jackson.jr:jackson-jr-objects:2.22.2")
 
@@ -26,7 +25,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("org.mockito:mockito-core:5.23.0")
-    testImplementation(project(":sharedkernel-archunit"))
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.5.0")
 }
 
 application {

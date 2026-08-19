@@ -3,19 +3,19 @@ package atlas.presentation.presence.handlers;
 import atlas.application.presence.commands.closesession.CloseSessionCommand;
 import atlas.application.presence.commands.refreshsession.RefreshSessionCommand;
 import atlas.application.presence.queries.getactivesession.GetActiveSessionQuery;
+import atlas.application.sharedkernel.cqrs.CommandBus;
+import atlas.application.sharedkernel.cqrs.QueryBus;
 import atlas.domain.presence.PresenceErrors;
 import atlas.domain.presence.SessionId;
+import atlas.domain.sharedkernel.exceptions.FormatException;
 import atlas.presentation.common.web.Json;
 import atlas.presentation.presence.web.Values;
+import atlas.presentation.sharedkernel.http.HttpRequest;
+import atlas.presentation.sharedkernel.http.HttpResponse;
+import atlas.presentation.sharedkernel.sse.SseEvent;
+import atlas.presentation.sharedkernel.sse.SseHub;
 import java.util.Map;
 import java.util.Set;
-import sharedkernel.application.cqrs.CommandBus;
-import sharedkernel.application.cqrs.QueryBus;
-import sharedkernel.domain.exceptions.FormatException;
-import sharedkernel.presentation.http.HttpRequest;
-import sharedkernel.presentation.http.HttpResponse;
-import sharedkernel.presentation.sse.SseEvent;
-import sharedkernel.presentation.sse.SseHub;
 
 public final class InteractionHandlers {
 

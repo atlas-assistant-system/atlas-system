@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import atlas.domain.routines.enums.RecurrencePeriod;
+import atlas.domain.sharedkernel.exceptions.FormatException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
@@ -11,7 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.exceptions.FormatException;
 
 class ValuesTest {
 

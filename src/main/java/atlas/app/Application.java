@@ -3,10 +3,10 @@ package atlas.app;
 import atlas.app.presence.PresenceApplication;
 import atlas.app.presence.PresenceSettings;
 import atlas.app.routines.RoutinesApplication;
+import atlas.application.sharedkernel.logging.LogEntryRenderer;
+import atlas.presentation.sharedkernel.http.WebServer;
 import java.io.IOException;
 import java.time.Clock;
-import sharedkernel.application.logging.LogEntryRenderer;
-import sharedkernel.presentation.http.WebServer;
 
 public final class Application {
 

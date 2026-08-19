@@ -3,9 +3,9 @@ package atlas.application.presence.queries.listprofiles;
 import atlas.application.presence.dto.ProfileSummaryDto;
 import atlas.application.presence.mappers.PresenceMapper;
 import atlas.application.presence.ports.BiometricProfileRepository;
+import atlas.application.sharedkernel.cqrs.QueryHandler;
+import atlas.domain.sharedkernel.results.Result;
 import java.util.List;
-import sharedkernel.application.cqrs.QueryHandler;
-import sharedkernel.domain.results.Result;
 
 public final class ListProfilesQueryHandler
     implements QueryHandler<ListProfilesQuery, Result<List<ProfileSummaryDto>>> {

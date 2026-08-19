@@ -1,6 +1,6 @@
 package atlas.application.presence.ports;
 
-import sharedkernel.application.unitofwork.UnitOfWork;
+import atlas.application.sharedkernel.unitofwork.UnitOfWork;
 
 public interface PresenceUnitOfWork extends UnitOfWork {
 

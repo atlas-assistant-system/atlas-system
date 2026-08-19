@@ -3,6 +3,8 @@ package atlas.infrastructure.routines.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import atlas.application.sharedkernel.events.ImmediateEventDelivery;
+import atlas.application.sharedkernel.events.PendingEventDispatcher;
 import atlas.domain.routines.Routine;
 import atlas.domain.routines.RoutineEntry;
 import atlas.domain.routines.RoutineEntryId;
@@ -15,6 +17,8 @@ import atlas.domain.routines.vos.RoutineName;
 import atlas.domain.routines.vos.Schedule;
 import atlas.domain.routines.vos.Target;
 import atlas.domain.routines.vos.Unit;
+import atlas.domain.sharedkernel.events.DomainEvent;
+import atlas.domain.sharedkernel.results.Result;
 import atlas.infrastructure.common.SqliteSequenceGenerator;
 import atlas.support.builders.RoutinesTestDatabase;
 import java.math.BigDecimal;
@@ -32,10 +36,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import sharedkernel.application.events.ImmediateEventDelivery;
-import sharedkernel.application.events.PendingEventDispatcher;
-import sharedkernel.domain.events.DomainEvent;
-import sharedkernel.domain.results.Result;
 
 class SqliteRoutineRepositoryIT {
 

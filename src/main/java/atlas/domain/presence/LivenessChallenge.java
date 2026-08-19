@@ -4,11 +4,11 @@ import atlas.domain.presence.enums.LivenessChallengeType;
 import atlas.domain.presence.events.LivenessChallengeIssuedEvent;
 import atlas.domain.presence.vos.ChallengeNonce;
 import atlas.domain.presence.vos.LivenessEvidence;
+import atlas.domain.sharedkernel.ddd.AggregateRoot;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Instant;
 import java.util.Optional;
-import sharedkernel.domain.ddd.AggregateRoot;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.results.Result;
 
 public final class LivenessChallenge extends AggregateRoot<LivenessChallengeId> {
 

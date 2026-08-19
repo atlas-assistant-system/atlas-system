@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 import atlas.domain.presence.PresenceErrors;
+import atlas.domain.sharedkernel.exceptions.GuardException;
 import org.junit.jupiter.api.Test;
-import sharedkernel.domain.exceptions.GuardException;
 
 class FaceDescriptorTest {
 

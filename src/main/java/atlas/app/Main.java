@@ -1,12 +1,12 @@
 package atlas.app;
 
 import atlas.app.presence.PresenceSettings;
+import atlas.infrastructure.sharedkernel.console.StartupBanner;
+import atlas.infrastructure.sharedkernel.logging.LogEntryRenderers;
 import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.time.Clock;
 import java.util.logging.LogManager;
-import sharedkernel.infrastructure.console.StartupBanner;
-import sharedkernel.infrastructure.logging.LogEntryRenderers;
 
 public final class Main {
 

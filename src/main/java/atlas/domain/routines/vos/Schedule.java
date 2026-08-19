@@ -2,13 +2,13 @@ package atlas.domain.routines.vos;
 
 import atlas.domain.routines.RoutineErrors;
 import atlas.domain.routines.enums.RecurrencePeriod;
+import atlas.domain.sharedkernel.ddd.ValueObject;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.results.CommonErrors;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Set;
-import sharedkernel.domain.ddd.ValueObject;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.results.CommonErrors;
-import sharedkernel.domain.results.Result;
 
 public record Schedule(RecurrencePeriod period, Set<DayOfWeek> activeDays, Set<Integer> daysOfMonth)
     implements ValueObject {

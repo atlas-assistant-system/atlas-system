@@ -1,13 +1,13 @@
 package atlas.domain.presence.vos;
 
+import atlas.domain.sharedkernel.ddd.SingleValueObject;
+import atlas.domain.sharedkernel.guards.ObjectGuard;
+import atlas.domain.sharedkernel.guards.StringGuard;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.random.RandomGenerator;
 import java.util.regex.Pattern;
-import sharedkernel.domain.ddd.SingleValueObject;
-import sharedkernel.domain.guards.ObjectGuard;
-import sharedkernel.domain.guards.StringGuard;
 
 public record ChallengeNonce(String value) implements SingleValueObject<String> {
 

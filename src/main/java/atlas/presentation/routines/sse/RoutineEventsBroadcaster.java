@@ -1,5 +1,6 @@
 package atlas.presentation.routines.sse;
 
+import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
 import atlas.domain.routines.events.DayClearedEvent;
 import atlas.domain.routines.events.ProgressLoggedEvent;
 import atlas.domain.routines.events.RoutineArchivedEvent;
@@ -9,11 +10,10 @@ import atlas.domain.routines.events.RoutineDetailsChangedEvent;
 import atlas.domain.routines.events.RoutineScheduleChangedEvent;
 import atlas.domain.routines.events.RoutineUnarchivedEvent;
 import atlas.presentation.common.web.Json;
+import atlas.presentation.sharedkernel.sse.SseEvent;
+import atlas.presentation.sharedkernel.sse.SseHub;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import sharedkernel.application.events.SimpleDomainEventPublisher;
-import sharedkernel.presentation.sse.SseEvent;
-import sharedkernel.presentation.sse.SseHub;
 
 public final class RoutineEventsBroadcaster {
 

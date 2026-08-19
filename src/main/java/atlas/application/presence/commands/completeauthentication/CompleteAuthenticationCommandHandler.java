@@ -4,6 +4,7 @@ import atlas.application.presence.dto.SessionDto;
 import atlas.application.presence.mappers.PresenceMapper;
 import atlas.application.presence.ports.LivenessChallengeRepository;
 import atlas.application.presence.ports.PresenceUnitOfWork;
+import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.presence.AuthenticationGate;
 import atlas.domain.presence.BiometricProfile;
 import atlas.domain.presence.PresenceErrors;
@@ -16,12 +17,11 @@ import atlas.domain.presence.vos.LivenessEvidence;
 import atlas.domain.presence.vos.MatchThreshold;
 import atlas.domain.presence.vos.ModelVersion;
 import atlas.domain.presence.vos.SessionDuration;
+import atlas.domain.sharedkernel.exceptions.GuardException;
+import atlas.domain.sharedkernel.results.Error;
+import atlas.domain.sharedkernel.results.Result;
 import java.time.Clock;
 import java.time.Instant;
-import sharedkernel.application.cqrs.CommandHandler;
-import sharedkernel.domain.exceptions.GuardException;
-import sharedkernel.domain.results.Error;
-import sharedkernel.domain.results.Result;
 
 public final class CompleteAuthenticationCommandHandler
     implements CommandHandler<CompleteAuthenticationCommand, Result<SessionDto>> {
