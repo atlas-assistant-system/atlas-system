@@ -368,6 +368,7 @@ nav {
 body:not(.locked) .access-lock,
 body.locked nav,
 body.locked .home-blocks,
+body.locked .news-block,
 body.locked #view-agenda,
 body.locked #view-rutinas,
 body.locked #panel,
@@ -417,6 +418,51 @@ body.locked #voice-control {
 
 .plain-list .muted {
     color: var(--ink-faint);
+}
+
+.news-block {
+    position: absolute;
+    top: 18.5rem;
+    right: 3.5rem;
+    bottom: 2.5rem;
+    width: min(45rem, 50vw);
+    overflow-y: auto;
+}
+
+.news-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem 1.5rem;
+    list-style: none;
+}
+
+.news-item {
+    border-top: 1px solid var(--hairline);
+    min-width: 0;
+    padding-top: 0.65rem;
+}
+
+.news-item a {
+    color: var(--ink);
+    display: block;
+    text-decoration: none;
+}
+
+.news-meta {
+    color: var(--ink-faint);
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+}
+
+.news-title {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.35;
 }
 
 .month-nav {

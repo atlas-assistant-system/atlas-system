@@ -767,6 +767,7 @@ const SKY = {
 };
 
 const WEATHER_REFRESH = 900000;
+const NEWS_REFRESH = 1800000;
 
 function degrees(value) {
     return Math.round(value) + '°';
@@ -800,6 +801,37 @@ async function refreshWeather() {
     } catch (_) {
         block.hidden = true;
     }
+}
+
+async function refreshNews() {
+    const block = document.getElementById('news');
+    try {
+        const response = await api('/news');
+        if (response.status !== 200 || !Array.isArray(response.body) || response.body.length === 0) {
+            throw new Error('News unavailable');
+        }
+        const list = document.getElementById('news-list');
+        list.replaceChildren();
+        for (const item of response.body) {
+            const link = el('a');
+            link.href = item.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.append(
+                el('span', 'news-meta', item.category + ' · ' + formatNewsDate(item.publishedAt)),
+                el('span', 'news-title', item.title));
+            const entry = el('li', 'news-item');
+            entry.appendChild(link);
+            list.appendChild(entry);
+        }
+        block.hidden = false;
+    } catch (_) {
+        block.hidden = true;
+    }
+}
+
+function formatNewsDate(date) {
+    return new Date(date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
 function tickClock() {
@@ -1762,6 +1794,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(tickClock, 1000);
     refreshWeather();
     setInterval(refreshWeather, WEATHER_REFRESH);
+    refreshNews();
+    setInterval(refreshNews, NEWS_REFRESH);
     refreshAuthentication();
     setInterval(refreshAuthentication, 2000);
     setInterval(refreshAll, 60000);

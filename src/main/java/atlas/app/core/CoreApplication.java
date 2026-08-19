@@ -1,5 +1,6 @@
 package atlas.app.core;
 
+import atlas.presentation.core.web.NewsHandlers;
 import atlas.presentation.core.web.UiHandlers;
 import atlas.presentation.sharedkernel.http.Router;
 import atlas.presentation.sharedkernel.http.Routes;
@@ -20,7 +21,8 @@ public final class CoreApplication {
                 .get("/assets/app.js", UiHandlers::script)
                 .get("/assets/config.js", request -> UiHandlers.config(settings.latitude(), settings.longitude()))
                 .get("/assets/routines.css", UiHandlers::routinesStyles)
-                .get("/assets/routines.js", UiHandlers::routinesScript))
+                .get("/assets/routines.js", UiHandlers::routinesScript)
+                .get("/news", NewsHandlers::latest))
             .build());
     }
 
