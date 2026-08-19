@@ -4,11 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import atlas.infrastructure.sharedkernel.logging.LogEntryRenderers;
 import com.fasterxml.jackson.jr.ob.JSON;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,7 +14,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -33,48 +29,16 @@ class HttpApiIT {
     static Path databaseDirectory;
 
     private static AppointmentsApplication application;
-    private static HttpServer presence;
     private static HttpClient client;
     private static String base;
-    private static final AtomicReference<String> PRESENCE_SESSION = new AtomicReference<>(activeSession());
-    private static final AtomicReference<String> PRESENCE_REQUEST = new AtomicReference<>();
-    private static final AtomicReference<String> GESTURE_REQUEST = new AtomicReference<>();
+    private static final AtomicBoolean AUTHENTICATED = new AtomicBoolean(true);
 
     @BeforeAll
     static void startServer() throws IOException {
-        presence = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
-        presence.createContext("/sessions/active", exchange -> {
-            respond(exchange, 200, PRESENCE_SESSION.get());
-        });
-        presence.createContext("/authentication", exchange -> {
-            if ("/authentication".equals(exchange.getRequestURI().getPath())) {
-                respond(exchange, 200, """
-                    {"failedAttempts":0,"enrolledProfiles":1,
-                     "activeSession":%s,"maintenanceMode":false}""".formatted(PRESENCE_SESSION.get()));
-                return;
-            }
-            if ("/authentication/challenges".equals(exchange.getRequestURI().getPath())) {
-                respond(exchange, 201, """
-                    {"challengeId":"L00000001","type":"VICTORY","nonce":"nonce-1",
-                     "expiresAt":"2026-08-17T08:01:00Z"}""");
-                return;
-            }
-            PRESENCE_REQUEST.set(exchange.getRequestURI().getPath() + "\n"
-                + new String(exchange.getRequestBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
-            respond(exchange, 200, activeSession());
-        });
-        presence.createContext("/interactions/gestures", exchange -> {
-            GESTURE_REQUEST.set(new String(
-                exchange.getRequestBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
-            exchange.sendResponseHeaders(204, -1);
-            exchange.close();
-        });
-        presence.start();
-        var presenceUrl = URI.create("http://localhost:" + presence.getAddress().getPort());
         application = AppointmentsApplication
             .wire(
                 LogEntryRenderers.forCurrentConsole(), databaseDirectory, Clock.fixed(NOW, ZoneOffset.UTC),
-                presenceUrl)
+                AUTHENTICATED::get)
             .start(0);
         client = HttpClient.newHttpClient();
         base = "http://localhost:" + application.port();
@@ -83,14 +47,11 @@ class HttpApiIT {
     @AfterAll
     static void stopServer() {
         application.stop();
-        presence.stop(0);
     }
 
     @AfterEach
     void restoreActiveSession() {
-        PRESENCE_SESSION.set(activeSession());
-        PRESENCE_REQUEST.set(null);
-        GESTURE_REQUEST.set(null);
+        AUTHENTICATED.set(true);
     }
 
     @Test
@@ -330,71 +291,20 @@ class HttpApiIT {
     }
 
     @Test
-    void shouldServeTheMirrorUi() throws Exception {
-        var page = get("/");
-
-        assertThat(page.statusCode()).isEqualTo(200);
-        assertThat(page.headers().firstValue("Content-Type").orElse("")).contains("text/html");
-        assertThat(page.body()).contains("<body class=\"locked\">")
-            .contains("id=\"mirror\"")
-            .contains("id=\"gesture-pointer\"")
-            .contains("id=\"interaction-status\"")
-            .contains("id=\"authenticate\"")
-            .contains("@vladmandic/human@3.3.6")
-            .doesNotContain("Abrir Presence");
-
-        assertThat(get("/app.css").statusCode()).isEqualTo(200);
-        var script = get("/app.js");
-        assertThat(script.statusCode()).isEqualTo(200);
-        assertThat(script.body())
-            .contains("PALM_LEFT")
-            .contains("staticPalmGesture")
-            .contains("SpeechRecognition")
-            .contains("activatePointerTarget");
-    }
-
-    @Test
     void shouldKeepAppointmentAccessLockedWithoutAnActivePresenceSession() throws Exception {
-        PRESENCE_SESSION.set("null");
+        AUTHENTICATED.set(false);
 
-        var session = get("/presence/session");
         var appointments = get("/appointments/upcoming?limit=1");
 
-        assertThat(session.statusCode()).isEqualTo(200);
-        assertThat(session.body()).isEqualTo("null");
         assertThat(appointments.statusCode()).isEqualTo(401);
-        assertThat(appointments.body()).contains("Presence.AuthenticationRequired");
+        assertThat(appointments.body()).contains("Authentication.Required");
     }
 
     @Test
-    void shouldProxyTheCompletePresenceAuthenticationFlow() throws Exception {
-        PRESENCE_SESSION.set("null");
+    void shouldKeepTheEventStreamLockedWithoutAnActiveSession() throws Exception {
+        AUTHENTICATED.set(false);
 
-        var state = get("/presence/authentication");
-        var challenge = post("/presence/authentication/challenges", "{}");
-        var completed = post("/presence/authentication/challenges/L00000001/complete", """
-            {"modelVersion":"human-faceres-3.3.6","descriptor":[0.1,0.2],"observedType":"VICTORY",
-             "nonce":"nonce-1","capturedAt":"2026-08-17T08:00:20Z"}""");
-
-        assertThat(state.statusCode()).isEqualTo(200);
-        assertThat(state.body()).contains("\"activeSession\":null").contains("\"maintenanceMode\":false");
-        assertThat(challenge.statusCode()).isEqualTo(201);
-        assertThat(challenge.body()).contains("L00000001").contains("VICTORY");
-        assertThat(completed.statusCode()).isEqualTo(200);
-        assertThat(PRESENCE_REQUEST.get())
-            .startsWith("/authentication/challenges/L00000001/complete")
-            .contains("human-faceres-3.3.6")
-            .contains("nonce-1");
-    }
-
-    @Test
-    void shouldProxyHandGesturesToPresence() throws Exception {
-        var response = post("/presence/interactions/gestures", """
-            {"type":"PINCH","handIndex":0,"confidence":0.91,
-             "observedAt":"2026-08-17T08:00:20Z"}""");
-
-        assertThat(response.statusCode()).isEqualTo(204);
-        assertThat(GESTURE_REQUEST.get()).contains("PINCH").contains("0.91");
+        assertThat(get("/events").statusCode()).isEqualTo(401);
     }
 
     @Test
@@ -408,21 +318,6 @@ class HttpApiIT {
 
     private static String appointment(String start, String end) {
         return "{\"title\":\"Cita\",\"start\":\"" + start + "\",\"end\":\"" + end + "\"}";
-    }
-
-    private static String activeSession() {
-        return """
-            {"id":"S00000001","profileId":"B00000001","openedAt":"2026-08-17T08:00:00Z",
-             "lastActivityAt":"2026-08-17T08:00:00Z","expiresAt":"2026-08-17T08:15:00Z","status":"ACTIVE"}""";
-    }
-
-    private static void respond(HttpExchange exchange, int status, String value) throws IOException {
-        var body = value.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(status, body.length);
-        try (var output = exchange.getResponseBody()) {
-            output.write(body);
-        }
     }
 
     private static HttpResponse<String> get(String path) throws IOException, InterruptedException {

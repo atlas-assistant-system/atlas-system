@@ -47,7 +47,7 @@ class ApplicationIT {
         var rejected = first.commands().dispatch(new CompleteAuthenticationCommand(
             LivenessChallengeId.parse(challenge.challengeId()),
             "face-v1",
-            new float[]{0.0f, 1.0f},
+            new float[]{20.0f, 20.0f},
             challenge.type(),
             challenge.nonce(),
             CLOCK.instant()));

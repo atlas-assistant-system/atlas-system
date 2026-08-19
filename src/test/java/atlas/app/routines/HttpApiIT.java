@@ -152,12 +152,10 @@ class HttpApiIT {
     }
 
     @Test
-    void shouldServeTheUiAndTheDocs() throws Exception {
-        assertThat(send("GET", "/", null).body()).contains("<title>Rutinas</title>");
-        assertThat(send("GET", "/app.css", null).statusCode()).isEqualTo(200);
-        assertThat(send("GET", "/app.js", null).statusCode()).isEqualTo(200);
-        assertThat(send("GET", "/docs", null).body()).contains("swagger");
-        assertThat(json(send("GET", "/openapi.json", null))).containsKey("paths");
+    void shouldServeItsDocsBelowTheModulePath() throws Exception {
+        assertThat(send("GET", "/", null).statusCode()).isEqualTo(404);
+        assertThat(send("GET", "/routines/docs", null).body()).contains("swagger");
+        assertThat(json(send("GET", "/routines/openapi.json", null))).containsKey("paths");
     }
 
     private static HttpResponse<String> send(String method, String path, String body) throws Exception {

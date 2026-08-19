@@ -108,7 +108,7 @@ class HttpApiIT {
 
         var rejected = post(
             "/authentication/challenges/" + challenge.get("challengeId") + "/complete",
-            completion(challenge, "[0.0,1.0]"));
+            completion(challenge, "[20.0,20.0]"));
 
         assertThat(rejected.statusCode()).isEqualTo(401);
         assertThat(rejected.body()).contains("Verification.NoMatch");
