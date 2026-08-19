@@ -28,7 +28,7 @@ public final class Main {
 
         var application = Application
             .wire(LogEntryRenderers.forCurrentConsole(), PresenceSettings.fromEnvironment(args),
-                Clock.systemDefaultZone(), DEFAULT_PORT)
+                Clock.systemDefaultZone())
             .start(DEFAULT_PORT);
 
         Runtime.getRuntime().addShutdownHook(new Thread(application::stop));
@@ -39,7 +39,7 @@ public final class Main {
     private static String banner(int port) {
         return StartupBanner
             .showing(WORDMARK)
-            .with("JDK", StartupBanner.jdkVersion())
+            .with("JDK", StartupBanner.jdkVersion().split("\\+")[0])
             .with("Port", String.valueOf(port))
             .with("PID", StartupBanner.processId())
             .with("API", "http://localhost:" + port)
