@@ -10,21 +10,20 @@ public record HandlerLogEntry(
     long durationMs,
     String errorCode,
     String exception,
-    String correlationId,
     String summary) {
 
     public static final int MAX_SUMMARY_LENGTH = 120;
 
     public String detail() {
         if (exception != null) {
-            return exception;
+            return "exception=" + exception;
         }
 
         if (errorCode != null) {
-            return errorCode;
+            return "code=" + errorCode;
         }
 
-        return summary != null ? summary : "";
+        return summary != null ? "summary=" + summary : "";
     }
 
     public static String sanitize(String text) {

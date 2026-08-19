@@ -115,19 +115,10 @@ class LoggingCommandHandlerTest {
     }
 
     @Test
-    void shouldIncludeCorrelationIdWhenScopeIsBound() {
+    void shouldNotIncludeCorrelationId() {
         var handler = decorate((ScheduleAppointment c) -> Result.success("ok"));
 
         CorrelationContext.runWith("a3f9c1", () -> handler.handle(new ScheduleAppointment("09:00", SENSITIVE)));
-
-        assertThat(logger.single().message()).contains("correlationId=a3f9c1");
-    }
-
-    @Test
-    void shouldOmitCorrelationIdWhenScopeIsNotBound() {
-        var handler = decorate((ScheduleAppointment c) -> Result.success("ok"));
-
-        handler.handle(new ScheduleAppointment("09:00", SENSITIVE));
 
         assertThat(logger.single().message()).doesNotContain("correlationId=");
     }

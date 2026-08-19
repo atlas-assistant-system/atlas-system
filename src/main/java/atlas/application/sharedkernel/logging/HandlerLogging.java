@@ -21,7 +21,6 @@ public final class HandlerLogging {
             durationMs,
             errorCodeOf(outcomeSource),
             exceptionOf(thrown),
-            CorrelationContext.current().orElse(null),
             summaryOf(message));
     }
 

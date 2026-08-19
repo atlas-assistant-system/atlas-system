@@ -18,10 +18,6 @@ public final class PlainLogEntryRenderer implements LogEntryRenderer {
             line.append(" exception=").append(entry.exception());
         }
 
-        if (entry.correlationId() != null) {
-            line.append(" correlationId=").append(entry.correlationId());
-        }
-
         if (entry.summary() != null) {
             line.append(" summary=").append(entry.summary());
         }

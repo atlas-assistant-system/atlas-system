@@ -6,4 +6,6 @@ module atlas {
     requires java.sql;
     requires jdk.httpserver;
     requires org.xerial.sqlitejdbc;
+
+    exports atlas.infrastructure.sharedkernel.logging to java.logging;
 }
