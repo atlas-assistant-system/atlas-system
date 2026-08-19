@@ -4,8 +4,8 @@ import java.util.function.UnaryOperator;
 
 public record CoreSettings(double latitude, double longitude) {
 
-    public static final double DEFAULT_LATITUDE = 40.4168;
-    public static final double DEFAULT_LONGITUDE = -3.7038;
+    public static final double DEFAULT_LATITUDE = 28.1235;
+    public static final double DEFAULT_LONGITUDE = -15.4363;
 
     public static final String LATITUDE_PROPERTY = "atlas.weather.latitude";
     public static final String LATITUDE_VARIABLE = "ATLAS_WEATHER_LATITUDE";

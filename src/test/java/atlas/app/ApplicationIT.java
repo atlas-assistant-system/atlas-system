@@ -61,8 +61,8 @@ class ApplicationIT {
             var config = get(client, base, "/assets/config.js");
             assertThat(config.statusCode()).isEqualTo(200);
             assertThat(config.body()).contains("window.AtlasConfig")
-                .contains("latitude: 40.4168")
-                .contains("longitude: -3.7038");
+                .contains("latitude: 28.1235")
+                .contains("longitude: -15.4363");
 
             assertThat(get(client, base, "/appointments/upcoming?limit=1").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/authentication").statusCode()).isEqualTo(200);
