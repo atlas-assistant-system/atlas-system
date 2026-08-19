@@ -28,9 +28,45 @@ La arquitectura y las decisiones de stack de este proyecto están documentadas e
 
 Estos documentos son la fuente de verdad técnica del proyecto. Cualquier decisión arquitectónica nueva debe reflejarse ahí.
 
+## Los bounded contexts
+
+El proyecto es **un único módulo JPMS** y cada bounded context es un subpaquete dentro de
+cada anillo. La convención de `architecture.md` aplicada a varios contextos:
+
+```
+atlas/domain/presence/        atlas/domain/routines/
+atlas/application/presence/   atlas/application/routines/
+atlas/infrastructure/presence/ atlas/infrastructure/routines/
+atlas/presentation/presence/  atlas/presentation/routines/
+atlas/app/presence/           atlas/app/routines/       cableado de cada contexto
+atlas/app/Application.java                              composition root que los monta
+```
+
+**Lo que está en `common` es genérico de verdad, no un cajón compartido.** `Json` y
+`StaticResources` sí lo son. `Values`, `UiHandlers` y `DocsHandlers` **no**: sus métodos y sus
+recursos son los de un contexto concreto (`floats` para descriptores faciales, `weekdays` para
+rutinas), así que viven en `presentation/<contexto>/web/`. Fusionarlos era un cambio de
+comportamiento silencioso: en `presence` un campo ausente lanza 400 y en `routines` devuelve
+`null`.
+
+Cada contexto conserva su propia base de datos en `data/` —el aislamiento entre contextos es
+físico— y su propio bus de comandos y consultas.
+
 ## Estado actual
 
-Proyecto en fase inicial de definición. Actualiza esta sección con el estado real (funcionalidades completas, en progreso, pendientes) a medida que avance el desarrollo.
+- **`presence` migrado** — identidad biométrica facial con prueba de vida e interacción por
+  gesto. Cuatro capas completas, se monta en `/` y su SSE en `/events`.
+- **`routines` migrado** — hábitos como cuota dentro de un periodo. Cuatro capas completas, se
+  monta en `/routines` y su SSE en `/events/routines`.
+- **594 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
+  ArchUnit.
+- **El Shared Kernel es un subproyecto** (`sharedkernel/`, `sharedkernel-archunit/`), no una
+  dependencia de `mavenLocal`. El build ya no necesita nada publicado a mano.
+- **Pendiente** — migrar el contexto `appointments` (citas, recordatorios y calendario), que
+  es además quien trae la UI espejo y la cámara. Y unificar la puerta de sesión: hoy la API de
+  `presence` devuelve 401 sin sesión y la de `routines` responde abierta.
+- **Conocido** — la UI de `routines` no es alcanzable: montado en `/routines`, ese path lo
+  ocupa su endpoint de listado. Se resolverá al componer las pestañas del espejo.
 
 ## Notas de trabajo
 
