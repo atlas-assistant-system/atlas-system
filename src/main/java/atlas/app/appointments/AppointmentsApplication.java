@@ -55,12 +55,10 @@ import atlas.infrastructure.sharedkernel.persistence.Migrations;
 import atlas.infrastructure.sharedkernel.persistence.SchemaMigrator;
 import atlas.infrastructure.sharedkernel.persistence.SqliteConnections;
 import atlas.presentation.appointments.handlers.AppointmentHandlers;
-import atlas.presentation.appointments.presence.PresenceAccess;
-import atlas.presentation.appointments.presence.ProtectedSseEndpoint;
+import atlas.presentation.appointments.security.SessionGuard;
 import atlas.presentation.appointments.sse.AppointmentEventsBroadcaster;
 import atlas.presentation.appointments.sse.DueReminderPusher;
 import atlas.presentation.appointments.web.DocsHandlers;
-import atlas.presentation.appointments.web.UiHandlers;
 import atlas.presentation.sharedkernel.http.Router;
 import atlas.presentation.sharedkernel.http.Routes;
 import atlas.presentation.sharedkernel.http.SseEndpoint;
@@ -68,11 +66,11 @@ import atlas.presentation.sharedkernel.http.WebServer;
 import atlas.presentation.sharedkernel.sse.SseHub;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
+import java.util.function.BooleanSupplier;
 
 public final class AppointmentsApplication {
 
@@ -84,7 +82,7 @@ public final class AppointmentsApplication {
     private final SseHub hub;
     private final Router router;
     private final DueReminderPusher pusher;
-    private final PresenceAccess presence;
+    private final SessionGuard sessions;
     private final Connection connection;
 
     private WebServer server;
@@ -96,7 +94,7 @@ public final class AppointmentsApplication {
         SseHub hub,
         Router router,
         DueReminderPusher pusher,
-        PresenceAccess presence,
+        SessionGuard sessions,
         Connection connection) {
         this.commands = commands;
         this.queries = queries;
@@ -104,16 +102,12 @@ public final class AppointmentsApplication {
         this.hub = hub;
         this.router = router;
         this.pusher = pusher;
-        this.presence = presence;
+        this.sessions = sessions;
         this.connection = connection;
     }
 
-    public static AppointmentsApplication wire(LogEntryRenderer renderer, Path databaseDirectory, Clock clock) {
-        return wire(renderer, databaseDirectory, clock, URI.create(AppointmentsSettings.DEFAULT_PRESENCE_URL));
-    }
-
     public static AppointmentsApplication wire(
-        LogEntryRenderer renderer, Path databaseDirectory, Clock clock, URI presenceUrl) {
+        LogEntryRenderer renderer, Path databaseDirectory, Clock clock, BooleanSupplier hasActiveSession) {
         var connection = SqliteConnections.openForContext(databaseDirectory, "appointments");
         new SchemaMigrator(connection, clock).migrate(Migrations.load(
             AppointmentsApplication.class, "/db-migrations/appointments",
@@ -139,9 +133,9 @@ public final class AppointmentsApplication {
 
         var handlers = new AppointmentHandlers(commands, queries, clock);
         var pusher = new DueReminderPusher(queries, hub, clock);
-        var presence = new PresenceAccess(presenceUrl);
+        var sessions = new SessionGuard(hasActiveSession);
 
-        return new AppointmentsApplication(commands, queries, events, hub, routes(handlers, presence), pusher, presence,
+        return new AppointmentsApplication(commands, queries, events, hub, routes(handlers, sessions), pusher, sessions,
             connection);
     }
 
@@ -149,7 +143,7 @@ public final class AppointmentsApplication {
         server = WebServer
             .onLoopback(port)
             .mount("/", router)
-            .mount(EVENT_STREAM_PATH, new ProtectedSseEndpoint(presence, new SseEndpoint(hub)))
+            .mount(EVENT_STREAM_PATH, sessions.protect(new SseEndpoint(hub)))
             .start();
         pusher.start();
 
@@ -161,7 +155,7 @@ public final class AppointmentsApplication {
     }
 
     public HttpHandler eventStream() {
-        return new ProtectedSseEndpoint(presence, new SseEndpoint(hub));
+        return sessions.protect(new SseEndpoint(hub));
     }
 
     public void startBackgroundTasks() {
@@ -183,7 +177,7 @@ public final class AppointmentsApplication {
         try {
             connection.close();
         } catch (SQLException e) {
-            System.getLogger("agenda").log(System.Logger.Level.WARNING, "Failed to close the database.", e);
+            System.getLogger("appointments").log(System.Logger.Level.WARNING, "Failed to close the database.", e);
         }
     }
 
@@ -244,43 +238,30 @@ public final class AppointmentsApplication {
             new GetDueRemindersQueryHandler(readModel), renderer));
     }
 
-    private static Router routes(AppointmentHandlers handlers, PresenceAccess presence) {
+    private static Router routes(AppointmentHandlers handlers, SessionGuard sessions) {
         return Router.builder()
             .mount(Routes.at("/appointments")
-                .post("/", presence.protect(handlers::schedule))
-                .get("/", presence.protect(handlers::list))
-                .get("/counts/by-month", presence.protect(handlers::countsByMonth))
-                .get("/counts/by-day", presence.protect(handlers::countsByDay))
-                .get("/overlapping", presence.protect(handlers::overlapping))
-                .get("/free-slots", presence.protect(handlers::freeSlots))
-                .get("/upcoming", presence.protect(handlers::upcoming))
-                .get("/{id}", presence.protect(handlers::detail))
-                .delete("/{id}", presence.protect(handlers::delete))
-                .post("/{id}/reschedule", presence.protect(handlers::reschedule))
-                .post("/{id}/cancel", presence.protect(handlers::cancel))
-                .post("/{id}/restore", presence.protect(handlers::restore))
-                .put("/{id}/details", presence.protect(handlers::changeDetails))
-                .post("/{id}/reminders", presence.protect(handlers::addReminder))
-                .delete("/{id}/reminders/{reminderId}", presence.protect(handlers::removeReminder))
-                .post("/{id}/reminders/{reminderId}/acknowledge", presence.protect(handlers::acknowledgeReminder)))
+                .post("/", sessions.protect(handlers::schedule))
+                .get("/", sessions.protect(handlers::list))
+                .get("/counts/by-month", sessions.protect(handlers::countsByMonth))
+                .get("/counts/by-day", sessions.protect(handlers::countsByDay))
+                .get("/overlapping", sessions.protect(handlers::overlapping))
+                .get("/free-slots", sessions.protect(handlers::freeSlots))
+                .get("/upcoming", sessions.protect(handlers::upcoming))
+                .get("/{id}", sessions.protect(handlers::detail))
+                .delete("/{id}", sessions.protect(handlers::delete))
+                .post("/{id}/reschedule", sessions.protect(handlers::reschedule))
+                .post("/{id}/cancel", sessions.protect(handlers::cancel))
+                .post("/{id}/restore", sessions.protect(handlers::restore))
+                .put("/{id}/details", sessions.protect(handlers::changeDetails))
+                .post("/{id}/reminders", sessions.protect(handlers::addReminder))
+                .delete("/{id}/reminders/{reminderId}", sessions.protect(handlers::removeReminder))
+                .post("/{id}/reminders/{reminderId}/acknowledge", sessions.protect(handlers::acknowledgeReminder)))
             .mount(Routes.at("/reminders")
-                .get("/due", presence.protect(handlers::dueReminders)))
-            .mount(Routes.at("/presence")
-                .get("/session", presence::activeSession)
-                .get("/authentication", presence::authenticationState)
-                .post("/authentication/challenges", presence::beginAuthentication)
-                .post("/authentication/challenges/{challengeId}/complete", presence::completeAuthentication)
-                .get("/profiles", presence::profiles)
-                .post("/profiles", presence::enrollProfile)
-                .delete("/profiles/{id}", presence::deleteProfile)
-                .delete("/sessions/{id}", presence::closeSession)
-                .post("/interactions/gestures", presence::publishGesture))
+                .get("/due", sessions.protect(handlers::dueReminders)))
             .mount(Routes.at("/")
-                .get("/", UiHandlers::index)
-                .get("/app.css", UiHandlers::styles)
-                .get("/app.js", UiHandlers::script)
-                .get("/docs", presence.protect(DocsHandlers::docs))
-                .get("/openapi.json", presence.protect(DocsHandlers::openapi)))
+                .get("/docs", sessions.protect(DocsHandlers::docs))
+                .get("/openapi.json", sessions.protect(DocsHandlers::openapi)))
             .build();
     }
 }
