@@ -13,11 +13,14 @@ const state = {
     human: null,
     recognition: null,
     recognitionVersion: 0,
+    handRecognizer: null,
+    handResult: null,
+    handVideoTime: -1,
     gesture: {
-        candidate: null, frames: 0, missing: 0, latched: null,
-        swipe: { origin: null, direction: null },
+        candidate: null, candidateSince: 0, missingSince: 0, latched: null,
+        swipe: { points: [], direction: null },
     },
-    pointer: { target: null },
+    pointer: { target: null, candidate: null, frames: 0, position: null, missing: 0 },
     voice: { recognition: null, target: null, listening: false },
 };
 
@@ -32,10 +35,16 @@ const MIN_CONFIDENCE = 0.6;
 const MIN_FACE_SIZE = 224;
 const MAX_FACE_ANGLE = 0.45;
 const ENROLLMENT_SAMPLES = 3;
+const HAND_CONFIDENCE = 0.65;
+const GESTURE_HOLD_MS = 180;
 const INTERACTIVE = 'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), '
     + 'select:not(:disabled), .clickable, .day, .item';
 // ponytail: pinned CDN keeps face recognition out of the Agenda build; self-host it if offline use is required.
 const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
+const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs';
+const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';
+const GESTURE_MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/'
+    + 'gesture_recognizer/float16/1/gesture_recognizer.task';
 
 function todayIso() {
     return isoDate(new Date());
@@ -166,16 +175,25 @@ async function startCamera() {
                 liveness: { enabled: true },
             },
             body: { enabled: false },
-            hand: {
-                enabled: true, rotation: true, minConfidence: 0.55,
-                maxDetected: 1, landmarks: true,
-            },
+            hand: { enabled: false },
             object: { enabled: false },
             segmentation: { enabled: false },
-            gesture: { enabled: true },
+            gesture: { enabled: false },
         });
         await state.human.load();
         await state.human.warmup();
+        document.getElementById('access-message').textContent = 'Cargando seguimiento de manos…';
+        const { FilesetResolver, GestureRecognizer } = await import(MEDIAPIPE);
+        const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM);
+        state.handRecognizer = await GestureRecognizer.createFromOptions(vision, {
+            baseOptions: { modelAssetPath: GESTURE_MODEL },
+            runningMode: 'VIDEO',
+            numHands: 1,
+            minHandDetectionConfidence: HAND_CONFIDENCE,
+            minHandPresenceConfidence: HAND_CONFIDENCE,
+            minTrackingConfidence: HAND_CONFIDENCE,
+            cannedGesturesClassifierOptions: { maxResults: 1, scoreThreshold: HAND_CONFIDENCE },
+        });
         state.cameraReady = true;
         detectFaces();
     } catch (error) {
@@ -192,12 +210,17 @@ async function detectFaces() {
         return;
     }
     try {
-        state.recognition = await state.human.detect(document.getElementById('mirror'), {
-            face: { enabled: !state.authenticated },
-        });
-        state.recognitionVersion++;
-        renderAuthenticationStatus();
-        trackHandGesture(state.human.next(state.recognition));
+        const video = document.getElementById('mirror');
+        if (!state.authenticated) {
+            state.recognition = await state.human.detect(video);
+            state.recognitionVersion++;
+            renderAuthenticationStatus();
+        }
+        if (video.currentTime !== state.handVideoTime) {
+            state.handVideoTime = video.currentTime;
+            state.handResult = state.handRecognizer.recognizeForVideo(video, performance.now());
+            trackHandGesture(state.handResult);
+        }
     } catch (_) {
         document.getElementById('access-message').textContent = 'No se pudo procesar la imagen.';
     }
@@ -233,24 +256,24 @@ function trackHandGesture(result) {
     const observed = recognizedHandGesture(result);
     trackPointer(result, observed);
     const tracking = state.gesture;
+    const now = performance.now();
     if (!observed) {
-        tracking.missing++;
-        if (tracking.missing >= 3) {
+        tracking.missingSince ||= now;
+        if (now - tracking.missingSince >= GESTURE_HOLD_MS) {
             tracking.candidate = null;
-            tracking.frames = 0;
+            tracking.candidateSince = 0;
             tracking.latched = null;
         }
         return;
     }
 
-    tracking.missing = 0;
+    tracking.missingSince = 0;
     if (tracking.candidate !== observed.type) {
         tracking.candidate = observed.type;
-        tracking.frames = 1;
+        tracking.candidateSince = now;
         return;
     }
-    tracking.frames++;
-    if (tracking.frames < 3 || tracking.latched === observed.type) {
+    if (now - tracking.candidateSince < GESTURE_HOLD_MS || tracking.latched === observed.type) {
         return;
     }
 
@@ -286,25 +309,51 @@ function publishGesture(observed) {
 }
 
 function trackPointer(result, observed) {
-    const hand = result && result.hand && result.hand[0];
-    const index = hand && hand.annotations && hand.annotations.index;
-    const point = index && index[index.length - 1];
+    const point = result?.landmarks?.[0]?.[8];
     const mapped = point && cameraPoint(point);
     const pointer = document.getElementById('gesture-pointer');
     if (!mapped) {
-        pointer.classList.remove('visible');
-        pointer.classList.remove('recognized');
-        pointer.dataset.gesture = 'TRACKING';
-        setPointerTarget(null);
+        if (++state.pointer.missing >= 3) {
+            pointer.classList.remove('visible');
+            pointer.classList.remove('recognized');
+            pointer.dataset.gesture = 'TRACKING';
+            state.pointer.position = null;
+            setPointerTarget(null);
+        }
         return;
     }
 
-    pointer.style.transform = `translate(${mapped.x}px, ${mapped.y}px)`;
+    state.pointer.missing = 0;
+    const position = smoothPointer(state.pointer.position, mapped);
+    state.pointer.position = position;
+    pointer.style.transform = `translate(${position.x}px, ${position.y}px)`;
     pointer.classList.add('visible');
     pointer.classList.toggle('recognized', Boolean(observed));
     pointer.dataset.gesture = observed ? observed.type.replace('PALM_', '') : 'TRACKING';
-    const hit = document.elementFromPoint(mapped.x, mapped.y);
-    setPointerTarget(hit && hit.closest(INTERACTIVE));
+    const hit = document.elementFromPoint(position.x, position.y);
+    trackPointerTarget(hit && hit.closest(INTERACTIVE));
+}
+
+function smoothPointer(previous, current) {
+    if (!previous) {
+        return current;
+    }
+    const alpha = Math.max(0.25, Math.min(0.7, pointDistance(previous, current) / 120));
+    return {
+        x: previous.x + (current.x - previous.x) * alpha,
+        y: previous.y + (current.y - previous.y) * alpha,
+    };
+}
+
+function trackPointerTarget(target) {
+    if (state.pointer.candidate !== target) {
+        state.pointer.candidate = target;
+        state.pointer.frames = 1;
+        return;
+    }
+    if (++state.pointer.frames >= 2) {
+        setPointerTarget(target);
+    }
 }
 
 function cameraPoint(point) {
@@ -341,73 +390,76 @@ function setPointerTarget(target) {
         state.pointer.target.classList.remove('gesture-target');
     }
     state.pointer.target = target;
+    state.pointer.candidate = target;
+    state.pointer.frames = 0;
     if (target) {
         target.classList.add('gesture-target');
     }
 }
 
 function recognizedHandGesture(result) {
-    const hand = result && result.hand && result.hand[0];
-    if (!hand || (hand.score || 0) < MIN_CONFIDENCE) {
+    const landmarks = result?.landmarks?.[0];
+    if (!landmarks || landmarks.length !== 21) {
         return null;
     }
 
-    const signals = (result.gesture || [])
-        .filter(value => value.hand === 0)
-        .map(value => value.gesture);
-    const fingersUp = signals.filter(value => /^(thumb|index|middle|ring|pinky) up$/.test(value));
-    const swipePose = isSwipePose(hand, signals);
+    const gesture = result.gestures?.[0]?.[0];
     let type = null;
-    if (swipePose) {
-        type = trackSwipe(hand);
+    if (isSwipePose(landmarks)) {
+        type = trackSwipe(landmarks);
         if (!type) {
             return null;
         }
     } else {
         resetSwipe();
-        if (hand.label === 'pinch' || hand.label === 'pinchtip') {
+        if (isPinch(landmarks)) {
             type = 'PINCH';
-        } else if (signals.includes('thumbs up')) {
-            type = 'THUMBS_UP';
-        } else if (signals.includes('victory')) {
-            type = 'VICTORY';
-        } else if (hand.label === 'point' || (fingersUp.length === 1 && fingersUp[0] === 'index up')) {
-            type = 'POINT';
-        } else if (hand.label === 'fist') {
-            type = 'FIST';
-        } else if (fingersUp.length >= 4) {
-            type = 'OPEN_PALM';
+        } else {
+            type = ({
+                Closed_Fist: 'FIST', Open_Palm: 'OPEN_PALM', Pointing_Up: 'POINT',
+                Thumb_Up: 'THUMBS_UP', Victory: 'VICTORY',
+            })[gesture?.categoryName] || null;
         }
     }
 
     return type ? {
         type,
-        handIndex: Number.isInteger(hand.id) ? hand.id : 0,
-        confidence: Number((hand.score || hand.fingerScore || 0).toFixed(3)),
+        handIndex: 0,
+        confidence: Number((gesture?.score || HAND_CONFIDENCE).toFixed(3)),
     } : null;
 }
 
-function isSwipePose(hand, signals) {
-    if (!fingerIsExtended(hand, signals, 'index') || !fingerIsExtended(hand, signals, 'middle')
-        || fingerIsExtended(hand, signals, 'ring') || fingerIsExtended(hand, signals, 'pinky')) {
-        return false;
-    }
-
-    const index = hand.annotations?.index;
-    const middle = hand.annotations?.middle;
-    const pinky = hand.annotations?.pinky;
-    if (!index?.length || !middle?.length || !pinky?.length) {
-        return false;
-    }
-
-    const palmWidth = pointDistance(index[0], pinky[0]);
-    const tipGap = pointDistance(index[index.length - 1], middle[middle.length - 1]);
-    return palmWidth > 0 && tipGap <= palmWidth * 0.8;
+function isSwipePose(points) {
+    const palmWidth = pointDistance(points[5], points[17]);
+    return fingerIsExtended(points, 5) && fingerIsExtended(points, 9)
+        && !fingerIsExtended(points, 13) && !fingerIsExtended(points, 17)
+        && palmWidth > 0 && pointDistance(points[8], points[12]) <= palmWidth * 0.55;
 }
 
-function fingerIsExtended(hand, signals, finger) {
-    const curl = hand.landmarks?.[finger]?.curl;
-    return curl ? curl === 'none' : signals.includes(finger + ' up');
+function isPinch(points) {
+    const palmWidth = pointDistance(points[5], points[17]);
+    return palmWidth > 0 && pointDistance(points[4], points[8]) <= palmWidth * 0.28
+        && !(fingerIsExtended(points, 9) && fingerIsExtended(points, 13)
+            && fingerIsExtended(points, 17));
+}
+
+function fingerIsExtended(points, base) {
+    return jointAngle(points[base], points[base + 1], points[base + 3]) > 155
+        && jointAngle(points[base + 1], points[base + 2], points[base + 3]) > 145
+        && pointDistance(points[0], points[base + 3]) > pointDistance(points[0], points[base + 1]) * 1.12;
+}
+
+function jointAngle(first, middle, last) {
+    const a = pointCoordinates(first);
+    const b = pointCoordinates(middle);
+    const c = pointCoordinates(last);
+    const ab = Math.hypot(a.x - b.x, a.y - b.y);
+    const cb = Math.hypot(c.x - b.x, c.y - b.y);
+    if (!ab || !cb) {
+        return 0;
+    }
+    const cosine = ((a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y)) / (ab * cb);
+    return Math.acos(Math.max(-1, Math.min(1, cosine))) * 180 / Math.PI;
 }
 
 function pointDistance(first, second) {
@@ -420,27 +472,28 @@ function pointCoordinates(point) {
     return Array.isArray(point) ? { x: point[0], y: point[1] } : point;
 }
 
-function trackSwipe(hand) {
-    const index = hand.annotations.index;
-    const middle = hand.annotations.middle;
-    const first = cameraPoint(index[index.length - 1]);
-    const second = cameraPoint(middle[middle.length - 1]);
+function trackSwipe(landmarks) {
+    const first = cameraPoint(landmarks[8]);
+    const second = cameraPoint(landmarks[12]);
     if (!first || !second) {
         resetSwipe();
         return null;
     }
 
-    const center = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+    const now = performance.now();
+    const center = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2, time: now };
     const swipe = state.gesture.swipe;
-    if (!swipe.origin) {
-        swipe.origin = center;
-        return null;
+    const previous = swipe.points[swipe.points.length - 1];
+    if (previous && (now - previous.time > 220
+        || pointDistance(previous, center) > Math.min(innerWidth, innerHeight) * 0.25)) {
+        resetSwipe();
     }
-    if (!swipe.direction) {
-        swipe.direction = swipeDirection(
-            center.x - swipe.origin.x,
-            center.y - swipe.origin.y,
-            Math.max(60, Math.min(innerWidth, innerHeight) * 0.08));
+    swipe.points.push(center);
+    swipe.points = swipe.points.filter(point => now - point.time <= 650);
+    const origin = swipe.points.find(point => now - point.time >= 80);
+    if (!swipe.direction && origin) {
+        swipe.direction = swipeDirection(center.x - origin.x, center.y - origin.y,
+            Math.max(80, Math.min(innerWidth, innerHeight) * 0.1));
     }
     return swipe.direction;
 }
@@ -449,14 +502,17 @@ function swipeDirection(dx, dy, threshold) {
     if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) {
         return null;
     }
-    if (Math.abs(dx) > Math.abs(dy)) {
+    if (Math.abs(dx) > Math.abs(dy) * 1.35) {
         return dx > 0 ? 'PALM_RIGHT' : 'PALM_LEFT';
     }
-    return dy > 0 ? 'PALM_DOWN' : 'PALM_UP';
+    if (Math.abs(dy) > Math.abs(dx) * 1.35) {
+        return dy > 0 ? 'PALM_DOWN' : 'PALM_UP';
+    }
+    return null;
 }
 
 function resetSwipe() {
-    state.gesture.swipe.origin = null;
+    state.gesture.swipe.points = [];
     state.gesture.swipe.direction = null;
 }
 
@@ -654,9 +710,9 @@ async function refreshWeather() {
         }
         const data = await response.json();
         document.getElementById('weather-now').textContent = degrees(data.current.temperature_2m);
-        document.getElementById('weather-sky').textContent = SKY[data.current.weather_code] || '';
-        document.getElementById('weather-range').textContent =
-            degrees(data.daily.temperature_2m_max[0]) + ' / ' + degrees(data.daily.temperature_2m_min[0]);
+        const sky = SKY[data.current.weather_code];
+        const range = degrees(data.daily.temperature_2m_max[0]) + ' / ' + degrees(data.daily.temperature_2m_min[0]);
+        document.getElementById('weather-detail').textContent = sky ? sky + ' · ' + range : range;
         block.hidden = false;
     } catch (_) {
         block.hidden = true;
@@ -1321,11 +1377,12 @@ function setAuthenticated(authenticated) {
     if (!authenticated) {
         if (changed) {
             Object.assign(state.gesture, {
-                candidate: null, frames: 0, missing: 0, latched: null,
+                candidate: null, candidateSince: 0, missingSince: 0, latched: null,
             });
             resetSwipe();
             stopVoiceInput();
             setPointerTarget(null);
+            Object.assign(state.pointer, { position: null, missing: 0 });
             document.getElementById('gesture-pointer').classList.remove('visible');
         }
         disconnectEvents();
@@ -1487,7 +1544,8 @@ async function deleteProfile(id) {
 
 function challengeDetector(type) {
     return result => type === 'VICTORY'
-        && (result.gesture || []).some(value => value.hand === 0 && value.gesture === 'victory');
+        && result?.gestures?.[0]?.some(value => value.categoryName === 'Victory'
+            && value.score >= HAND_CONFIDENCE);
 }
 
 function sleep(milliseconds) {
@@ -1526,7 +1584,7 @@ async function waitForChallenge(challenge) {
         if (state.recognitionVersion !== lastVersion) {
             lastVersion = state.recognitionVersion;
             const status = faceStatus(state.recognition);
-            consecutiveFrames = status.ready && detected(state.recognition) ? consecutiveFrames + 1 : 0;
+            consecutiveFrames = status.ready && detected(state.handResult) ? consecutiveFrames + 1 : 0;
             if (consecutiveFrames >= 3) {
                 return status.face;
             }

@@ -181,35 +181,17 @@ nav {
     text-align: right;
 }
 
+.clock,
 .weather-now {
-    font-size: clamp(2.2rem, 3.6vw, 3.2rem);
-    font-weight: 300;
-    line-height: 1;
-}
-
-.weather-sky {
-    color: var(--ink-dim);
-    font-size: 1.05rem;
-    font-weight: 500;
-    margin-top: 0.4rem;
-}
-
-.weather-range {
-    color: var(--ink-faint);
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-top: 0.25rem;
-    font-variant-numeric: tabular-nums;
-}
-
-.clock {
     font-size: clamp(4rem, 11vw, 10rem);
     font-weight: 300;
     line-height: 1;
     letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
 }
 
-.clock-date {
+.clock-date,
+.weather-detail {
     color: var(--ink-dim);
     font-size: 1.05rem;
     font-weight: 500;
