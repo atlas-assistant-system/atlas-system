@@ -3,8 +3,13 @@ const MIN_CONFIDENCE = 0.6;
 const MIN_FACE_SIZE = 224;
 const MAX_FACE_ANGLE = 0.45;
 const ENROLLMENT_SAMPLES = 3;
+const HAND_CONFIDENCE = 0.65;
 // ponytail: pinned CDN keeps this UI adapter small; serve the same assets locally for offline deployment.
 const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
+const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs';
+const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';
+const GESTURE_MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/'
+    + 'gesture_recognizer/float16/1/gesture_recognizer.task';
 
 const state = {
     authentication: null,
@@ -13,6 +18,9 @@ const state = {
     human: null,
     result: null,
     resultVersion: 0,
+    handRecognizer: null,
+    handResult: null,
+    handVideoTime: -1,
 };
 
 const dom = {
@@ -132,16 +140,25 @@ async function startCamera() {
                 liveness: { enabled: true },
             },
             body: { enabled: false },
-            hand: {
-                enabled: true, rotation: true, minConfidence: 0.55,
-                maxDetected: 1, landmarks: true,
-            },
+            hand: { enabled: false },
             object: { enabled: false },
             segmentation: { enabled: false },
-            gesture: { enabled: true },
+            gesture: { enabled: false },
         });
         await state.human.load();
         await state.human.warmup();
+        dom.cameraState.textContent = 'Cargando seguimiento de manos…';
+        const { FilesetResolver, GestureRecognizer } = await import(MEDIAPIPE);
+        const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM);
+        state.handRecognizer = await GestureRecognizer.createFromOptions(vision, {
+            baseOptions: { modelAssetPath: GESTURE_MODEL },
+            runningMode: 'VIDEO',
+            numHands: 1,
+            minHandDetectionConfidence: HAND_CONFIDENCE,
+            minHandPresenceConfidence: HAND_CONFIDENCE,
+            minTrackingConfidence: HAND_CONFIDENCE,
+            cannedGesturesClassifierOptions: { maxResults: 1, scoreThreshold: HAND_CONFIDENCE },
+        });
         state.cameraReady = true;
         dom.startCamera.hidden = true;
         detectLoop();
@@ -160,11 +177,14 @@ async function detectLoop() {
     }
     try {
         const sessionActive = Boolean(state.authentication?.activeSession);
-        state.result = await state.human.detect(dom.camera, {
-            face: { enabled: !sessionActive },
-            hand: { enabled: !sessionActive },
-        });
-        state.resultVersion++;
+        if (!sessionActive) {
+            state.result = await state.human.detect(dom.camera);
+            if (dom.camera.currentTime !== state.handVideoTime) {
+                state.handVideoTime = dom.camera.currentTime;
+                state.handResult = state.handRecognizer.recognizeForVideo(dom.camera, performance.now());
+            }
+            state.resultVersion++;
+        }
         dom.cameraState.textContent = sessionActive
             ? 'Procesamiento en pausa mientras la sesión está activa.'
             : faceStatus(state.result).reason;
@@ -254,12 +274,10 @@ async function deleteProfile(id) {
     }
 }
 
-function gestures(result) {
-    return (result.gesture || []).map(value => value.gesture);
-}
-
 function challengeDetector(type) {
-    return result => type === 'VICTORY' && gestures(result).includes('victory');
+    return result => type === 'VICTORY'
+        && result?.gestures?.[0]?.some(value => value.categoryName === 'Victory'
+            && value.score >= HAND_CONFIDENCE);
 }
 
 function sleep(milliseconds) {
@@ -298,7 +316,7 @@ async function waitForChallenge(challenge) {
         if (state.resultVersion !== lastVersion) {
             lastVersion = state.resultVersion;
             const status = faceStatus(state.result);
-            consecutiveFrames = status.ready && detected(state.result) ? consecutiveFrames + 1 : 0;
+            consecutiveFrames = status.ready && detected(state.handResult) ? consecutiveFrames + 1 : 0;
             if (consecutiveFrames >= 3) {
                 return status.face;
             }
