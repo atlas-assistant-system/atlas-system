@@ -367,7 +367,8 @@ nav {
 
 body:not(.locked) .access-lock,
 body.locked nav,
-body.locked .next-block,
+body.locked .agenda-block,
+body.locked .routines-block,
 body.locked #view-agenda,
 body.locked #view-rutinas,
 body.locked #panel,
@@ -376,11 +377,23 @@ body.locked #voice-control {
     display: none !important;
 }
 
-.next-block {
+.agenda-block {
     position: absolute;
     top: 18.5rem;
     left: 3.5rem;
     max-width: 34rem;
+}
+
+.agenda-block .plain-list {
+    margin-top: 1.6rem;
+}
+
+.routines-block {
+    position: absolute;
+    top: 18.5rem;
+    right: 3.5rem;
+    max-width: 24rem;
+    text-align: right;
 }
 
 .next-when {
