@@ -58,6 +58,11 @@ class ApplicationIT {
                 .doesNotContain("'/presence/");
             assertThat(get(client, base, "/assets/routines.js").body())
                 .contains("'/events/routines'");
+            var config = get(client, base, "/assets/config.js");
+            assertThat(config.statusCode()).isEqualTo(200);
+            assertThat(config.body()).contains("window.AtlasConfig")
+                .contains("latitude: 40.4168")
+                .contains("longitude: -3.7038");
 
             assertThat(get(client, base, "/appointments/upcoming?limit=1").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/authentication").statusCode()).isEqualTo(200);

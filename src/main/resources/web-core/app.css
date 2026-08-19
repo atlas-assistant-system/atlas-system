@@ -174,6 +174,34 @@ nav {
     margin-bottom: 0.6rem;
 }
 
+.weather {
+    position: absolute;
+    top: 1rem;
+    right: 3.5rem;
+    text-align: right;
+}
+
+.weather-now {
+    font-size: clamp(2.2rem, 3.6vw, 3.2rem);
+    font-weight: 300;
+    line-height: 1;
+}
+
+.weather-sky {
+    color: var(--ink-dim);
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin-top: 0.4rem;
+}
+
+.weather-range {
+    color: var(--ink-faint);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
 .clock {
     font-size: clamp(4rem, 11vw, 10rem);
     font-weight: 300;

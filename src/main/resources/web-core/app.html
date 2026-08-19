@@ -9,6 +9,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/dist/human.js"
             integrity="sha384-vASLsXJSh9FIgw41jM2fwBSF2MoEPlegwV4SO9G3NeyRMcWf7XjSdYvU6MlwOfQl"
             crossorigin="anonymous"></script>
+    <script defer src="/assets/config.js"></script>
     <script defer src="/assets/app.js"></script>
     <script defer src="/assets/routines.js"></script>
 </head>
@@ -25,6 +26,13 @@
 </nav>
 
 <main id="view-inicio" class="view">
+    <section id="weather" class="weather" hidden>
+        <p class="label">Tiempo</p>
+        <p id="weather-now" class="weather-now">--&deg;</p>
+        <p id="weather-sky" class="weather-sky"></p>
+        <p id="weather-range" class="weather-range"></p>
+    </section>
+
     <section class="clock-block">
         <p class="label">Hora</p>
         <p id="clock" class="clock">--:--</p>

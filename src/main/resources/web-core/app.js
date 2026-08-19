@@ -615,6 +615,54 @@ function stopVoiceInput() {
     state.voice = { recognition: null, target: null, listening: false };
 }
 
+const SKY = {
+    0: 'Despejado', 1: 'Casi despejado', 2: 'Parcialmente nublado', 3: 'Nublado',
+    45: 'Niebla', 48: 'Niebla helada',
+    51: 'Llovizna débil', 53: 'Llovizna', 55: 'Llovizna intensa',
+    56: 'Llovizna helada', 57: 'Llovizna helada intensa',
+    61: 'Lluvia débil', 63: 'Lluvia', 65: 'Lluvia intensa',
+    66: 'Lluvia helada', 67: 'Lluvia helada intensa',
+    71: 'Nieve débil', 73: 'Nieve', 75: 'Nieve intensa', 77: 'Granizo blando',
+    80: 'Chubascos', 81: 'Chubascos', 82: 'Chubascos fuertes',
+    85: 'Chubascos de nieve', 86: 'Chubascos de nieve',
+    95: 'Tormenta', 96: 'Tormenta con granizo', 99: 'Tormenta con granizo',
+};
+
+const WEATHER_REFRESH = 900000;
+
+function degrees(value) {
+    return Math.round(value) + '°';
+}
+
+async function refreshWeather() {
+    const place = window.AtlasConfig?.weather;
+    const block = document.getElementById('weather');
+    if (!place) {
+        return;
+    }
+
+    const url = 'https://api.open-meteo.com/v1/forecast'
+        + '?latitude=' + place.latitude + '&longitude=' + place.longitude
+        + '&current=temperature_2m,weather_code'
+        + '&daily=temperature_2m_max,temperature_2m_min'
+        + '&timezone=auto&forecast_days=1';
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+        const data = await response.json();
+        document.getElementById('weather-now').textContent = degrees(data.current.temperature_2m);
+        document.getElementById('weather-sky').textContent = SKY[data.current.weather_code] || '';
+        document.getElementById('weather-range').textContent =
+            degrees(data.daily.temperature_2m_max[0]) + ' / ' + degrees(data.daily.temperature_2m_min[0]);
+        block.hidden = false;
+    } catch (_) {
+        block.hidden = true;
+    }
+}
+
 function tickClock() {
     const now = new Date();
     document.getElementById('clock').textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
@@ -1564,6 +1612,8 @@ document.addEventListener('DOMContentLoaded', () => {
     startCamera();
     tickClock();
     setInterval(tickClock, 1000);
+    refreshWeather();
+    setInterval(refreshWeather, WEATHER_REFRESH);
     refreshAuthentication();
     setInterval(refreshAuthentication, 2000);
     setInterval(refreshAll, 60000);
