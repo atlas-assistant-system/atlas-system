@@ -1,5 +1,8 @@
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
+const MIN_FACE_SIZE = 224;
+const MAX_FACE_ANGLE = 0.45;
+const ENROLLMENT_SAMPLES = 3;
 // ponytail: pinned CDN keeps this UI adapter small; serve the same assets locally for offline deployment.
 const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
 
@@ -9,6 +12,7 @@ const state = {
     cameraReady: false,
     human: null,
     result: null,
+    resultVersion: 0,
 };
 
 const dom = {
@@ -73,8 +77,12 @@ function faceStatus(result) {
 
     const face = result.face[0];
     const confidence = face.faceScore || face.boxScore || 0;
-    if (confidence < MIN_CONFIDENCE || Math.min(face.box[2], face.box[3]) < 160) {
+    if (confidence < MIN_CONFIDENCE || Math.min(face.box[2], face.box[3]) < MIN_FACE_SIZE) {
         return { ready: false, reason: 'Acércate un poco y mira hacia la cámara.' };
+    }
+    const angle = face.rotation?.angle;
+    if (angle && Math.max(Math.abs(angle.yaw), Math.abs(angle.pitch), Math.abs(angle.roll)) > MAX_FACE_ANGLE) {
+        return { ready: false, reason: 'Mira de frente a la cámara.' };
     }
     if (!face.embedding || face.embedding.length === 0) {
         return { ready: false, reason: 'Calculando la firma facial…' };
@@ -105,22 +113,29 @@ async function startCamera() {
         dom.cameraState.textContent = 'Cargando modelos faciales…';
         state.human = new window.Human.Human({
             backend: 'webgl',
-            cacheSensitivity: 0.01,
+            async: true,
+            cacheSensitivity: 0,
             debug: false,
             modelBasePath: HUMAN_MODELS,
-            filter: { enabled: true, equalization: true },
+            filter: { enabled: true, autoBrightness: true, equalization: false },
             face: {
                 enabled: true,
-                detector: { rotation: true, return: false, maxDetected: 1 },
+                detector: {
+                    rotation: true, return: false, maxDetected: 2,
+                    minConfidence: MIN_CONFIDENCE, minSize: MIN_FACE_SIZE,
+                },
                 mesh: { enabled: true },
-                iris: { enabled: true },
+                iris: { enabled: false },
                 description: { enabled: true },
-                emotion: { enabled: true },
+                emotion: { enabled: false },
                 antispoof: { enabled: true },
                 liveness: { enabled: true },
             },
             body: { enabled: false },
-            hand: { enabled: true, maxDetected: 1, landmarks: true },
+            hand: {
+                enabled: true, rotation: true, minConfidence: 0.55,
+                maxDetected: 1, landmarks: true,
+            },
             object: { enabled: false },
             segmentation: { enabled: false },
             gesture: { enabled: true },
@@ -144,12 +159,19 @@ async function detectLoop() {
         return;
     }
     try {
-        state.result = await state.human.detect(dom.camera);
-        dom.cameraState.textContent = faceStatus(state.result).reason;
+        const sessionActive = Boolean(state.authentication?.activeSession);
+        state.result = await state.human.detect(dom.camera, {
+            face: { enabled: !sessionActive },
+            hand: { enabled: !sessionActive },
+        });
+        state.resultVersion++;
+        dom.cameraState.textContent = sessionActive
+            ? 'Procesamiento en pausa mientras la sesión está activa.'
+            : faceStatus(state.result).reason;
     } catch (error) {
         dom.cameraState.textContent = 'Error procesando la imagen.';
     }
-    setTimeout(detectLoop, 80);
+    requestAnimationFrame(detectLoop);
 }
 
 async function refresh() {
@@ -192,23 +214,25 @@ async function refreshProfiles() {
 }
 
 async function enroll() {
-    const status = faceStatus(state.result);
-    if (!status.ready) {
-        setFeedback(status.reason, true);
-        return;
-    }
-
     state.busy = true;
     updateActions();
-    setFeedback('Registrando rostro…');
     try {
-        await send('/profiles', {
+        const descriptors = await captureFaceDescriptors(ENROLLMENT_SAMPLES,
+            count => setFeedback(`Capturando rostro ${count}/${ENROLLMENT_SAMPLES}…`));
+        const profile = await send('/profiles', {
             displayName: dom.displayName.value.trim(),
             modelVersion: MODEL_VERSION,
-            descriptor: Array.from(status.face.embedding),
+            descriptor: descriptors[0],
         });
+        let captures = 1;
+        for (const descriptor of descriptors.slice(1)) {
+            try {
+                await send(`/profiles/${profile.id}/templates`, { modelVersion: MODEL_VERSION, descriptor });
+                captures++;
+            } catch (_) {}
+        }
         dom.displayName.value = '';
-        setFeedback('Rostro registrado. Reinicia Presence sin --maintenance para usarlo.');
+        setFeedback(`Rostro registrado con ${captures} capturas. Reinicia Presence sin --maintenance.`);
         await refresh();
     } catch (error) {
         setFeedback(message(error), true);
@@ -242,17 +266,44 @@ function sleep(milliseconds) {
     return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
+async function captureFaceDescriptors(count, onCapture) {
+    const descriptors = [];
+    let lastVersion = -1;
+    const expiresAt = Date.now() + 10000;
+    while (descriptors.length < count && Date.now() < expiresAt) {
+        if (state.resultVersion !== lastVersion) {
+            lastVersion = state.resultVersion;
+            const status = faceStatus(state.result);
+            if (status.ready) {
+                descriptors.push(Array.from(status.face.embedding));
+                onCapture(descriptors.length);
+            }
+        }
+        await sleep(60);
+    }
+    if (descriptors.length < count) {
+        throw new Error('Mantén el rostro centrado y bien iluminado durante unos segundos.');
+    }
+    return descriptors;
+}
+
 async function waitForChallenge(challenge) {
     const detected = challengeDetector(challenge.type);
     const expiresAt = Date.parse(challenge.expiresAt);
+    let consecutiveFrames = 0;
+    let lastVersion = -1;
     while (Date.now() < expiresAt) {
         const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
         dom.challengeTime.textContent = `${remaining} s`;
-        const status = faceStatus(state.result);
-        if (status.ready && detected(state.result)) {
-            return status.face;
+        if (state.resultVersion !== lastVersion) {
+            lastVersion = state.resultVersion;
+            const status = faceStatus(state.result);
+            consecutiveFrames = status.ready && detected(state.result) ? consecutiveFrames + 1 : 0;
+            if (consecutiveFrames >= 3) {
+                return status.face;
+            }
         }
-        await sleep(80);
+        await sleep(60);
     }
     throw { message: 'El desafío ha caducado. Inténtalo de nuevo.' };
 }

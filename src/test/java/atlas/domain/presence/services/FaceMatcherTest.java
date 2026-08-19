@@ -31,7 +31,7 @@ class FaceMatcherTest {
 
     @Test
     void shouldPickTheTemplateWithTheHighestSimilarity() {
-        var enrolled = List.of(template(1, 0.0f, 1.0f), template(2, 1.0f, 1.0f), template(3, 2.0f, 0.0f));
+        var enrolled = List.of(template(1, 20.0f, 0.0f), template(2, 9.0f, 0.0f), template(3, 1.0f, 0.0f));
 
         var match = matcher.bestMatch(CANDIDATE, enrolled, MatchThreshold.of(0.6));
 
@@ -43,7 +43,7 @@ class FaceMatcherTest {
 
     @Test
     void shouldMatchWhenTheBestScoreEqualsTheThresholdExactly() {
-        var enrolled = List.of(template(1, 3.0f, 4.0f));
+        var enrolled = List.of(template(1, 9.8f, 0.0f));
 
         var match = matcher.bestMatch(CANDIDATE, enrolled, MatchThreshold.of(0.6));
 
@@ -55,7 +55,7 @@ class FaceMatcherTest {
 
     @Test
     void shouldFindNoMatchWhenTheBestScoreIsJustBelowTheThreshold() {
-        var enrolled = List.of(template(1, 3.0f, 4.0f));
+        var enrolled = List.of(template(1, 9.9f, 0.0f));
 
         var match = matcher.bestMatch(CANDIDATE, enrolled, MatchThreshold.of(0.601));
 

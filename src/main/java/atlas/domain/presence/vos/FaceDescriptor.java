@@ -52,27 +52,27 @@ public record FaceDescriptor(ModelVersion modelVersion, float[] values) implemen
         return modelVersion.equals(other.modelVersion) && values.length == other.values.length;
     }
 
-    public SimilarityScore cosineSimilarity(FaceDescriptor other) {
+    public SimilarityScore similarity(FaceDescriptor other) {
         if (!isComparableWith(other)) {
             throw GuardException.forParameter("other", "must share model version and dimension");
         }
 
-        var dotProduct = 0.0;
-        var normSquared = 0.0;
-        var otherNormSquared = 0.0;
+        var squaredDistance = 0.0;
         for (var i = 0; i < values.length; i++) {
-            dotProduct += (double) values[i] * other.values[i];
-            normSquared += (double) values[i] * values[i];
-            otherNormSquared += (double) other.values[i] * other.values[i];
+            var difference = (double) values[i] - other.values[i];
+            squaredDistance += difference * difference;
         }
 
-        if (normSquared == 0.0 || otherNormSquared == 0.0) {
-            return SimilarityScore.of(0.0);
+        if (squaredDistance == 0.0) {
+            return SimilarityScore.of(1.0);
         }
 
-        var cosine = dotProduct / (Math.sqrt(normSquared) * Math.sqrt(otherNormSquared));
+        // Human 3.3.6 normalizes Euclidean descriptor distance into its public similarity score.
+        var distance = Math.round(100.0 * 25.0 * squaredDistance) / 100.0;
+        var normalized = (1.0 - Math.sqrt(distance) / 100.0 - 0.2) / (0.8 - 0.2);
+        var score = Math.round(100.0 * Math.clamp(normalized, 0.0, 1.0)) / 100.0;
 
-        return SimilarityScore.of(Math.clamp(cosine, SimilarityScore.MIN_VALUE, SimilarityScore.MAX_VALUE));
+        return SimilarityScore.of(score);
     }
 
     @Override

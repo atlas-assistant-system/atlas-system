@@ -2,7 +2,6 @@ package atlas.domain.presence.vos;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.within;
 
 import atlas.domain.presence.PresenceErrors;
 import atlas.domain.sharedkernel.exceptions.GuardException;
@@ -141,40 +140,31 @@ class FaceDescriptorTest {
         var descriptor = FaceDescriptor.of(MODEL, new float[]{1f, 2f, 3f});
         var identical = FaceDescriptor.of(MODEL, new float[]{1f, 2f, 3f});
 
-        assertThat(descriptor.cosineSimilarity(identical).value()).isCloseTo(1.0, within(1e-9));
+        assertThat(descriptor.similarity(identical).value()).isEqualTo(1.0);
     }
 
     @Test
-    void shouldScoreZeroWhenVectorsAreOrthogonal() {
+    void shouldUseHumansNormalizedEuclideanSimilarity() {
         var descriptor = FaceDescriptor.of(MODEL, new float[]{1f, 0f});
-        var orthogonal = FaceDescriptor.of(MODEL, new float[]{0f, 1f});
+        var candidate = FaceDescriptor.of(MODEL, new float[]{9.8f, 0f});
 
-        assertThat(descriptor.cosineSimilarity(orthogonal).value()).isEqualTo(0.0);
+        assertThat(descriptor.similarity(candidate).value()).isEqualTo(0.6);
     }
 
     @Test
-    void shouldClampToZeroWhenVectorsAreOpposite() {
-        var descriptor = FaceDescriptor.of(MODEL, new float[]{1f, 0f});
-        var opposite = FaceDescriptor.of(MODEL, new float[]{-1f, 0f});
-
-        assertThat(descriptor.cosineSimilarity(opposite).value()).isEqualTo(0.0);
-    }
-
-    @Test
-    void shouldScoreZeroWhenAVectorHasZeroNorm() {
+    void shouldClampLargeDistancesToZero() {
         var descriptor = FaceDescriptor.of(MODEL, new float[]{0f, 0f});
-        var candidate = FaceDescriptor.of(MODEL, new float[]{1f, 0f});
+        var distant = FaceDescriptor.of(MODEL, new float[]{20f, 0f});
 
-        assertThat(descriptor.cosineSimilarity(candidate).value()).isEqualTo(0.0);
-        assertThat(candidate.cosineSimilarity(descriptor).value()).isEqualTo(0.0);
+        assertThat(descriptor.similarity(distant).value()).isEqualTo(0.0);
     }
 
     @Test
-    void shouldComputeCosineForKnownVectors() {
-        var descriptor = FaceDescriptor.of(MODEL, new float[]{1f, 0f});
-        var candidate = FaceDescriptor.of(MODEL, new float[]{1f, 1f});
+    void shouldBeSymmetric() {
+        var descriptor = FaceDescriptor.of(MODEL, new float[]{1f, 2f});
+        var candidate = FaceDescriptor.of(MODEL, new float[]{7f, 9f});
 
-        assertThat(descriptor.cosineSimilarity(candidate).value()).isCloseTo(0.7071067811865475, within(1e-12));
+        assertThat(descriptor.similarity(candidate)).isEqualTo(candidate.similarity(descriptor));
     }
 
     @Test
@@ -182,7 +172,7 @@ class FaceDescriptorTest {
         var descriptor = FaceDescriptor.of(MODEL, new float[]{1f, 0f});
         var candidate = FaceDescriptor.of(OTHER_MODEL, new float[]{1f, 0f});
 
-        assertThatThrownBy(() -> descriptor.cosineSimilarity(candidate)).isInstanceOf(GuardException.class);
+        assertThatThrownBy(() -> descriptor.similarity(candidate)).isInstanceOf(GuardException.class);
     }
 
     @Test
@@ -190,6 +180,6 @@ class FaceDescriptorTest {
         var descriptor = FaceDescriptor.of(MODEL, new float[]{1f, 0f});
         var candidate = FaceDescriptor.of(MODEL, new float[]{1f, 0f, 0f});
 
-        assertThatThrownBy(() -> descriptor.cosineSimilarity(candidate)).isInstanceOf(GuardException.class);
+        assertThatThrownBy(() -> descriptor.similarity(candidate)).isInstanceOf(GuardException.class);
     }
 }

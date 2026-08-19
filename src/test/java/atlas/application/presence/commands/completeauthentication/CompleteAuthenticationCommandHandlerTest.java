@@ -162,7 +162,7 @@ class CompleteAuthenticationCommandHandlerTest {
         when(challenges.get(CHALLENGE_ID)).thenReturn(Optional.of(challenge()));
         when(profiles.getAll()).thenReturn(List.of(profile()));
 
-        var result = handlerAt(AUTHENTICATED_AT).handle(validCommand(new float[]{0.0f, 1.0f}));
+        var result = handlerAt(AUTHENTICATED_AT).handle(validCommand(new float[]{20.0f, 20.0f}));
 
         assertThat(result.error()).isEqualTo(PresenceErrors.VERIFICATION_NO_MATCH);
         assertThat(gate.failedAttempts()).isEqualTo(1);

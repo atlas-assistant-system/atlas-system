@@ -23,7 +23,7 @@ public final class FaceMatcher {
 
         return enrolled.stream()
             .filter(template -> template.descriptor().isComparableWith(candidate))
-            .map(template -> Match.of(template.id(), candidate.cosineSimilarity(template.descriptor())))
+            .map(template -> Match.of(template.id(), candidate.similarity(template.descriptor())))
             .max(Comparator.comparing(match -> match.score().value()))
             .filter(match -> match.score().meets(threshold));
     }
