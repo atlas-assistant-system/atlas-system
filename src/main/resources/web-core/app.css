@@ -367,8 +367,7 @@ nav {
 
 body:not(.locked) .access-lock,
 body.locked nav,
-body.locked .agenda-block,
-body.locked .routines-block,
+body.locked .home-blocks,
 body.locked #view-agenda,
 body.locked #view-rutinas,
 body.locked #panel,
@@ -377,7 +376,7 @@ body.locked #voice-control {
     display: none !important;
 }
 
-.agenda-block {
+.home-blocks {
     position: absolute;
     top: 18.5rem;
     left: 3.5rem;
@@ -389,11 +388,7 @@ body.locked #voice-control {
 }
 
 .routines-block {
-    position: absolute;
-    top: 18.5rem;
-    right: 3.5rem;
-    max-width: 24rem;
-    text-align: right;
+    margin-top: 2.5rem;
 }
 
 .next-when {
