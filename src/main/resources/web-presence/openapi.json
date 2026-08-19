@@ -1,0 +1,87 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "Presence API", "version": "1.0.0", "description": "Autenticación biométrica local con detección de vida."},
+  "servers": [{"url": "/"}],
+  "paths": {
+    "/authentication": {
+      "get": {"summary": "Estado de autenticación", "responses": {"200": {"description": "Estado actual", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AuthenticationState"}}}}}}
+    },
+    "/authentication/challenges": {
+      "post": {"summary": "Emite un desafío de vida", "responses": {"201": {"description": "Desafío emitido", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Challenge"}}}}, "409": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/authentication/challenges/{challengeId}/complete": {
+      "post": {
+        "summary": "Completa la autenticación",
+        "parameters": [{"$ref": "#/components/parameters/ChallengeId"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CompleteAuthentication"}}}},
+        "responses": {"200": {"description": "Sesión abierta", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Session"}}}}, "401": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/authentication/attempts": {
+      "get": {"summary": "Auditoría de intentos", "parameters": [{"$ref": "#/components/parameters/Page"}, {"$ref": "#/components/parameters/PageSize"}], "responses": {"200": {"description": "Página de intentos"}, "401": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/profiles": {
+      "get": {"summary": "Lista perfiles", "responses": {"200": {"description": "Perfiles"}, "401": {"$ref": "#/components/responses/Error"}}},
+      "post": {
+        "summary": "Enrola un perfil",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnrollProfile"}}}},
+        "responses": {"201": {"description": "Perfil enrolado", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Profile"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/profiles/{id}": {
+      "get": {"summary": "Obtiene un perfil", "parameters": [{"$ref": "#/components/parameters/ProfileId"}], "responses": {"200": {"description": "Perfil"}, "404": {"$ref": "#/components/responses/Error"}}},
+      "delete": {"summary": "Borra un perfil", "parameters": [{"$ref": "#/components/parameters/ProfileId"}], "responses": {"204": {"description": "Borrado"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/profiles/{id}/templates": {
+      "post": {
+        "summary": "Añade una plantilla facial",
+        "parameters": [{"$ref": "#/components/parameters/ProfileId"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/FaceSample"}}}},
+        "responses": {"200": {"description": "Perfil actualizado"}, "409": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/profiles/{id}/templates/{templateId}": {
+      "delete": {"summary": "Elimina una plantilla facial", "parameters": [{"$ref": "#/components/parameters/ProfileId"}, {"name": "templateId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}], "responses": {"204": {"description": "Eliminada"}, "409": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/sessions/active": {
+      "get": {"summary": "Obtiene la sesión activa", "responses": {"200": {"description": "Sesión o null"}}}
+    },
+    "/sessions/{id}/refresh": {
+      "post": {"summary": "Refresca una sesión", "parameters": [{"$ref": "#/components/parameters/SessionId"}], "responses": {"200": {"description": "Sesión refrescada"}, "401": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/sessions/{id}": {
+      "delete": {"summary": "Cierra una sesión", "parameters": [{"$ref": "#/components/parameters/SessionId"}], "responses": {"204": {"description": "Cerrada"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/interactions/gestures": {
+      "post": {
+        "summary": "Publica un gesto de mano; VICTORY cierra la sesión",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/HandGesture"}}}},
+        "responses": {"204": {"description": "Gesto publicado por SSE"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/events": {
+      "get": {"summary": "Eventos SSE de sesión y gestos", "responses": {"200": {"description": "text/event-stream"}}}
+    }
+  },
+  "components": {
+    "parameters": {
+      "ProfileId": {"name": "id", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^B[0-9]{8}$"}},
+      "SessionId": {"name": "id", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^S[0-9]{8}$"}},
+      "ChallengeId": {"name": "challengeId", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^L[0-9]{8}$"}},
+      "Page": {"name": "page", "in": "query", "schema": {"type": "integer", "minimum": 1, "default": 1}},
+      "PageSize": {"name": "pageSize", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}}
+    },
+    "responses": {"Error": {"description": "Error", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}},
+    "schemas": {
+      "FaceSample": {"type": "object", "required": ["modelVersion", "descriptor"], "properties": {"modelVersion": {"type": "string"}, "descriptor": {"type": "array", "minItems": 1, "items": {"type": "number", "format": "float"}}}},
+      "EnrollProfile": {"allOf": [{"$ref": "#/components/schemas/FaceSample"}, {"type": "object", "required": ["displayName"], "properties": {"displayName": {"type": "string", "maxLength": 60}}}]},
+      "CompleteAuthentication": {"allOf": [{"$ref": "#/components/schemas/FaceSample"}, {"type": "object", "required": ["observedType", "nonce", "capturedAt"], "properties": {"observedType": {"type": "string", "enum": ["VICTORY"]}, "nonce": {"type": "string"}, "capturedAt": {"type": "string", "format": "date-time"}}}]},
+      "Challenge": {"type": "object", "properties": {"challengeId": {"type": "string"}, "type": {"type": "string"}, "nonce": {"type": "string"}, "expiresAt": {"type": "string", "format": "date-time"}}},
+      "Session": {"type": "object", "properties": {"id": {"type": "string"}, "profileId": {"type": "string"}, "openedAt": {"type": "string", "format": "date-time"}, "lastActivityAt": {"type": "string", "format": "date-time"}, "expiresAt": {"type": "string", "format": "date-time"}, "status": {"type": "string"}}},
+      "Profile": {"type": "object", "properties": {"id": {"type": "string"}, "displayName": {"type": "string"}, "modelVersion": {"type": "string"}, "templateCount": {"type": "integer"}, "templates": {"type": "array", "items": {"type": "object"}}}},
+      "AuthenticationState": {"type": "object", "properties": {"failedAttempts": {"type": "integer"}, "enrolledProfiles": {"type": "integer"}, "activeSession": {"allOf": [{"$ref": "#/components/schemas/Session"}], "nullable": true}, "maintenanceMode": {"type": "boolean"}}},
+      "HandGesture": {"type": "object", "required": ["type", "handIndex", "confidence", "observedAt"], "properties": {"type": {"type": "string", "enum": ["FIST", "OPEN_PALM", "PALM_DOWN", "PALM_LEFT", "PALM_RIGHT", "PALM_UP", "PINCH", "POINT", "THUMBS_UP", "VICTORY"]}, "handIndex": {"type": "integer", "minimum": 0}, "confidence": {"type": "number", "minimum": 0, "maximum": 1}, "observedAt": {"type": "string", "format": "date-time"}}},
+      "Error": {"type": "object", "properties": {"status": {"type": "integer"}, "code": {"type": "string"}, "message": {"type": "string"}, "correlationId": {"type": "string"}}}
+    }
+  }
+}

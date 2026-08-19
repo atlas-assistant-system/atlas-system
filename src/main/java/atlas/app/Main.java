@@ -1,7 +1,9 @@
 package atlas.app;
 
+import atlas.app.presence.PresenceSettings;
 import java.io.IOException;
 import java.lang.System.Logger.Level;
+import java.time.Clock;
 import java.util.logging.LogManager;
 import sharedkernel.infrastructure.console.StartupBanner;
 import sharedkernel.infrastructure.logging.LogEntryRenderers;
@@ -15,7 +17,10 @@ public final class Main {
     public static void main(String[] args) throws IOException {
         configureLogging();
 
-        var application = Application.wire(LogEntryRenderers.forCurrentConsole()).start(DEFAULT_PORT);
+        var application = Application
+            .wire(LogEntryRenderers.forCurrentConsole(), PresenceSettings.fromEnvironment(args),
+                Clock.systemDefaultZone())
+            .start(DEFAULT_PORT);
 
         Runtime.getRuntime().addShutdownHook(new Thread(application::stop));
 

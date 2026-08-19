@@ -20,12 +20,13 @@ java {
 dependencies {
     implementation("dev.sharedkernel:sharedkernel:0.19.0")
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
+    implementation("com.fasterxml.jackson.jr:jackson-jr-objects:2.22.2")
 
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.26.3")
-    testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("dev.sharedkernel:sharedkernel-archunit:0.2.0")
 }
 
@@ -37,7 +38,8 @@ application {
         "-Xmx96m",
         "-Xss256k",
         "-XX:+UseSerialGC",
-        "-XX:MaxMetaspaceSize=64m")
+        "-XX:MaxMetaspaceSize=64m",
+        "--enable-native-access=org.xerial.sqlitejdbc")
 }
 
 spotless {

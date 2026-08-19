@@ -1,0 +1,251 @@
+:root {
+    color-scheme: dark;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    background: #07111f;
+    color: #e7eef8;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top right, #183b62 0, #07111f 45%);
+}
+
+main {
+    width: min(1050px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 56px 0;
+}
+
+header {
+    max-width: 760px;
+    margin-bottom: 32px;
+}
+
+.eyebrow {
+    color: #60d9c8;
+    font: 700 12px/1.2 ui-monospace, monospace;
+    letter-spacing: .18em;
+}
+
+h1 {
+    margin: 10px 0;
+    font-size: clamp(2.5rem, 7vw, 5.4rem);
+    line-height: .95;
+    letter-spacing: -.055em;
+}
+
+h2 {
+    margin: 0 0 16px;
+    font-size: .8rem;
+    color: #9db1c9;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+}
+
+header > p:not(.eyebrow), .status, li {
+    color: #9db1c9;
+    line-height: 1.55;
+}
+
+nav, .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+a, button {
+    border: 1px solid #36536f;
+    border-radius: 999px;
+    padding: 10px 16px;
+    color: #e7eef8;
+    background: #10243a;
+    text-decoration: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+a:hover, button:hover:not(:disabled) {
+    border-color: #60d9c8;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: .45;
+}
+
+button.secondary, button.quiet {
+    background: transparent;
+}
+
+.button-link {
+    background: #167467;
+    border-color: #60d9c8;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+article {
+    min-height: 230px;
+    padding: 24px;
+    border: 1px solid #203950;
+    border-radius: 18px;
+    background: rgb(9 25 42 / 86%);
+    box-shadow: 0 24px 70px rgb(0 0 0 / 22%);
+}
+
+.wide {
+    grid-column: 1 / -1;
+}
+
+.camera-card {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(230px, 1fr);
+    gap: 24px;
+}
+
+.camera-stage {
+    position: relative;
+    min-height: 360px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #03080d;
+}
+
+#camera {
+    width: 100%;
+    height: 100%;
+    min-height: 360px;
+    object-fit: cover;
+    transform: scaleX(-1);
+}
+
+.face-guide {
+    position: absolute;
+    inset: 12% 30%;
+    border: 2px solid rgb(96 217 200 / 75%);
+    border-radius: 50%;
+    box-shadow: 0 0 0 999px rgb(0 0 0 / 22%);
+    pointer-events: none;
+}
+
+.camera-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.challenge {
+    margin-top: 18px;
+    padding: 18px;
+    border-left: 3px solid #60d9c8;
+    background: #10243a;
+}
+
+.challenge span, .challenge small {
+    display: block;
+    color: #9db1c9;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+}
+
+.challenge strong {
+    display: block;
+    margin: 6px 0;
+    font-size: 1.25rem;
+}
+
+.feedback {
+    min-height: 24px;
+    color: #60d9c8;
+    line-height: 1.45;
+}
+
+.feedback.error {
+    color: #ff9f9f;
+}
+
+label {
+    display: block;
+    margin: 18px 0 6px;
+    color: #9db1c9;
+    font-size: .8rem;
+}
+
+input {
+    width: 100%;
+    margin-bottom: 14px;
+    border: 1px solid #36536f;
+    border-radius: 10px;
+    padding: 11px 12px;
+    background: #07111f;
+    color: #e7eef8;
+    font: inherit;
+}
+
+.profiles {
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.profiles li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid #203950;
+}
+
+button.quiet {
+    padding: 5px 10px;
+    font-size: .75rem;
+}
+
+ol {
+    margin: 0;
+    padding-left: 22px;
+}
+
+pre {
+    min-height: 70px;
+    max-height: 150px;
+    overflow: auto;
+    white-space: pre-wrap;
+    color: #b8c8da;
+    font: 13px/1.6 ui-monospace, monospace;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 760px) {
+    main {
+        padding-top: 32px;
+    }
+
+    .grid, .camera-card {
+        grid-template-columns: 1fr;
+    }
+
+    .wide {
+        grid-column: auto;
+    }
+
+    .camera-stage, #camera {
+        min-height: 280px;
+    }
+}

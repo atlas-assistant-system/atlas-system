@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Presence</title>
+    <link rel="stylesheet" href="/app.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/dist/human.js"
+            integrity="sha384-vASLsXJSh9FIgw41jM2fwBSF2MoEPlegwV4SO9G3NeyRMcWf7XjSdYvU6MlwOfQl"
+            crossorigin="anonymous"></script>
+    <script defer src="/app.js"></script>
+</head>
+<body>
+<main>
+    <header>
+        <p class="eyebrow">ATLAS / PRESENCE</p>
+        <h1>Te reconoce y te entiende.</h1>
+        <p>Autenticaci&oacute;n facial local con prueba de vida.</p>
+        <nav><a href="/docs">API interactiva</a><a href="/openapi.json">OpenAPI</a></nav>
+    </header>
+
+    <section class="grid">
+        <article class="camera-card wide">
+            <div class="camera-stage">
+                <video id="camera" autoplay playsinline muted></video>
+                <div class="face-guide" aria-hidden="true"></div>
+            </div>
+            <div class="camera-controls">
+                <h2>C&aacute;mara</h2>
+                <p id="camera-state" class="status" aria-live="polite">Activa la c&aacute;mara para comenzar.</p>
+                <button id="start-camera" type="button">Activar c&aacute;mara</button>
+            </div>
+        </article>
+
+        <article>
+            <h2>Acceso</h2>
+            <p id="session-state" class="status" aria-live="polite">Consultando estado&hellip;</p>
+            <div id="challenge" class="challenge" hidden>
+                <span>Prueba de vida</span>
+                <strong id="challenge-instruction"></strong>
+                <small id="challenge-time"></small>
+            </div>
+            <div class="actions">
+                <button id="authenticate" type="button" disabled>Autenticarme</button>
+                <button id="close-session" class="secondary" type="button" hidden>Cerrar sesi&oacute;n</button>
+                <a id="open-agenda" class="button-link" href="http://localhost:8080" hidden>Abrir Agenda</a>
+            </div>
+            <p id="feedback" class="feedback" aria-live="assertive"></p>
+        </article>
+
+        <article id="enrollment-card" hidden>
+            <h2>Modo mantenimiento</h2>
+            <p class="status">Registra el rostro que podr&aacute; abrir la sesi&oacute;n.</p>
+            <label for="display-name">Nombre</label>
+            <input id="display-name" maxlength="60" autocomplete="name" placeholder="Tu nombre">
+            <button id="enroll" type="button" disabled>Registrar rostro actual</button>
+            <ul id="profiles" class="profiles"></ul>
+        </article>
+
+        <article id="setup-card">
+            <h2>Preparaci&oacute;n</h2>
+            <ol>
+                <li>Activa la c&aacute;mara y mira de frente.</li>
+                <li>Si es el primer uso, registra tu rostro en modo mantenimiento.</li>
+                <li>Pulsa <em>Autenticarme</em> e introduce el c&oacute;digo gestual.</li>
+                <li>Abre Agenda cuando la sesi&oacute;n est&eacute; activa.</li>
+            </ol>
+        </article>
+
+        <article class="wide events-card">
+            <h2>Eventos de sesi&oacute;n</h2>
+            <pre id="events">Conectando&hellip;</pre>
+        </article>
+    </section>
+</main>
+</body>
+</html>

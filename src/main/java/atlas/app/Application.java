@@ -1,96 +1,53 @@
 package atlas.app;
 
+import atlas.app.presence.PresenceApplication;
+import atlas.app.presence.PresenceSettings;
 import java.io.IOException;
-import sharedkernel.application.cqrs.SimpleCommandBus;
-import sharedkernel.application.cqrs.SimpleQueryBus;
-import sharedkernel.application.events.SimpleDomainEventPublisher;
+import java.time.Clock;
 import sharedkernel.application.logging.LogEntryRenderer;
-import sharedkernel.presentation.http.Router;
-import sharedkernel.presentation.http.SseEndpoint;
 import sharedkernel.presentation.http.WebServer;
-import sharedkernel.presentation.sse.SseHub;
 
 public final class Application {
 
     public static final String EVENT_STREAM_PATH = "/events";
 
-    private final SimpleCommandBus commands;
-    private final SimpleQueryBus queries;
-    private final SimpleDomainEventPublisher events;
-    private final SseHub hub;
-    private final Router router;
+    private final PresenceApplication presence;
 
     private WebServer server;
 
-    private Application(
-        SimpleCommandBus commands,
-        SimpleQueryBus queries,
-        SimpleDomainEventPublisher events,
-        SseHub hub,
-        Router router) {
-        this.commands = commands;
-        this.queries = queries;
-        this.events = events;
-        this.hub = hub;
-        this.router = router;
+    private Application(PresenceApplication presence) {
+        this.presence = presence;
     }
 
-    public static Application wire(LogEntryRenderer renderer) {
-        var events = new SimpleDomainEventPublisher();
-        var commands = new SimpleCommandBus();
-        var queries = new SimpleQueryBus();
-        var hub = new SseHub();
-
-        registerHandlers(commands, queries, events, renderer);
-
-        return new Application(commands, queries, events, hub, routes(commands, queries));
+    public static Application wire(LogEntryRenderer renderer, PresenceSettings presenceSettings, Clock clock) {
+        return new Application(PresenceApplication.wire(renderer, presenceSettings, clock));
     }
 
     public Application start(int port) throws IOException {
         server = WebServer
             .onLoopback(port)
-            .mount("/", router)
-            .mount(EVENT_STREAM_PATH, new SseEndpoint(hub))
+            .mount("/", presence.router())
+            .mount(EVENT_STREAM_PATH, presence.eventStream())
             .start();
+
+        presence.startBackgroundTasks();
 
         return this;
     }
 
     public void stop() {
-        hub.closeAll();
-
         if (server != null) {
             server.close();
         }
+
+        presence.stop();
     }
 
     public int port() {
         return server.port();
     }
 
-    public SimpleCommandBus commands() {
-        return commands;
+    public PresenceApplication presence() {
+        return presence;
     }
-
-    public SimpleQueryBus queries() {
-        return queries;
-    }
-
-    public SimpleDomainEventPublisher events() {
-        return events;
-    }
-
-    public SseHub hub() {
-        return hub;
-    }
-
-    private static Router routes(SimpleCommandBus commands, SimpleQueryBus queries) {
-        return Router.builder().build();
-    }
-
-    private static void registerHandlers(
-        SimpleCommandBus commands,
-        SimpleQueryBus queries,
-        SimpleDomainEventPublisher events,
-        LogEntryRenderer renderer) {}
 }

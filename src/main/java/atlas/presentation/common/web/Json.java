@@ -1,0 +1,32 @@
+package atlas.presentation.common.web;
+
+import com.fasterxml.jackson.jr.ob.JSON;
+import java.io.IOException;
+import java.util.Map;
+import sharedkernel.domain.exceptions.FormatException;
+import sharedkernel.infrastructure.persistence.PersistenceException;
+
+public final class Json {
+
+    private Json() {}
+
+    public static String write(Object value) {
+        try {
+            return JSON.std.asString(value);
+        } catch (IOException e) {
+            throw new PersistenceException("Failed to serialize a response body", e);
+        }
+    }
+
+    public static Map<String, Object> parse(String body) {
+        if (body == null || body.isBlank()) {
+            throw new FormatException("The request body must be a JSON object.");
+        }
+
+        try {
+            return JSON.std.mapFrom(body);
+        } catch (IOException e) {
+            throw new FormatException("The request body is not valid JSON.");
+        }
+    }
+}
