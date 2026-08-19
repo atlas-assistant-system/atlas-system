@@ -54,8 +54,12 @@ físico— y su propio bus de comandos y consultas.
 
 ## Estado actual
 
-- **`appointments` migrado** — citas, recordatorios y calendario. Trae la UI espejo, así que se
-  monta en `/` y su SSE en `/events`. Su API va detrás de la guardia de sesión de `presence`.
+- **`core` compuesto** — es dueño de `/` y de la interfaz espejo. Tras autenticarse ofrece
+  `Inicio`, `Agenda` y `Rutinas` como pestañas de una sola aplicación; consume los módulos por
+  sus APIs públicas, sin introducir dependencias entre sus dominios.
+- **`appointments` migrado** — citas, recordatorios y calendario. Se monta en `/appointments`,
+  conserva sus rutas auxiliares de recordatorios y documentación, y su SSE va en `/events`. Su
+  API está detrás de la guardia de sesión de `presence`.
 - **`presence` migrado** — identidad biométrica facial con prueba de vida e interacción por
   gesto. Se monta en sus propios prefijos (`/profiles`, `/sessions`, `/authentication`...) y su
   SSE en `/events/presence`.
@@ -70,12 +74,11 @@ físico— y su propio bus de comandos y consultas.
   `src/test/java/atlas/architecture/rules/` — no pueden ser un subproyecto porque importan
   `ValueObject` del propio kernel y se formaría un ciclo.
 - **Pendiente** — unificar la puerta de sesión: `appointments` y `presence` devuelven 401 sin
-  sesión y `routines` responde abierta. Y quitar el salto de loopback: `appointments` sigue
-  hablando con `presence` por HTTP contra este mismo proceso, cuando ya comparten JVM y basta
-  con implementar el acceso a la sesión en memoria (marcado con `ponytail:` en
-  `atlas/app/Application.java`).
-- **Conocido** — la UI de `routines` no es alcanzable: montado en `/routines`, ese path lo
-  ocupa su endpoint de listado. Se resolverá al componer las pestañas del espejo.
+  sesión y `routines` responde abierta. `appointments` ya consulta la sesión de `presence` en
+  memoria mediante un contrato booleano cableado en el composition root; no hay HTTP interno ni
+  rutas proxy entre contextos.
+- Las UIs independientes de `appointments` y `routines` se retiraron: la presentación de ambos
+  módulos vive ahora en `core`; `routines` conserva su documentación en `/routines/docs`.
 
 ## Notas de trabajo
 
