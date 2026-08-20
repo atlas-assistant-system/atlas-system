@@ -18,6 +18,11 @@ class MovementIdTest {
         assertThat(MovementId.parse("M00000007")).isEqualTo(MovementId.of(7));
     }
 
+    @Test
+    void shouldTryParseIntoTheSameId() {
+        assertThat(MovementId.tryParse("M00000007")).contains(MovementId.of(7));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"R00000007", "M7", "M0000000A", ""})
     void shouldNotParseSomethingThatIsNotAMovementId(String text) {
