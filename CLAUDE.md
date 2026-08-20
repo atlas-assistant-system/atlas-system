@@ -25,7 +25,7 @@ La arquitectura y las decisiones de stack de este proyecto están documentadas e
 - [docs/testing-conventions.md](docs/testing-conventions.md) — naming, estructura de los tests, mocks, cobertura y mutation testing
 - [docs/validation-specification-conventions.md](docs/validation-specification-conventions.md) — por qué no se adoptan Validator/Specification y qué se usa en su lugar
 - [docs/conventions.md](docs/conventions.md) — convenciones de código, naming, testing y flujo de trabajo
-- [docs/economy-context.md](docs/economy-context.md) — diseño del contexto `economy`, aún sin implementar
+- [docs/economy-context.md](docs/economy-context.md) — diseño del contexto `economy`; el ciclo 1 (movimientos y saldo) ya está implementado, los ciclos 2 y 3 siguen esbozados
 
 Estos documentos son la fuente de verdad técnica del proyecto. Cualquier decisión arquitectónica nueva debe reflejarse ahí.
 
@@ -35,20 +35,21 @@ El proyecto es **un único módulo JPMS** y cada bounded context es un subpaquet
 cada anillo. La convención de `architecture.md` aplicada a varios contextos:
 
 ```
-atlas/domain/sharedkernel/          appointments/   presence/   routines/
-atlas/application/sharedkernel/     appointments/   presence/   routines/
-atlas/infrastructure/sharedkernel/  appointments/   presence/   routines/
-atlas/presentation/sharedkernel/    appointments/   presence/   routines/
-atlas/app/appointments/  presence/  routines/    cableado de cada contexto
-atlas/app/Application.java                       composition root que los monta
+atlas/domain/sharedkernel/          appointments/  presence/  routines/  economy/
+atlas/application/sharedkernel/     appointments/  presence/  routines/  economy/
+atlas/infrastructure/sharedkernel/  appointments/  presence/  routines/  economy/
+atlas/presentation/sharedkernel/    appointments/  presence/  routines/  economy/
+atlas/app/appointments/  presence/  routines/  economy/   cableado de cada contexto
+atlas/app/Application.java                                composition root que los monta
 ```
 
-**Lo que está en `common` es genérico de verdad, no un cajón compartido.** `Json` y
-`StaticResources` sí lo son. `Values`, `UiHandlers` y `DocsHandlers` **no**: sus métodos y sus
-recursos son los de un contexto concreto (`floats` para descriptores faciales, `weekdays` para
-rutinas), así que viven en `presentation/<contexto>/web/`. Fusionarlos era un cambio de
-comportamiento silencioso: en `presence` un campo ausente lanza 400 y en `routines` devuelve
-`null`.
+**Lo que está en `common` es genérico de verdad, no un cajón compartido.** `Json`,
+`StaticResources` y `SessionGuard` sí lo son — `SessionGuard` solo conoce un `BooleanSupplier` y
+un 401, y lo usan `appointments` y `economy`. `Values`, `UiHandlers` y `DocsHandlers` **no**: sus
+métodos y sus recursos son los de un contexto concreto (`floats` para descriptores faciales,
+`weekdays` para rutinas, `amount` en euros para movimientos), así que viven en
+`presentation/<contexto>/web/`. Fusionarlos era un cambio de comportamiento silencioso: en
+`presence` un campo ausente lanza 400 y en `routines` devuelve `null`.
 
 Cada contexto conserva su propia base de datos en `data/` —el aislamiento entre contextos es
 físico— y su propio bus de comandos y consultas.
@@ -56,8 +57,8 @@ físico— y su propio bus de comandos y consultas.
 ## Estado actual
 
 - **`core` compuesto** — es dueño de `/` y de la interfaz espejo. Tras autenticarse ofrece
-  `Inicio`, `Agenda` y `Rutinas` como pestañas de una sola aplicación; consume los módulos por
-  sus APIs públicas, sin introducir dependencias entre sus dominios.
+  `Inicio`, `Agenda`, `Rutinas` y `Economía` como pestañas de una sola aplicación; consume los
+  módulos por sus APIs públicas, sin introducir dependencias entre sus dominios.
 - **`appointments` migrado** — citas, recordatorios y calendario. Se monta en `/appointments`,
   conserva sus rutas auxiliares de recordatorios y documentación, y su SSE va en `/events`. Su
   API está detrás de la guardia de sesión de `presence`.
@@ -66,18 +67,30 @@ físico— y su propio bus de comandos y consultas.
   SSE en `/events/presence`.
 - **`routines` migrado** — hábitos como cuota dentro de un periodo. Cuatro capas completas, se
   monta en `/routines` y su SSE en `/events/routines`.
-- **1127 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
+- **`economy` implementado (ciclo 1)** — movimientos, saldo y desglose por categoría. Cuatro
+  capas completas, se monta en `/economy` tras la guardia de sesión de `presence`, y su SSE en
+  `/events/economy`. **El espejo es de solo consulta**: la escritura entra por HTTP (un Atajo de
+  iOS, un script, curl) y la vista se refresca sola oyendo los eventos. El importe viaja como
+  cadena en euros (`"12.50"`) y se guarda en céntimos con signo, sin columna de tipo: `kind` se
+  deriva al leer con `MovementKind.of(...)`, que es la única definición del signo en el sistema.
+  Los ciclos 2 (presupuesto) y 3 (objetivos de ahorro) siguen sin empezar.
+- **1256 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
   ArchUnit.
+- **Mutation testing con PIT** sobre `atlas.domain.*` (excluido el kernel), umbral del 90%: hoy
+  el dominio está al 95% y `economy` al 97%. No cuelga de `check` porque son ~30 s — se lanza a
+  mano con `gradle pitest`. Ojo con las versiones: el plugin 1.15.0 no vale con Gradle 9 y PIT
+  1.19.4 no lee bytecode de Java 25.
 - **El Shared Kernel es un contexto más**, repartido por sus anillos igual que los demás
   (`atlas.domain.sharedkernel`, `atlas.application.sharedkernel`...). Ya no es una dependencia
   externa ni un subproyecto: el build no necesita nada publicado a mano, y `mavenLocal` no
   interviene. Las reglas de ArchUnit lo excluyen por el patrón `..sharedkernel..`, y viven en
   `src/test/java/atlas/architecture/rules/` — no pueden ser un subproyecto porque importan
   `ValueObject` del propio kernel y se formaría un ciclo.
-- **Pendiente** — unificar la puerta de sesión: `appointments` y `presence` devuelven 401 sin
-  sesión y `routines` responde abierta. `appointments` ya consulta la sesión de `presence` en
-  memoria mediante un contrato booleano cableado en el composition root; no hay HTTP interno ni
-  rutas proxy entre contextos.
+- **Pendiente** — unificar la puerta de sesión: `appointments`, `economy` y `presence` devuelven
+  401 sin sesión, y `routines` sigue respondiendo abierta. Los tres cerrados comparten el
+  `SessionGuard` de `presentation/common/web/` y consultan la sesión de `presence` en memoria
+  mediante un contrato booleano cableado en el composition root; no hay HTTP interno ni rutas
+  proxy entre contextos.
 - Las UIs independientes de `appointments` y `routines` se retiraron: la presentación de ambos
   módulos vive ahora en `core`; `routines` conserva su documentación en `/routines/docs`.
 
