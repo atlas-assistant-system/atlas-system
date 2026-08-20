@@ -25,6 +25,7 @@ La arquitectura y las decisiones de stack de este proyecto están documentadas e
 - [docs/testing-conventions.md](docs/testing-conventions.md) — naming, estructura de los tests, mocks, cobertura y mutation testing
 - [docs/validation-specification-conventions.md](docs/validation-specification-conventions.md) — por qué no se adoptan Validator/Specification y qué se usa en su lugar
 - [docs/conventions.md](docs/conventions.md) — convenciones de código, naming, testing y flujo de trabajo
+- [docs/economy-context.md](docs/economy-context.md) — diseño del contexto `economy`, aún sin implementar
 
 Estos documentos son la fuente de verdad técnica del proyecto. Cualquier decisión arquitectónica nueva debe reflejarse ahí.
 
