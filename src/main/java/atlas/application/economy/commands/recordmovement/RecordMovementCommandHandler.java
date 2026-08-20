@@ -2,7 +2,7 @@ package atlas.application.economy.commands.recordmovement;
 
 import atlas.application.economy.dto.MovementDto;
 import atlas.application.economy.mappers.EconomyMapper;
-import atlas.application.economy.ports.MovementUnitOfWork;
+import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.economy.Movement;
 import atlas.domain.economy.vos.Money;
@@ -13,10 +13,10 @@ import java.time.LocalDate;
 
 public final class RecordMovementCommandHandler implements CommandHandler<RecordMovementCommand, Result<MovementDto>> {
 
-    private final MovementUnitOfWork unitOfWork;
+    private final EconomyUnitOfWork unitOfWork;
     private final Clock clock;
 
-    public RecordMovementCommandHandler(MovementUnitOfWork unitOfWork, Clock clock) {
+    public RecordMovementCommandHandler(EconomyUnitOfWork unitOfWork, Clock clock) {
         this.unitOfWork = unitOfWork;
         this.clock = clock;
     }

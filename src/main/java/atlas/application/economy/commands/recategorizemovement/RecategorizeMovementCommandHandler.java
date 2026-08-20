@@ -2,7 +2,7 @@ package atlas.application.economy.commands.recategorizemovement;
 
 import atlas.application.economy.dto.MovementDto;
 import atlas.application.economy.mappers.EconomyMapper;
-import atlas.application.economy.ports.MovementUnitOfWork;
+import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.economy.MovementErrors;
 import atlas.domain.sharedkernel.results.Result;
@@ -11,10 +11,10 @@ import java.time.Clock;
 public final class RecategorizeMovementCommandHandler
     implements CommandHandler<RecategorizeMovementCommand, Result<MovementDto>> {
 
-    private final MovementUnitOfWork unitOfWork;
+    private final EconomyUnitOfWork unitOfWork;
     private final Clock clock;
 
-    public RecategorizeMovementCommandHandler(MovementUnitOfWork unitOfWork, Clock clock) {
+    public RecategorizeMovementCommandHandler(EconomyUnitOfWork unitOfWork, Clock clock) {
         this.unitOfWork = unitOfWork;
         this.clock = clock;
     }

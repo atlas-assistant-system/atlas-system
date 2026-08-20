@@ -1,7 +1,7 @@
 package atlas.infrastructure.economy.persistence;
 
+import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.economy.ports.MovementRepository;
-import atlas.application.economy.ports.MovementUnitOfWork;
 import atlas.application.sharedkernel.events.EventDelivery;
 import atlas.application.sharedkernel.unitofwork.AbstractUnitOfWork;
 import atlas.infrastructure.sharedkernel.SequenceGenerator;
@@ -9,12 +9,12 @@ import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public final class SqliteMovementUnitOfWork extends AbstractUnitOfWork implements MovementUnitOfWork {
+public final class SqliteEconomyUnitOfWork extends AbstractUnitOfWork implements EconomyUnitOfWork {
 
     private final Connection connection;
     private final SqliteMovementRepository movements;
 
-    public SqliteMovementUnitOfWork(Connection connection, EventDelivery delivery, SequenceGenerator sequences) {
+    public SqliteEconomyUnitOfWork(Connection connection, EventDelivery delivery, SequenceGenerator sequences) {
         super(delivery);
         this.connection = connection;
         this.movements = new SqliteMovementRepository(connection, sequences);

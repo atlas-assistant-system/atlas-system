@@ -4,8 +4,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
+import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.economy.ports.MovementRepository;
-import atlas.application.economy.ports.MovementUnitOfWork;
 import atlas.application.routines.ports.RoutineEntryRepository;
 import atlas.application.routines.ports.RoutineRepository;
 import atlas.application.routines.ports.RoutineUnitOfWork;
@@ -24,7 +24,7 @@ public final class UnitOfWorkStub {
         }).when(unitOfWork).run(any());
     }
 
-    public static void with(MovementUnitOfWork unitOfWork, MovementRepository movements) {
+    public static void with(EconomyUnitOfWork unitOfWork, MovementRepository movements) {
         run(unitOfWork);
         when(unitOfWork.movements()).thenReturn(movements);
     }

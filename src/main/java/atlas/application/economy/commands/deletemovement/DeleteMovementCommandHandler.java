@@ -1,6 +1,6 @@
 package atlas.application.economy.commands.deletemovement;
 
-import atlas.application.economy.ports.MovementUnitOfWork;
+import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.economy.MovementErrors;
 import atlas.domain.sharedkernel.results.Result;
@@ -8,10 +8,10 @@ import java.time.Clock;
 
 public final class DeleteMovementCommandHandler implements CommandHandler<DeleteMovementCommand, Result<Void>> {
 
-    private final MovementUnitOfWork unitOfWork;
+    private final EconomyUnitOfWork unitOfWork;
     private final Clock clock;
 
-    public DeleteMovementCommandHandler(MovementUnitOfWork unitOfWork, Clock clock) {
+    public DeleteMovementCommandHandler(EconomyUnitOfWork unitOfWork, Clock clock) {
         this.unitOfWork = unitOfWork;
         this.clock = clock;
     }

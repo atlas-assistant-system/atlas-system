@@ -36,13 +36,13 @@ class SqliteMovementPersistenceIT {
     private static final LocalDate AUGUST_LAST = LocalDate.of(2026, 8, 31);
 
     private Connection connection;
-    private SqliteMovementUnitOfWork unitOfWork;
+    private SqliteEconomyUnitOfWork unitOfWork;
     private SqliteMovementReadModel readModel;
 
     @BeforeEach
     void openDatabase(@TempDir Path directory) {
         connection = EconomyTestDatabase.open(directory, CLOCK);
-        unitOfWork = new SqliteMovementUnitOfWork(
+        unitOfWork = new SqliteEconomyUnitOfWork(
             connection,
             new ImmediateEventDelivery(new PendingEventDispatcher(new SimpleDomainEventPublisher())),
             new SqliteSequenceGenerator(connection));

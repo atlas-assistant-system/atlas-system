@@ -7,8 +7,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.economy.ports.MovementRepository;
-import atlas.application.economy.ports.MovementUnitOfWork;
 import atlas.domain.economy.Movement;
 import atlas.domain.economy.MovementErrors;
 import atlas.domain.economy.MovementId;
@@ -31,7 +31,7 @@ class RecategorizeMovementCommandHandlerTest {
     private static final LocalDate TODAY = LocalDate.of(2026, 8, 20);
     private static final MovementId ID = MovementId.of(7);
 
-    private final MovementUnitOfWork unitOfWork = mock(MovementUnitOfWork.class);
+    private final EconomyUnitOfWork unitOfWork = mock(EconomyUnitOfWork.class);
     private final MovementRepository movements = mock(MovementRepository.class);
     private final RecategorizeMovementCommandHandler handler =
         new RecategorizeMovementCommandHandler(unitOfWork, Clock.fixed(NOW, ZoneOffset.UTC));

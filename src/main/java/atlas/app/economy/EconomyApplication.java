@@ -8,8 +8,8 @@ import atlas.application.economy.commands.recategorizemovement.RecategorizeMovem
 import atlas.application.economy.commands.recategorizemovement.RecategorizeMovementCommandHandler;
 import atlas.application.economy.commands.recordmovement.RecordMovementCommand;
 import atlas.application.economy.commands.recordmovement.RecordMovementCommandHandler;
+import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.economy.ports.MovementReadModel;
-import atlas.application.economy.ports.MovementUnitOfWork;
 import atlas.application.economy.queries.getbalance.GetBalanceQuery;
 import atlas.application.economy.queries.getbalance.GetBalanceQueryHandler;
 import atlas.application.economy.queries.getbreakdown.GetBreakdownQuery;
@@ -27,8 +27,8 @@ import atlas.application.sharedkernel.logging.LogEntryRenderer;
 import atlas.application.sharedkernel.logging.LoggingCommandHandler;
 import atlas.application.sharedkernel.logging.LoggingQueryHandler;
 import atlas.infrastructure.common.SqliteSequenceGenerator;
+import atlas.infrastructure.economy.persistence.SqliteEconomyUnitOfWork;
 import atlas.infrastructure.economy.persistence.SqliteMovementReadModel;
-import atlas.infrastructure.economy.persistence.SqliteMovementUnitOfWork;
 import atlas.infrastructure.sharedkernel.persistence.Migrations;
 import atlas.infrastructure.sharedkernel.persistence.SchemaMigrator;
 import atlas.infrastructure.sharedkernel.persistence.SqliteConnections;
@@ -94,7 +94,7 @@ public final class EconomyApplication {
         var queries = new SimpleQueryBus();
         var hub = new SseHub();
 
-        var unitOfWork = new SqliteMovementUnitOfWork(
+        var unitOfWork = new SqliteEconomyUnitOfWork(
             connection, new ImmediateEventDelivery(new PendingEventDispatcher(events)),
             new SqliteSequenceGenerator(connection));
         var readModel = new SqliteMovementReadModel(connection);
@@ -178,7 +178,7 @@ public final class EconomyApplication {
     }
 
     private static void registerCommandHandlers(
-        SimpleCommandBus commands, MovementUnitOfWork unitOfWork, Clock clock, LogEntryRenderer renderer) {
+        SimpleCommandBus commands, EconomyUnitOfWork unitOfWork, Clock clock, LogEntryRenderer renderer) {
 
         commands.register(RecordMovementCommand.class, new LoggingCommandHandler<>(
             new RecordMovementCommandHandler(unitOfWork, clock), renderer));
