@@ -1,6 +1,5 @@
-package atlas.presentation.appointments.security;
+package atlas.presentation.common.web;
 
-import atlas.presentation.common.web.Json;
 import atlas.presentation.sharedkernel.http.HttpResponse;
 import atlas.presentation.sharedkernel.http.RouteHandler;
 import com.sun.net.httpserver.HttpHandler;
