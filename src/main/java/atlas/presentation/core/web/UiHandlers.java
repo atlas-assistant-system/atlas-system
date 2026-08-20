@@ -12,6 +12,8 @@ public final class UiHandlers {
     private static final String SCRIPT = StaticResources.read("/web-core/app.js");
     private static final String ROUTINES_STYLES = StaticResources.read("/web-core/routines.css");
     private static final String ROUTINES_SCRIPT = StaticResources.read("/web-core/routines.js");
+    private static final String ECONOMY_STYLES = StaticResources.read("/web-core/economy.css");
+    private static final String ECONOMY_SCRIPT = StaticResources.read("/web-core/economy.js");
 
     private UiHandlers() {}
 
@@ -39,5 +41,13 @@ public final class UiHandlers {
 
     public static HttpResponse routinesScript(HttpRequest request) {
         return new HttpResponse(200, "text/javascript; charset=utf-8", ROUTINES_SCRIPT, Map.of());
+    }
+
+    public static HttpResponse economyStyles(HttpRequest request) {
+        return new HttpResponse(200, "text/css; charset=utf-8", ECONOMY_STYLES, Map.of());
+    }
+
+    public static HttpResponse economyScript(HttpRequest request) {
+        return new HttpResponse(200, "text/javascript; charset=utf-8", ECONOMY_SCRIPT, Map.of());
     }
 }

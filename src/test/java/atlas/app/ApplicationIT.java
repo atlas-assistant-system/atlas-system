@@ -49,7 +49,9 @@ class ApplicationIT {
                 .contains("data-view=\"inicio\"")
                 .contains("data-view=\"agenda\"")
                 .contains("data-view=\"rutinas\"")
-                .contains("id=\"view-rutinas\"");
+                .contains("id=\"view-rutinas\"")
+                .contains("data-view=\"economia\"")
+                .contains("id=\"view-economia\"");
             assertThat(get(client, base, "/assets/app.css").statusCode()).isEqualTo(200);
             assertThat(get(client, base, "/assets/routines.css").statusCode()).isEqualTo(200);
             var coreScript = get(client, base, "/assets/app.js");
@@ -58,6 +60,9 @@ class ApplicationIT {
                 .doesNotContain("'/presence/");
             assertThat(get(client, base, "/assets/routines.js").body())
                 .contains("'/events/routines'");
+            assertThat(get(client, base, "/assets/economy.css").statusCode()).isEqualTo(200);
+            assertThat(get(client, base, "/assets/economy.js").body())
+                .contains("'/events/economy'");
             var config = get(client, base, "/assets/config.js");
             assertThat(config.statusCode()).isEqualTo(200);
             assertThat(config.body()).contains("window.AtlasConfig")
@@ -65,6 +70,7 @@ class ApplicationIT {
                 .contains("longitude: -15.4363");
 
             assertThat(get(client, base, "/appointments/upcoming?limit=1").statusCode()).isEqualTo(401);
+            assertThat(get(client, base, "/economy/balance").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/authentication").statusCode()).isEqualTo(200);
             assertThat(get(client, base, "/presence/authentication").statusCode()).isEqualTo(404);
 
@@ -81,6 +87,7 @@ class ApplicationIT {
 
             assertThat(authenticated.isSuccess()).isTrue();
             assertThat(get(client, base, "/appointments/upcoming?limit=1").statusCode()).isEqualTo(200);
+            assertThat(get(client, base, "/economy/balance").statusCode()).isEqualTo(200);
         } finally {
             application.stop();
         }

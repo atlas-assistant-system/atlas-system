@@ -22,6 +22,8 @@ public final class CoreApplication {
                 .get("/assets/config.js", request -> UiHandlers.config(settings.latitude(), settings.longitude()))
                 .get("/assets/routines.css", UiHandlers::routinesStyles)
                 .get("/assets/routines.js", UiHandlers::routinesScript)
+                .get("/assets/economy.css", UiHandlers::economyStyles)
+                .get("/assets/economy.js", UiHandlers::economyScript)
                 .get("/news", NewsHandlers::latest))
             .build());
     }

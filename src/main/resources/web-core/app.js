@@ -28,7 +28,7 @@ let eventSource = null;
 const DURATIONS = [30, 60, 90, 120];
 const LEAD_TIMES = [10, 30, 60, 1440];
 const MONTH_INITIALS = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-const VIEWS = ['inicio', 'agenda', 'rutinas'];
+const VIEWS = ['inicio', 'agenda', 'rutinas', 'economia'];
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
 const MIN_FACE_SIZE = 224;
@@ -817,6 +817,7 @@ function tickClock() {
 
 async function refreshInicio() {
     window.AtlasRoutines?.summary();
+    window.AtlasEconomy?.summary();
 
     const upcoming = await api('/appointments/upcoming?limit=1');
     state.next = upcoming.status === 200 && upcoming.body.length > 0 ? upcoming.body[0] : null;
@@ -1423,6 +1424,9 @@ function refreshAll() {
     if (state.view === 'rutinas') {
         window.AtlasRoutines?.activate();
     }
+    if (state.view === 'economia') {
+        window.AtlasEconomy?.activate();
+    }
     if (state.openId) {
         openPanel(state.openId);
     }
@@ -1480,6 +1484,7 @@ function setAuthenticated(authenticated) {
         document.getElementById('view-inicio').hidden = false;
         document.getElementById('view-agenda').hidden = true;
         document.getElementById('view-rutinas').hidden = true;
+        document.getElementById('view-economia').hidden = true;
         renderNextCountdown();
         return;
     }
@@ -1728,6 +1733,7 @@ function switchView(view) {
     document.getElementById('view-inicio').hidden = view !== 'inicio';
     document.getElementById('view-agenda').hidden = view !== 'agenda';
     document.getElementById('view-rutinas').hidden = view !== 'rutinas';
+    document.getElementById('view-economia').hidden = view !== 'economia';
 
     for (const link of document.querySelectorAll('.nav-link[data-view]')) {
         link.classList.toggle('active', link.dataset.view === view);
@@ -1738,6 +1744,9 @@ function switchView(view) {
     }
     if (view === 'rutinas') {
         window.AtlasRoutines?.activate();
+    }
+    if (view === 'economia') {
+        window.AtlasEconomy?.activate();
     }
 }
 

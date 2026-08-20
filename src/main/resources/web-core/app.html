@@ -6,12 +6,14 @@
     <title>Atlas</title>
     <link rel="stylesheet" href="/assets/app.css">
     <link rel="stylesheet" href="/assets/routines.css">
+    <link rel="stylesheet" href="/assets/economy.css">
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/dist/human.js"
             integrity="sha384-vASLsXJSh9FIgw41jM2fwBSF2MoEPlegwV4SO9G3NeyRMcWf7XjSdYvU6MlwOfQl"
             crossorigin="anonymous"></script>
     <script defer src="/assets/config.js"></script>
     <script defer src="/assets/app.js"></script>
     <script defer src="/assets/routines.js"></script>
+    <script defer src="/assets/economy.js"></script>
 </head>
 <body class="locked">
 <video id="mirror" autoplay playsinline muted></video>
@@ -24,6 +26,7 @@
     <button class="nav-link active" data-view="inicio">Inicio</button>
     <button class="nav-link" data-view="agenda">Agenda</button>
     <button class="nav-link" data-view="rutinas">Rutinas</button>
+    <button class="nav-link" data-view="economia">Econom&iacute;a</button>
 </nav>
 
 <main id="view-inicio" class="view">
@@ -75,6 +78,14 @@
         <section class="routines-block">
             <p class="label">Rutinas</p>
             <ul id="today-routines" class="plain-list"></ul>
+        </section>
+
+        <section class="economy-block">
+            <p class="label">Econom&iacute;a</p>
+            <ul class="plain-list">
+                <li>Gastado <span id="today-spent">&mdash;</span></li>
+                <li>Saldo <span id="today-balance">&mdash;</span></li>
+            </ul>
         </section>
     </div>
 
@@ -185,6 +196,31 @@
                 </label>
             </div>
             <ul id="routines-list" class="routines-cards"></ul>
+        </section>
+    </div>
+</main>
+
+<main id="view-economia" class="view economy-view" hidden>
+    <div class="economy-layout">
+        <section class="economy-section economy-balance">
+            <p id="economy-period" class="economy-period"></p>
+            <p id="economy-net" class="economy-net">&mdash;</p>
+            <p class="economy-net-detail">
+                <span>Ingresos <b id="economy-income">&mdash;</b></span>
+                <span>Gastos <b id="economy-expense">&mdash;</b></span>
+            </p>
+        </section>
+
+        <section class="economy-section">
+            <p class="label">En qu&eacute; se va</p>
+            <ul id="economy-breakdown" class="economy-categories"></ul>
+            <p id="economy-breakdown-empty" class="economy-empty">Nada apuntado este mes.</p>
+        </section>
+
+        <section class="economy-section">
+            <p class="label">&Uacute;ltimos movimientos</p>
+            <ul id="economy-movements" class="economy-movements"></ul>
+            <p id="economy-movements-empty" class="economy-empty">Nada apuntado todav&iacute;a.</p>
         </section>
     </div>
 </main>
