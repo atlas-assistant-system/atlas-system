@@ -2,6 +2,7 @@ plugins {
     `java-library`
     application
     id("com.diffplug.spotless") version "8.9.0"
+    id("info.solidsoft.pitest") version "1.19.0-rc.1"
 }
 
 description = "Lo que necesitas ver, cuando levantas la vista"
@@ -54,6 +55,18 @@ spotless {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+pitest {
+    pitestVersion = "1.25.9"
+    junit5PluginVersion = "1.2.3"
+    targetClasses = setOf("atlas.domain.*")
+    targetTests = setOf("atlas.domain.*")
+    excludedClasses = setOf("atlas.domain.sharedkernel.*")
+    outputFormats = setOf("HTML", "XML")
+    timestampedReports = false
+    threads = 4
+    mutationThreshold = 90
 }
 
 // Gradle canaliza la salida del proceso hacia su demonio, asi que System.console() es
