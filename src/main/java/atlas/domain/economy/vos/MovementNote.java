@@ -27,9 +27,4 @@ public record MovementNote(String value) implements SingleValueObject<String> {
 
         return Result.success(Optional.of(new MovementNote(trimmed)));
     }
-
-    @Override
-    public String toString() {
-        return value;
-    }
 }
