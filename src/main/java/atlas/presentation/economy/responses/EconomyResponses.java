@@ -5,6 +5,8 @@ import atlas.application.economy.dto.BudgetDto;
 import atlas.application.economy.dto.BudgetStatusDto;
 import atlas.application.economy.dto.CategorySpendDto;
 import atlas.application.economy.dto.MovementDto;
+import atlas.application.economy.dto.SavingsGoalDto;
+import atlas.application.economy.dto.SavingsGoalStatusDto;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +74,35 @@ public final class EconomyResponses {
         body.put("spent", dto.spent().toPlainString());
         body.put("projected", dto.projected().toPlainString());
         body.put("status", dto.status());
+
+        return body;
+    }
+
+    public static Map<String, Object> savingsGoal(SavingsGoalDto dto) {
+        var body = new LinkedHashMap<String, Object>();
+        body.put("id", dto.id());
+        body.put("name", dto.name());
+        body.put("target", dto.target().toPlainString());
+        body.put("deadline", dto.deadline().toString());
+
+        return body;
+    }
+
+    public static List<Map<String, Object>> savingsGoals(List<SavingsGoalStatusDto> goals) {
+        return goals.stream().map(EconomyResponses::savingsGoalStatus).toList();
+    }
+
+    private static Map<String, Object> savingsGoalStatus(SavingsGoalStatusDto dto) {
+        var body = new LinkedHashMap<String, Object>();
+        body.put("id", dto.id());
+        body.put("name", dto.name());
+        body.put("target", dto.target().toPlainString());
+        body.put("deadline", dto.deadline().toString());
+        body.put("monthlySaving", dto.monthlySaving().toPlainString());
+        body.put("monthsRemaining", dto.monthsRemaining());
+        body.put("projected", dto.projected().toPlainString());
+        body.put("requiredMonthly", dto.requiredMonthly().toPlainString());
+        body.put("reachable", dto.reachable());
 
         return body;
     }

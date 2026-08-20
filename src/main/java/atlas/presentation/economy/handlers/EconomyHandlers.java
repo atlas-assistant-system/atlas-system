@@ -1,23 +1,29 @@
 package atlas.presentation.economy.handlers;
 
+import atlas.application.economy.commands.abandonsavingsgoal.AbandonSavingsGoalCommand;
 import atlas.application.economy.commands.changebudgetlimit.ChangeBudgetLimitCommand;
+import atlas.application.economy.commands.changesavingsgoal.ChangeSavingsGoalCommand;
 import atlas.application.economy.commands.correctmovement.CorrectMovementCommand;
 import atlas.application.economy.commands.definebudget.DefineBudgetCommand;
 import atlas.application.economy.commands.deletemovement.DeleteMovementCommand;
 import atlas.application.economy.commands.recategorizemovement.RecategorizeMovementCommand;
 import atlas.application.economy.commands.recordmovement.RecordMovementCommand;
 import atlas.application.economy.commands.removebudget.RemoveBudgetCommand;
+import atlas.application.economy.commands.setsavingsgoal.SetSavingsGoalCommand;
 import atlas.application.economy.dto.BudgetDto;
 import atlas.application.economy.dto.MovementDto;
+import atlas.application.economy.dto.SavingsGoalDto;
 import atlas.application.economy.queries.getbalance.GetBalanceQuery;
 import atlas.application.economy.queries.getbreakdown.GetBreakdownQuery;
 import atlas.application.economy.queries.getmovement.GetMovementQuery;
 import atlas.application.economy.queries.listbudgets.ListBudgetsQuery;
 import atlas.application.economy.queries.listmovements.ListMovementsQuery;
+import atlas.application.economy.queries.listsavingsgoals.ListSavingsGoalsQuery;
 import atlas.application.sharedkernel.cqrs.CommandBus;
 import atlas.application.sharedkernel.cqrs.QueryBus;
 import atlas.domain.economy.BudgetId;
 import atlas.domain.economy.MovementId;
+import atlas.domain.economy.SavingsGoalId;
 import atlas.domain.economy.enums.Category;
 import atlas.domain.sharedkernel.results.Result;
 import atlas.presentation.common.web.Json;
@@ -26,6 +32,7 @@ import atlas.presentation.economy.requests.CorrectMovementRequest;
 import atlas.presentation.economy.requests.DefineBudgetRequest;
 import atlas.presentation.economy.requests.RecategorizeMovementRequest;
 import atlas.presentation.economy.requests.RecordMovementRequest;
+import atlas.presentation.economy.requests.SavingsGoalRequest;
 import atlas.presentation.economy.responses.EconomyResponses;
 import atlas.presentation.economy.web.Values;
 import atlas.presentation.sharedkernel.http.HttpRequest;
@@ -157,6 +164,53 @@ public final class EconomyHandlers {
         }
 
         return HttpResponse.ok(Json.write(EconomyResponses.budgets(result.value())));
+    }
+
+    public HttpResponse setGoal(HttpRequest request) {
+        var body = SavingsGoalRequest.from(Json.parse(request.body()));
+
+        Result<SavingsGoalDto> result = commands.dispatch(
+            new SetSavingsGoalCommand(body.name(), body.target(), body.deadline()));
+        if (result.isFailure()) {
+            return HttpResponse.error(result.error());
+        }
+
+        return HttpResponse.created(
+            "/economy/goals/" + result.value().id(), Json.write(EconomyResponses.savingsGoal(result.value())));
+    }
+
+    public HttpResponse changeGoal(HttpRequest request) {
+        var body = SavingsGoalRequest.from(Json.parse(request.body()));
+
+        Result<SavingsGoalDto> result = commands.dispatch(
+            new ChangeSavingsGoalCommand(goalId(request), body.name(), body.target(), body.deadline()));
+        if (result.isFailure()) {
+            return HttpResponse.error(result.error());
+        }
+
+        return HttpResponse.ok(Json.write(EconomyResponses.savingsGoal(result.value())));
+    }
+
+    public HttpResponse abandonGoal(HttpRequest request) {
+        Result<Void> result = commands.dispatch(new AbandonSavingsGoalCommand(goalId(request)));
+        if (result.isFailure()) {
+            return HttpResponse.error(result.error());
+        }
+
+        return HttpResponse.noContent();
+    }
+
+    public HttpResponse goals(HttpRequest request) {
+        var result = queries.dispatch(new ListSavingsGoalsQuery());
+        if (result.isFailure()) {
+            return HttpResponse.error(result.error());
+        }
+
+        return HttpResponse.ok(Json.write(EconomyResponses.savingsGoals(result.value())));
+    }
+
+    private static SavingsGoalId goalId(HttpRequest request) {
+        return SavingsGoalId.parse(request.pathParam("id"));
     }
 
     private static BudgetId budgetId(HttpRequest request) {

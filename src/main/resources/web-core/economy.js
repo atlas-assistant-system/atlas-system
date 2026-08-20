@@ -7,6 +7,8 @@
     const breakdownEmpty = document.getElementById('economy-breakdown-empty');
     const movementList = document.getElementById('economy-movements');
     const movementsEmpty = document.getElementById('economy-movements-empty');
+    const goalsSection = document.getElementById('economy-goals-section');
+    const goalList = document.getElementById('economy-goals');
     const summarySpent = document.getElementById('today-spent');
     const summaryNet = document.getElementById('today-balance');
     let started = false;
@@ -139,6 +141,44 @@
         breakdownEmpty.hidden = spending.length > 0;
     }
 
+    function goalRow(goal) {
+        const item = document.createElement('li');
+        item.className = goal.reachable ? 'economy-goal reachable' : 'economy-goal';
+
+        const head = document.createElement('div');
+        head.className = 'economy-goal-head';
+
+        const name = document.createElement('span');
+        name.className = 'economy-goal-name';
+        name.textContent = goal.name;
+
+        const target = document.createElement('span');
+        target.className = 'economy-goal-target';
+        target.textContent = euros(goal.target) + ' · ' + monthText(goal.deadline);
+
+        head.append(name, target);
+
+        const forecast = document.createElement('p');
+        forecast.className = 'economy-goal-forecast';
+        forecast.textContent = goal.reachable
+            ? 'A este ritmo llegas: ' + euros(goal.projected)
+            : 'Necesitas ' + euros(goal.requiredMonthly) + ' al mes; vas a ' + euros(goal.monthlySaving);
+
+        item.append(head, forecast);
+        return item;
+    }
+
+    function monthText(day) {
+        const date = new Date(day + 'T00:00:00');
+        return MONTHS[date.getMonth()] + ' ' + date.getFullYear();
+    }
+
+    async function refreshGoals() {
+        const goals = await read('/economy/goals');
+        replace(goalList, goals.map(goalRow));
+        goalsSection.hidden = goals.length === 0;
+    }
+
     async function refreshMovements() {
         const movements = await read('/economy/movements?limit=12');
         replace(movementList, movements.map(movementRow));
@@ -146,7 +186,7 @@
     }
 
     async function refresh() {
-        await Promise.all([refreshBalance(), refreshBreakdown(), refreshMovements()]);
+        await Promise.all([refreshBalance(), refreshBreakdown(), refreshMovements(), refreshGoals()]);
     }
 
     async function refreshSummary() {
@@ -172,7 +212,8 @@
             guard(refreshSummary);
         };
         ['movementRecorded', 'movementCorrected', 'movementRecategorized', 'movementDeleted',
-            'budgetDefined', 'budgetLimitChanged', 'budgetRemoved']
+            'budgetDefined', 'budgetLimitChanged', 'budgetRemoved',
+            'savingsGoalSet', 'savingsGoalChanged', 'savingsGoalAbandoned']
             .forEach(name => events.addEventListener(name, reload));
     }
 

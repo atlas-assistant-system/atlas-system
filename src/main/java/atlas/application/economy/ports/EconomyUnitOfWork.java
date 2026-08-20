@@ -7,4 +7,6 @@ public interface EconomyUnitOfWork extends UnitOfWork {
     MovementRepository movements();
 
     BudgetRepository budgets();
+
+    SavingsGoalRepository goals();
 }

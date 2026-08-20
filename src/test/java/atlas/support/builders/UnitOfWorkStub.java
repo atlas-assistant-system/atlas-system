@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import atlas.application.economy.ports.BudgetRepository;
 import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.economy.ports.MovementRepository;
+import atlas.application.economy.ports.SavingsGoalRepository;
 import atlas.application.routines.ports.RoutineEntryRepository;
 import atlas.application.routines.ports.RoutineRepository;
 import atlas.application.routines.ports.RoutineUnitOfWork;
@@ -33,6 +34,11 @@ public final class UnitOfWorkStub {
     public static void withBudgets(EconomyUnitOfWork unitOfWork, BudgetRepository budgets) {
         run(unitOfWork);
         when(unitOfWork.budgets()).thenReturn(budgets);
+    }
+
+    public static void withGoals(EconomyUnitOfWork unitOfWork, SavingsGoalRepository goals) {
+        run(unitOfWork);
+        when(unitOfWork.goals()).thenReturn(goals);
     }
 
     public static void with(RoutineUnitOfWork unitOfWork, RoutineRepository routines) {

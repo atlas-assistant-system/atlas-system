@@ -143,6 +143,47 @@
     opacity: 0.9;
 }
 
+.economy-goals-section {
+    grid-column: 1 / -1;
+    margin-top: 1.5rem;
+}
+
+.economy-goals {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 2.5rem;
+}
+
+.economy-goal-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    font-size: 1.15rem;
+}
+
+.economy-goal-name {
+    opacity: 0.85;
+}
+
+.economy-goal-target {
+    opacity: 0.45;
+    font-variant-numeric: tabular-nums;
+}
+
+.economy-goal-forecast {
+    margin: 0.5rem 0 0;
+    font-size: 0.95rem;
+    opacity: 0.5;
+}
+
+.economy-goal.reachable .economy-goal-forecast {
+    opacity: 0.75;
+}
+
 .economy-empty {
     margin: 0;
     font-size: 1.05rem;

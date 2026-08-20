@@ -261,6 +261,71 @@ class HttpApiIT {
     }
 
     @Test
+    void shouldWalkTheWholeLifeOfASavingsGoal() throws Exception {
+        var created = send("POST", "/economy/goals", """
+            {"name":"Viaje a Japon","target":"3000.00","deadline":"2027-02-28"}""");
+        assertThat(created.statusCode()).isEqualTo(201);
+
+        var goal = json(created);
+        var id = (String) goal.get("id");
+        assertThat(id).matches("O\\d{8}");
+        assertThat(goal.get("name")).isEqualTo("Viaje a Japon");
+        assertThat(goal.get("target")).isEqualTo("3000.00");
+        assertThat(goal.get("deadline")).isEqualTo("2027-02-28");
+
+        var changed = json(send("PUT", "/economy/goals/" + id, """
+            {"name":"Viaje a Corea","target":"5000.00","deadline":"2027-12-31"}"""));
+        assertThat(changed.get("name")).isEqualTo("Viaje a Corea");
+        assertThat(changed.get("target")).isEqualTo("5000.00");
+
+        assertThat(jsonList(send("GET", "/economy/goals", null))).hasSize(1);
+
+        assertThat(send("DELETE", "/economy/goals/" + id, null).statusCode()).isEqualTo(204);
+        assertThat(jsonList(send("GET", "/economy/goals", null))).isEmpty();
+    }
+
+    @Test
+    void shouldProjectTheGoalFromTheLastSixMonths() throws Exception {
+        var salary = recordMovement("INCOME", "1500.00", "INCOME", "2026-03-10");
+        var rent = recordMovement("EXPENSE", "900.00", "HOME", "2026-03-11");
+        var goal = (String) json(send("POST", "/economy/goals", """
+            {"name":"Viaje","target":"3000.00","deadline":"2027-02-28"}""")).get("id");
+
+        var status = jsonList(send("GET", "/economy/goals", null)).getFirst();
+        assertThat(status.get("monthlySaving")).isEqualTo("100.00");
+        assertThat(status.get("monthsRemaining")).isEqualTo(6);
+        assertThat(status.get("projected")).isEqualTo("600.00");
+        assertThat(status.get("reachable")).isEqualTo(false);
+        assertThat(status.get("requiredMonthly")).isEqualTo("500.00");
+
+        send("DELETE", "/economy/goals/" + goal, null);
+        remove(salary, rent);
+    }
+
+    @Test
+    void shouldRefuseAGoalWhoseDeadlineHasPassed() throws Exception {
+        var response = send("POST", "/economy/goals", """
+            {"name":"Tarde","target":"3000.00","deadline":"2026-08-01"}""");
+
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(json(response).get("code")).isEqualTo("SavingsGoal.DeadlineMustBeAhead");
+    }
+
+    @Test
+    void shouldRefuseAGoalWithoutAName() throws Exception {
+        var response = send("POST", "/economy/goals", """
+            {"name":"  ","target":"3000.00","deadline":"2027-02-28"}""");
+
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(json(response).get("code")).isEqualTo("SavingsGoal.NameRequired");
+    }
+
+    @Test
+    void shouldReportAnUnknownGoalAsNotFound() throws Exception {
+        assertThat(send("DELETE", "/economy/goals/O00009999", null).statusCode()).isEqualTo(404);
+    }
+
+    @Test
     void shouldServeItsDocsBelowTheModulePath() throws Exception {
         assertThat(send("GET", "/", null).statusCode()).isEqualTo(404);
         assertThat(send("GET", "/economy/docs", null).body()).contains("swagger");

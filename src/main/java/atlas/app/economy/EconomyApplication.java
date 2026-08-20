@@ -1,7 +1,11 @@
 package atlas.app.economy;
 
+import atlas.application.economy.commands.abandonsavingsgoal.AbandonSavingsGoalCommand;
+import atlas.application.economy.commands.abandonsavingsgoal.AbandonSavingsGoalCommandHandler;
 import atlas.application.economy.commands.changebudgetlimit.ChangeBudgetLimitCommand;
 import atlas.application.economy.commands.changebudgetlimit.ChangeBudgetLimitCommandHandler;
+import atlas.application.economy.commands.changesavingsgoal.ChangeSavingsGoalCommand;
+import atlas.application.economy.commands.changesavingsgoal.ChangeSavingsGoalCommandHandler;
 import atlas.application.economy.commands.correctmovement.CorrectMovementCommand;
 import atlas.application.economy.commands.correctmovement.CorrectMovementCommandHandler;
 import atlas.application.economy.commands.definebudget.DefineBudgetCommand;
@@ -14,9 +18,12 @@ import atlas.application.economy.commands.recordmovement.RecordMovementCommand;
 import atlas.application.economy.commands.recordmovement.RecordMovementCommandHandler;
 import atlas.application.economy.commands.removebudget.RemoveBudgetCommand;
 import atlas.application.economy.commands.removebudget.RemoveBudgetCommandHandler;
+import atlas.application.economy.commands.setsavingsgoal.SetSavingsGoalCommand;
+import atlas.application.economy.commands.setsavingsgoal.SetSavingsGoalCommandHandler;
 import atlas.application.economy.ports.BudgetReadModel;
 import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.economy.ports.MovementReadModel;
+import atlas.application.economy.ports.SavingsGoalReadModel;
 import atlas.application.economy.queries.getbalance.GetBalanceQuery;
 import atlas.application.economy.queries.getbalance.GetBalanceQueryHandler;
 import atlas.application.economy.queries.getbreakdown.GetBreakdownQuery;
@@ -27,6 +34,8 @@ import atlas.application.economy.queries.listbudgets.ListBudgetsQuery;
 import atlas.application.economy.queries.listbudgets.ListBudgetsQueryHandler;
 import atlas.application.economy.queries.listmovements.ListMovementsQuery;
 import atlas.application.economy.queries.listmovements.ListMovementsQueryHandler;
+import atlas.application.economy.queries.listsavingsgoals.ListSavingsGoalsQuery;
+import atlas.application.economy.queries.listsavingsgoals.ListSavingsGoalsQueryHandler;
 import atlas.application.sharedkernel.cqrs.SimpleCommandBus;
 import atlas.application.sharedkernel.cqrs.SimpleQueryBus;
 import atlas.application.sharedkernel.events.ImmediateEventDelivery;
@@ -36,10 +45,12 @@ import atlas.application.sharedkernel.logging.LogEntryRenderer;
 import atlas.application.sharedkernel.logging.LoggingCommandHandler;
 import atlas.application.sharedkernel.logging.LoggingQueryHandler;
 import atlas.domain.economy.services.BudgetPace;
+import atlas.domain.economy.services.SavingsProjection;
 import atlas.infrastructure.common.SqliteSequenceGenerator;
 import atlas.infrastructure.economy.persistence.SqliteBudgetReadModel;
 import atlas.infrastructure.economy.persistence.SqliteEconomyUnitOfWork;
 import atlas.infrastructure.economy.persistence.SqliteMovementReadModel;
+import atlas.infrastructure.economy.persistence.SqliteSavingsGoalReadModel;
 import atlas.infrastructure.sharedkernel.persistence.Migrations;
 import atlas.infrastructure.sharedkernel.persistence.SchemaMigrator;
 import atlas.infrastructure.sharedkernel.persistence.SqliteConnections;
@@ -98,7 +109,7 @@ public final class EconomyApplication {
         new SchemaMigrator(connection, clock).migrate(Migrations.load(
             EconomyApplication.class, "/db-migrations/economy",
             "V001__create_movements.sql", "V002__create_sequences.sql",
-            "V003__index_movements_by_date.sql", "V004__create_budgets.sql"));
+            "V003__index_movements_by_date.sql", "V004__create_budgets.sql", "V005__create_savings_goals.sql"));
 
         var events = new SimpleDomainEventPublisher();
         var commands = new SimpleCommandBus();
@@ -110,9 +121,10 @@ public final class EconomyApplication {
             new SqliteSequenceGenerator(connection));
         var readModel = new SqliteMovementReadModel(connection);
         var budgets = new SqliteBudgetReadModel(connection);
+        var goals = new SqliteSavingsGoalReadModel(connection);
 
         registerCommandHandlers(commands, unitOfWork, clock, renderer);
-        registerQueryHandlers(queries, readModel, budgets, clock, renderer);
+        registerQueryHandlers(queries, readModel, budgets, goals, clock, renderer);
         EconomyEventsBroadcaster.subscribeAll(events, hub);
 
         var handlers = new EconomyHandlers(commands, queries);
@@ -184,6 +196,10 @@ public final class EconomyApplication {
                 .get("/budgets", sessions.protect(handlers::budgets))
                 .put("/budgets/{id}", sessions.protect(handlers::changeBudgetLimit))
                 .delete("/budgets/{id}", sessions.protect(handlers::removeBudget))
+                .post("/goals", sessions.protect(handlers::setGoal))
+                .get("/goals", sessions.protect(handlers::goals))
+                .put("/goals/{id}", sessions.protect(handlers::changeGoal))
+                .delete("/goals/{id}", sessions.protect(handlers::abandonGoal))
                 .get("/docs", sessions.protect(DocsHandlers::docs))
                 .get("/openapi.json", sessions.protect(DocsHandlers::openapi))
                 .get("/movements/{id}", sessions.protect(handlers::detail))
@@ -210,12 +226,19 @@ public final class EconomyApplication {
             new ChangeBudgetLimitCommandHandler(unitOfWork, clock), renderer));
         commands.register(RemoveBudgetCommand.class, new LoggingCommandHandler<>(
             new RemoveBudgetCommandHandler(unitOfWork, clock), renderer));
+        commands.register(SetSavingsGoalCommand.class, new LoggingCommandHandler<>(
+            new SetSavingsGoalCommandHandler(unitOfWork, clock), renderer));
+        commands.register(ChangeSavingsGoalCommand.class, new LoggingCommandHandler<>(
+            new ChangeSavingsGoalCommandHandler(unitOfWork, clock), renderer));
+        commands.register(AbandonSavingsGoalCommand.class, new LoggingCommandHandler<>(
+            new AbandonSavingsGoalCommandHandler(unitOfWork, clock), renderer));
     }
 
     private static void registerQueryHandlers(
         SimpleQueryBus queries,
         MovementReadModel readModel,
         BudgetReadModel budgets,
+        SavingsGoalReadModel goals,
         Clock clock,
         LogEntryRenderer renderer) {
 
@@ -229,5 +252,7 @@ public final class EconomyApplication {
             new GetBreakdownQueryHandler(readModel, clock), renderer));
         queries.register(ListBudgetsQuery.class, new LoggingQueryHandler<>(
             new ListBudgetsQueryHandler(budgets, readModel, new BudgetPace(), clock), renderer));
+        queries.register(ListSavingsGoalsQuery.class, new LoggingQueryHandler<>(
+            new ListSavingsGoalsQueryHandler(goals, readModel, new SavingsProjection(), clock), renderer));
     }
 }

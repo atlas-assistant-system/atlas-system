@@ -5,13 +5,17 @@ import atlas.application.economy.dto.BudgetDto;
 import atlas.application.economy.dto.BudgetStatusDto;
 import atlas.application.economy.dto.CategorySpendDto;
 import atlas.application.economy.dto.MovementDto;
+import atlas.application.economy.dto.SavingsGoalDto;
+import atlas.application.economy.dto.SavingsGoalStatusDto;
 import atlas.application.economy.ports.MovementReadModel.Balance;
 import atlas.application.economy.ports.MovementReadModel.CategorySpend;
 import atlas.application.economy.queries.Period;
 import atlas.domain.economy.Budget;
 import atlas.domain.economy.Movement;
+import atlas.domain.economy.SavingsGoal;
 import atlas.domain.economy.vos.MovementNote;
 import atlas.domain.economy.vos.Pace;
+import atlas.domain.economy.vos.Projection;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;
@@ -120,6 +124,33 @@ public final class EconomyMapper {
 
     private static double commitment(BudgetStatusDto budget) {
         return budget.spent().doubleValue() / budget.limit().doubleValue();
+    }
+
+    public static SavingsGoalDto toDto(SavingsGoal goal) {
+        return new SavingsGoalDto(
+            goal.id().toString(), goal.name().value(), goal.target().toEuros(), goal.deadline());
+    }
+
+    public static List<SavingsGoalStatusDto> toSavingsGoals(
+        Collection<SavingsGoal> goals, Function<SavingsGoal, Projection> projectionOf) {
+
+        return goals.stream()
+            .map(goal -> toStatus(goal, projectionOf.apply(goal)))
+            .sorted(Comparator.comparing(SavingsGoalStatusDto::deadline))
+            .toList();
+    }
+
+    private static SavingsGoalStatusDto toStatus(SavingsGoal goal, Projection projection) {
+        return new SavingsGoalStatusDto(
+            goal.id().toString(),
+            goal.name().value(),
+            euros(projection.targetCents()),
+            goal.deadline(),
+            euros(projection.monthlySavingCents()),
+            projection.monthsRemaining(),
+            euros(projection.projectedCents()),
+            euros(projection.requiredMonthlyCents()),
+            projection.reachable());
     }
 
     private static BigDecimal euros(long cents) {

@@ -406,6 +406,110 @@
           }
         }
       }
+    },
+    "/economy/goals": {
+      "get": {
+        "summary": "Objetivos de ahorro con su proyeccion",
+        "description": "De fecha limite mas cercana a mas lejana.",
+        "responses": {
+          "200": {
+            "description": "Objetivos proyectados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SavingsGoalStatus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Fija un objetivo de ahorro",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavingsGoalInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Fijado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoal"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Invalid"
+          }
+        }
+      }
+    },
+    "/economy/goals/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^O\\d{8}$"
+          }
+        }
+      ],
+      "put": {
+        "summary": "Cambia nombre, importe y fecha limite",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavingsGoalInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cambiado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoal"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Invalid"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Abandona el objetivo",
+        "responses": {
+          "204": {
+            "description": "Abandonado"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -696,6 +800,98 @@
           },
           "status": {
             "$ref": "#/components/schemas/BudgetStatusValue"
+          }
+        }
+      },
+      "SavingsGoalInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "target",
+          "deadline"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 60
+          },
+          "target": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date",
+            "description": "Tiene que ser posterior a hoy."
+          }
+        }
+      },
+      "SavingsGoal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "O00000005"
+          },
+          "name": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "SavingsGoalStatus": {
+        "type": "object",
+        "description": "El ritmo sale de los 6 meses naturales anteriores. No cuenta lo ya ahorrado: responde si desde hoy, a ese ritmo, se junta el importe antes de la fecha limite.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "O00000005"
+          },
+          "name": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "monthlySaving": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Amount"
+              }
+            ],
+            "description": "Ingresos menos gastos de los 6 meses anteriores, entre 6. Puede ser negativo."
+          },
+          "monthsRemaining": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "projected": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Amount"
+              }
+            ],
+            "description": "monthlySaving x monthsRemaining."
+          },
+          "requiredMonthly": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Amount"
+              }
+            ],
+            "description": "Lo que habria que ahorrar al mes para llegar."
+          },
+          "reachable": {
+            "type": "boolean"
           }
         }
       }

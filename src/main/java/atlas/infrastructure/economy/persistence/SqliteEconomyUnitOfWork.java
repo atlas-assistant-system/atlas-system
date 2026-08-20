@@ -3,6 +3,7 @@ package atlas.infrastructure.economy.persistence;
 import atlas.application.economy.ports.BudgetRepository;
 import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.economy.ports.MovementRepository;
+import atlas.application.economy.ports.SavingsGoalRepository;
 import atlas.application.sharedkernel.events.EventDelivery;
 import atlas.application.sharedkernel.unitofwork.AbstractUnitOfWork;
 import atlas.infrastructure.sharedkernel.SequenceGenerator;
@@ -15,12 +16,14 @@ public final class SqliteEconomyUnitOfWork extends AbstractUnitOfWork implements
     private final Connection connection;
     private final SqliteMovementRepository movements;
     private final SqliteBudgetRepository budgets;
+    private final SqliteSavingsGoalRepository goals;
 
     public SqliteEconomyUnitOfWork(Connection connection, EventDelivery delivery, SequenceGenerator sequences) {
         super(delivery);
         this.connection = connection;
         this.movements = new SqliteMovementRepository(connection, sequences);
         this.budgets = new SqliteBudgetRepository(connection, sequences);
+        this.goals = new SqliteSavingsGoalRepository(connection, sequences);
     }
 
     @Override
@@ -31,6 +34,11 @@ public final class SqliteEconomyUnitOfWork extends AbstractUnitOfWork implements
     @Override
     public BudgetRepository budgets() {
         return budgets;
+    }
+
+    @Override
+    public SavingsGoalRepository goals() {
+        return goals;
     }
 
     @Override
