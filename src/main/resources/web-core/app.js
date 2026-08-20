@@ -18,7 +18,6 @@ const state = {
     handVideoTime: -1,
     gesture: {
         candidate: null, candidateSince: 0, missingSince: 0, latched: null,
-        swipe: { points: [], direction: null },
     },
     pointer: { target: null, candidate: null, frames: 0, position: null, missing: 0 },
     voice: { recognition: null, target: null, listening: false },
@@ -283,7 +282,7 @@ function trackHandGesture(result) {
 
 function publishGesture(observed) {
     if (!state.authenticated) {
-        if (observed.type === 'VICTORY' && !state.authBusy && state.cameraReady
+        if (observed.type === 'FIST' && !state.authBusy && state.cameraReady
             && state.authentication
             && state.authentication.enrolledProfiles > 0) {
             authenticate();
@@ -297,7 +296,7 @@ function publishGesture(observed) {
         ...observed,
         observedAt: new Date().toISOString(),
     }).then(response => {
-        if (observed.type === 'VICTORY' && response.status === 204) {
+        if (observed.type === 'FIST' && response.status === 204) {
             setAuthenticated(false);
             refreshAuthentication();
         } else if (response.status === 204) {
@@ -410,18 +409,16 @@ function recognizedHandGesture(result) {
     const gesture = result.gestures?.[0]?.[0];
     let type = null;
     if (isPinch(pose)) {
-        resetSwipe();
         type = 'PINCH';
-    } else if (isSwipePose(pose)) {
-        type = trackSwipe(landmarks);
+    } else if (isDirectionalPose(pose)) {
+        type = staticDirection(landmarks);
         if (!type) {
             return null;
         }
     } else {
-        resetSwipe();
         type = ({
             Closed_Fist: 'FIST', Open_Palm: 'OPEN_PALM', Pointing_Up: 'POINT',
-            Thumb_Up: 'THUMBS_UP', Victory: 'VICTORY',
+            Thumb_Up: 'THUMBS_UP',
         })[gesture?.categoryName] || null;
     }
 
@@ -432,7 +429,7 @@ function recognizedHandGesture(result) {
     } : null;
 }
 
-function isSwipePose(points) {
+function isDirectionalPose(points) {
     const palmWidth = pointDistance(points[5], points[17]);
     return fingerIsExtended(points, 5) && fingerIsExtended(points, 9)
         && !fingerIsExtended(points, 13) && !fingerIsExtended(points, 17)
@@ -476,34 +473,14 @@ function pointCoordinates(point) {
     return Array.isArray(point) ? { x: point[0], y: point[1], z: point[2] || 0 } : point;
 }
 
-function trackSwipe(landmarks) {
-    const first = cameraPoint(landmarks[8]);
-    const second = cameraPoint(landmarks[12]);
-    if (!first || !second) {
-        resetSwipe();
-        return null;
-    }
-
-    const now = performance.now();
-    const center = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2, time: now };
-    const swipe = state.gesture.swipe;
-    const previous = swipe.points[swipe.points.length - 1];
-    if (previous && (now - previous.time > 220
-        || pointDistance(previous, center) > Math.min(innerWidth, innerHeight) * 0.25)) {
-        resetSwipe();
-    }
-    swipe.points.push(center);
-    swipe.points = swipe.points.filter(point => now - point.time <= 650);
-    const origin = swipe.points.find(point => now - point.time >= 80);
-    if (!swipe.direction && origin) {
-        swipe.direction = swipeDirection(center.x - origin.x, center.y - origin.y,
-            Math.max(80, Math.min(innerWidth, innerHeight) * 0.1));
-    }
-    return swipe.direction;
-}
-
-function swipeDirection(dx, dy, threshold) {
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) {
+function staticDirection(points) {
+    const indexBase = pointCoordinates(points[5]);
+    const middleBase = pointCoordinates(points[9]);
+    const indexTip = pointCoordinates(points[8]);
+    const middleTip = pointCoordinates(points[12]);
+    const dx = (indexBase.x + middleBase.x - indexTip.x - middleTip.x) / 2;
+    const dy = (indexTip.y + middleTip.y - indexBase.y - middleBase.y) / 2;
+    if (Math.hypot(dx, dy) < pointDistance(points[5], points[17]) * 0.65) {
         return null;
     }
     if (Math.abs(dx) > Math.abs(dy) * 1.35) {
@@ -513,11 +490,6 @@ function swipeDirection(dx, dy, threshold) {
         return dy > 0 ? 'PALM_DOWN' : 'PALM_UP';
     }
     return null;
-}
-
-function resetSwipe() {
-    state.gesture.swipe.points = [];
-    state.gesture.swipe.direction = null;
 }
 
 function applyGesture(type) {
@@ -543,7 +515,7 @@ function applyGesture(type) {
         }
         return;
     }
-    if (type === 'FIST') {
+    if (type === 'OPEN_PALM') {
         if (state.voice.listening) {
             stopVoiceInput();
         } else if (!document.getElementById('panel').hidden) {
@@ -1494,7 +1466,6 @@ function setAuthenticated(authenticated) {
             Object.assign(state.gesture, {
                 candidate: null, candidateSince: 0, missingSince: 0, latched: null,
             });
-            resetSwipe();
             stopVoiceInput();
             setPointerTarget(null);
             Object.assign(state.pointer, { position: null, missing: 0 });
@@ -1514,7 +1485,7 @@ function setAuthenticated(authenticated) {
     }
 
     if (changed) {
-        setInteractionStatus('Gestos activos: apunta y junta los dedos para seleccionar.');
+        setInteractionStatus('Gestos activos: junta pulgar e índice para seleccionar; orienta índice y corazón para navegar.');
         refreshAll();
         connectEvents();
     }
@@ -1658,8 +1629,8 @@ async function deleteProfile(id) {
 }
 
 function challengeDetector(type) {
-    return result => type === 'VICTORY'
-        && result?.gestures?.[0]?.some(value => value.categoryName === 'Victory'
+    return result => type === 'FIST'
+        && result?.gestures?.[0]?.some(value => value.categoryName === 'Closed_Fist'
             && value.score >= HAND_CONFIDENCE);
 }
 
@@ -1721,8 +1692,8 @@ async function authenticate() {
         }
         const challenge = started.body;
         challengeNode.hidden = false;
-        document.getElementById('challenge-instruction').textContent = 'Introduce el código secreto';
-        setAuthFeedback('Verificando código gestual…');
+        document.getElementById('challenge-instruction').textContent = 'Mantén el puño cerrado';
+        setAuthFeedback('Verificando puño y rostro…');
         const face = await waitForChallenge(challenge);
         const completed = await send('POST',
             '/authentication/challenges/' + challenge.challengeId + '/complete', {
