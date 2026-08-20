@@ -1,0 +1,140 @@
+.economy-view {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding-top: 2.5rem;
+    overflow-y: auto;
+}
+
+.economy-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr);
+    gap: 5.5rem;
+}
+
+.economy-section {
+    min-width: 0;
+}
+
+.economy-section > .label {
+    margin-bottom: 1.4rem;
+}
+
+.economy-balance {
+    grid-column: 1 / -1;
+}
+
+.economy-net {
+    margin: 0;
+    font-size: 5.5rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.economy-net.negative {
+    opacity: 0.75;
+}
+
+.economy-net-detail {
+    margin: 0.9rem 0 0;
+    font-size: 1.05rem;
+    opacity: 0.55;
+}
+
+.economy-net-detail span + span {
+    margin-left: 1.8rem;
+}
+
+.economy-period {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    opacity: 0.4;
+}
+
+.economy-categories,
+.economy-movements {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.economy-category + .economy-category {
+    margin-top: 1.5rem;
+}
+
+.economy-category-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    font-size: 1.15rem;
+}
+
+.economy-category-name {
+    opacity: 0.85;
+}
+
+.economy-category-total {
+    opacity: 0.55;
+    font-variant-numeric: tabular-nums;
+}
+
+.economy-bar {
+    margin-top: 0.55rem;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.economy-bar > span {
+    display: block;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.economy-movement {
+    display: grid;
+    grid-template-columns: 4.5rem 1.8rem minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.9rem;
+    padding: 0.75rem 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.economy-movement-day {
+    opacity: 0.4;
+    font-variant-numeric: tabular-nums;
+}
+
+.economy-movement-what {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.85;
+}
+
+.economy-movement-amount {
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+}
+
+.economy-movement-amount.income {
+    opacity: 0.9;
+}
+
+.economy-empty {
+    margin: 0;
+    font-size: 1.05rem;
+    opacity: 0.4;
+}
+
+@media (max-width: 60rem) {
+    .economy-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 3rem;
+    }
+
+    .economy-net {
+        font-size: 4rem;
+    }
+}

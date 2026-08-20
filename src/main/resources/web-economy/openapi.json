@@ -1,0 +1,227 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Atlas — Economia",
+    "version": "1.0.0",
+    "description": "Movimientos, saldo y desglose por categoria. Los importes viajan como cadena en euros."
+  },
+  "paths": {
+    "/economy/movements": {
+      "get": {
+        "summary": "Lista los ultimos movimientos",
+        "parameters": [
+          {"name": "from", "in": "query", "schema": {"type": "string", "format": "date"}},
+          {"name": "to", "in": "query", "schema": {"type": "string", "format": "date"}},
+          {"name": "category", "in": "query", "schema": {"$ref": "#/components/schemas/Category"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 20, "maximum": 200}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Movimientos, del mas reciente al mas antiguo",
+            "content": {"application/json": {"schema": {
+              "type": "array", "items": {"$ref": "#/components/schemas/Movement"}}}}
+          }
+        }
+      },
+      "post": {
+        "summary": "Registra un movimiento",
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RecordMovement"}}}
+        },
+        "responses": {
+          "201": {
+            "description": "Registrado",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Movement"}}}
+          },
+          "400": {"$ref": "#/components/responses/Invalid"}
+        }
+      }
+    },
+    "/economy/movements/{id}": {
+      "parameters": [
+        {"name": "id", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^M\\d{8}$"}}
+      ],
+      "get": {
+        "summary": "Detalle de un movimiento",
+        "responses": {
+          "200": {
+            "description": "El movimiento",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Movement"}}}
+          },
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "put": {
+        "summary": "Corrige importe, nota y fecha",
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CorrectMovement"}}}
+        },
+        "responses": {
+          "200": {
+            "description": "Corregido",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Movement"}}}
+          },
+          "400": {"$ref": "#/components/responses/Invalid"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "delete": {
+        "summary": "Borra el movimiento",
+        "responses": {
+          "204": {"description": "Borrado"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
+    "/economy/movements/{id}/category": {
+      "parameters": [
+        {"name": "id", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^M\\d{8}$"}}
+      ],
+      "put": {
+        "summary": "Cambia la categoria, dentro del mismo tipo",
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {
+            "type": "object",
+            "required": ["category"],
+            "properties": {"category": {"$ref": "#/components/schemas/Category"}}}}}
+        },
+        "responses": {
+          "200": {
+            "description": "Recategorizado",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Movement"}}}
+          },
+          "400": {"$ref": "#/components/responses/Invalid"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
+    "/economy/balance": {
+      "get": {
+        "summary": "Saldo del periodo",
+        "description": "Sin from ni to, el mes en curso.",
+        "parameters": [
+          {"name": "from", "in": "query", "schema": {"type": "string", "format": "date"}},
+          {"name": "to", "in": "query", "schema": {"type": "string", "format": "date"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Ingresos, gastos y neto",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Balance"}}}
+          }
+        }
+      }
+    },
+    "/economy/breakdown": {
+      "get": {
+        "summary": "Desglose del gasto por categoria",
+        "description": "Sin from ni to, el mes en curso. Solo gasto, de mayor a menor.",
+        "parameters": [
+          {"name": "from", "in": "query", "schema": {"type": "string", "format": "date"}},
+          {"name": "to", "in": "query", "schema": {"type": "string", "format": "date"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Gasto por categoria",
+            "content": {"application/json": {"schema": {
+              "type": "array", "items": {"$ref": "#/components/schemas/CategorySpend"}}}}
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "Invalid": {
+        "description": "Peticion invalida",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}
+      },
+      "NotFound": {
+        "description": "No existe",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}
+      }
+    },
+    "schemas": {
+      "Kind": {"type": "string", "enum": ["INCOME", "EXPENSE"]},
+      "Category": {
+        "type": "string",
+        "enum": ["FOOD", "TRANSPORT", "HOME", "LEISURE", "HEALTH", "SHOPPING", "OTHER", "INCOME"],
+        "description": "INCOME solo etiqueta ingresos; el resto, solo gastos."
+      },
+      "Amount": {
+        "type": "string",
+        "pattern": "^-?\\d+(\\.\\d+)?$",
+        "example": "12.50",
+        "description": "Euros como cadena, para no perder el centimo en coma flotante."
+      },
+      "RecordMovement": {
+        "type": "object",
+        "required": ["kind", "amount", "category"],
+        "properties": {
+          "kind": {"$ref": "#/components/schemas/Kind"},
+          "amount": {"$ref": "#/components/schemas/Amount"},
+          "category": {"$ref": "#/components/schemas/Category"},
+          "note": {"type": "string", "maxLength": 140, "nullable": true},
+          "occurredOn": {
+            "type": "string", "format": "date", "nullable": true,
+            "description": "Hoy si se omite. No admite fechas futuras."
+          }
+        }
+      },
+      "CorrectMovement": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "amount": {"$ref": "#/components/schemas/Amount"},
+          "note": {"type": "string", "maxLength": 140, "nullable": true},
+          "occurredOn": {"type": "string", "format": "date", "nullable": true}
+        }
+      },
+      "Movement": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "example": "M00000007"},
+          "kind": {"$ref": "#/components/schemas/Kind"},
+          "amount": {"$ref": "#/components/schemas/Amount"},
+          "category": {"$ref": "#/components/schemas/Category"},
+          "categoryLabel": {"type": "string", "example": "Comida"},
+          "categoryIcon": {"type": "string"},
+          "note": {"type": "string", "nullable": true},
+          "occurredOn": {"type": "string", "format": "date"},
+          "recordedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Balance": {
+        "type": "object",
+        "properties": {
+          "from": {"type": "string", "format": "date"},
+          "to": {"type": "string", "format": "date"},
+          "income": {"$ref": "#/components/schemas/Amount"},
+          "expense": {"$ref": "#/components/schemas/Amount"},
+          "net": {"$ref": "#/components/schemas/Amount"}
+        }
+      },
+      "CategorySpend": {
+        "type": "object",
+        "properties": {
+          "category": {"$ref": "#/components/schemas/Category"},
+          "label": {"type": "string"},
+          "icon": {"type": "string"},
+          "total": {"$ref": "#/components/schemas/Amount"},
+          "percentage": {"type": "string", "example": "75.0"}
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "integer"},
+          "code": {"type": "string", "example": "Movement.CategoryDoesNotMatchKind"},
+          "message": {"type": "string"},
+          "correlationId": {"type": "string"}
+        }
+      }
+    }
+  }
+}
