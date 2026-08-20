@@ -1,6 +1,8 @@
 package atlas.presentation.economy.responses;
 
 import atlas.application.economy.dto.BalanceDto;
+import atlas.application.economy.dto.BudgetDto;
+import atlas.application.economy.dto.BudgetStatusDto;
 import atlas.application.economy.dto.CategorySpendDto;
 import atlas.application.economy.dto.MovementDto;
 import java.util.LinkedHashMap;
@@ -43,6 +45,35 @@ public final class EconomyResponses {
 
     public static List<Map<String, Object>> breakdown(List<CategorySpendDto> spending) {
         return spending.stream().map(EconomyResponses::categorySpend).toList();
+    }
+
+    public static Map<String, Object> budget(BudgetDto dto) {
+        var body = new LinkedHashMap<String, Object>();
+        body.put("id", dto.id());
+        body.put("category", dto.category());
+        body.put("label", dto.label());
+        body.put("icon", dto.icon());
+        body.put("limit", dto.limit().toPlainString());
+
+        return body;
+    }
+
+    public static List<Map<String, Object>> budgets(List<BudgetStatusDto> budgets) {
+        return budgets.stream().map(EconomyResponses::budgetStatus).toList();
+    }
+
+    private static Map<String, Object> budgetStatus(BudgetStatusDto dto) {
+        var body = new LinkedHashMap<String, Object>();
+        body.put("id", dto.id());
+        body.put("category", dto.category());
+        body.put("label", dto.label());
+        body.put("icon", dto.icon());
+        body.put("limit", dto.limit().toPlainString());
+        body.put("spent", dto.spent().toPlainString());
+        body.put("projected", dto.projected().toPlainString());
+        body.put("status", dto.status());
+
+        return body;
     }
 
     private static Map<String, Object> categorySpend(CategorySpendDto dto) {

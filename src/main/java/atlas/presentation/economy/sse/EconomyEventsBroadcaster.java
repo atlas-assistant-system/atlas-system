@@ -1,7 +1,9 @@
 package atlas.presentation.economy.sse;
 
 import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
-import atlas.domain.economy.MovementId;
+import atlas.domain.economy.events.BudgetDefinedEvent;
+import atlas.domain.economy.events.BudgetLimitChangedEvent;
+import atlas.domain.economy.events.BudgetRemovedEvent;
 import atlas.domain.economy.events.MovementCorrectedEvent;
 import atlas.domain.economy.events.MovementDeletedEvent;
 import atlas.domain.economy.events.MovementRecategorizedEvent;
@@ -17,19 +19,28 @@ public final class EconomyEventsBroadcaster {
 
     public static void subscribeAll(SimpleDomainEventPublisher events, SseHub hub) {
         events.subscribe(MovementRecordedEvent.class,
-            event -> broadcast(hub, "movementRecorded", event.movementId()));
+            event -> broadcast(hub, "movementRecorded", "movementId", event.movementId().toString()));
 
         events.subscribe(MovementCorrectedEvent.class,
-            event -> broadcast(hub, "movementCorrected", event.movementId()));
+            event -> broadcast(hub, "movementCorrected", "movementId", event.movementId().toString()));
 
         events.subscribe(MovementRecategorizedEvent.class,
-            event -> broadcast(hub, "movementRecategorized", event.movementId()));
+            event -> broadcast(hub, "movementRecategorized", "movementId", event.movementId().toString()));
 
         events.subscribe(MovementDeletedEvent.class,
-            event -> broadcast(hub, "movementDeleted", event.movementId()));
+            event -> broadcast(hub, "movementDeleted", "movementId", event.movementId().toString()));
+
+        events.subscribe(BudgetDefinedEvent.class,
+            event -> broadcast(hub, "budgetDefined", "budgetId", event.budgetId().toString()));
+
+        events.subscribe(BudgetLimitChangedEvent.class,
+            event -> broadcast(hub, "budgetLimitChanged", "budgetId", event.budgetId().toString()));
+
+        events.subscribe(BudgetRemovedEvent.class,
+            event -> broadcast(hub, "budgetRemoved", "budgetId", event.budgetId().toString()));
     }
 
-    private static void broadcast(SseHub hub, String name, MovementId movementId) {
-        hub.broadcast(SseEvent.named(name, Json.write(Map.of("movementId", movementId.toString()))));
+    private static void broadcast(SseHub hub, String name, String field, String id) {
+        hub.broadcast(SseEvent.named(name, Json.write(Map.of(field, id))));
     }
 }

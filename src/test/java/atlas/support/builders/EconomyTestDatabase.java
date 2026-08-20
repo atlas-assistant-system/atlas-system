@@ -16,7 +16,7 @@ public final class EconomyTestDatabase {
         new SchemaMigrator(connection, clock).migrate(Migrations.load(
             EconomyTestDatabase.class, "/db-migrations/economy",
             "V001__create_movements.sql", "V002__create_sequences.sql",
-            "V003__index_movements_by_date.sql"));
+            "V003__index_movements_by_date.sql", "V004__create_budgets.sql"));
 
         return connection;
     }

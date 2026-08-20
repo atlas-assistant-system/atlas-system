@@ -191,6 +191,76 @@ class HttpApiIT {
     }
 
     @Test
+    void shouldWalkTheWholeLifeOfABudget() throws Exception {
+        var created = send("POST", "/economy/budgets", """
+            {"category":"FOOD","limit":"300.00"}""");
+        assertThat(created.statusCode()).isEqualTo(201);
+
+        var budget = json(created);
+        var id = (String) budget.get("id");
+        assertThat(id).matches("P\\d{8}");
+        assertThat(budget.get("category")).isEqualTo("FOOD");
+        assertThat(budget.get("label")).isEqualTo("Comida");
+        assertThat(budget.get("limit")).isEqualTo("300.00");
+
+        var raised = json(send("PUT", "/economy/budgets/" + id, """
+            {"limit":"500.00"}"""));
+        assertThat(raised.get("limit")).isEqualTo("500.00");
+
+        assertThat(jsonList(send("GET", "/economy/budgets", null))).hasSize(1);
+
+        assertThat(send("DELETE", "/economy/budgets/" + id, null).statusCode()).isEqualTo(204);
+        assertThat(jsonList(send("GET", "/economy/budgets", null))).isEmpty();
+    }
+
+    @Test
+    void shouldReportWhatEachBudgetHasCommittedThisMonth() throws Exception {
+        var budget = (String) json(send("POST", "/economy/budgets", """
+            {"category":"FOOD","limit":"200.00"}""")).get("id");
+        var lunch = recordMovement("EXPENSE", "180.00", "FOOD", "2026-08-05");
+
+        var status = jsonList(send("GET", "/economy/budgets", null)).getFirst();
+        assertThat(status.get("limit")).isEqualTo("200.00");
+        assertThat(status.get("spent")).isEqualTo("180.00");
+        assertThat(status.get("projected")).isEqualTo("279.00");
+        assertThat(status.get("status")).isEqualTo("AT_RISK");
+
+        send("DELETE", "/economy/budgets/" + budget, null);
+        remove(lunch);
+    }
+
+    @Test
+    void shouldRefuseASecondBudgetForTheSameCategory() throws Exception {
+        var first = (String) json(send("POST", "/economy/budgets", """
+            {"category":"LEISURE","limit":"50.00"}""")).get("id");
+
+        var second = send("POST", "/economy/budgets", """
+            {"category":"LEISURE","limit":"90.00"}""");
+
+        assertThat(second.statusCode()).isEqualTo(409);
+        assertThat(json(second).get("code")).isEqualTo("Budget.AlreadyDefined");
+
+        send("DELETE", "/economy/budgets/" + first, null);
+    }
+
+    @Test
+    void shouldRefuseToBudgetIncome() throws Exception {
+        var response = send("POST", "/economy/budgets", """
+            {"category":"INCOME","limit":"300.00"}""");
+
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(json(response).get("code")).isEqualTo("Budget.OnlySpendingCanBeBudgeted");
+    }
+
+    @Test
+    void shouldReportAnUnknownBudgetAsNotFound() throws Exception {
+        var response = send("GET", "/economy/budgets", null);
+        assertThat(response.statusCode()).isEqualTo(200);
+
+        assertThat(send("DELETE", "/economy/budgets/P00009999", null).statusCode()).isEqualTo(404);
+    }
+
+    @Test
     void shouldServeItsDocsBelowTheModulePath() throws Exception {
         assertThat(send("GET", "/", null).statusCode()).isEqualTo(404);
         assertThat(send("GET", "/economy/docs", null).body()).contains("swagger");

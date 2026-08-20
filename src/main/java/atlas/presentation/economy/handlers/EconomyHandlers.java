@@ -1,21 +1,29 @@
 package atlas.presentation.economy.handlers;
 
+import atlas.application.economy.commands.changebudgetlimit.ChangeBudgetLimitCommand;
 import atlas.application.economy.commands.correctmovement.CorrectMovementCommand;
+import atlas.application.economy.commands.definebudget.DefineBudgetCommand;
 import atlas.application.economy.commands.deletemovement.DeleteMovementCommand;
 import atlas.application.economy.commands.recategorizemovement.RecategorizeMovementCommand;
 import atlas.application.economy.commands.recordmovement.RecordMovementCommand;
+import atlas.application.economy.commands.removebudget.RemoveBudgetCommand;
+import atlas.application.economy.dto.BudgetDto;
 import atlas.application.economy.dto.MovementDto;
 import atlas.application.economy.queries.getbalance.GetBalanceQuery;
 import atlas.application.economy.queries.getbreakdown.GetBreakdownQuery;
 import atlas.application.economy.queries.getmovement.GetMovementQuery;
+import atlas.application.economy.queries.listbudgets.ListBudgetsQuery;
 import atlas.application.economy.queries.listmovements.ListMovementsQuery;
 import atlas.application.sharedkernel.cqrs.CommandBus;
 import atlas.application.sharedkernel.cqrs.QueryBus;
+import atlas.domain.economy.BudgetId;
 import atlas.domain.economy.MovementId;
 import atlas.domain.economy.enums.Category;
 import atlas.domain.sharedkernel.results.Result;
 import atlas.presentation.common.web.Json;
+import atlas.presentation.economy.requests.ChangeBudgetLimitRequest;
 import atlas.presentation.economy.requests.CorrectMovementRequest;
+import atlas.presentation.economy.requests.DefineBudgetRequest;
 import atlas.presentation.economy.requests.RecategorizeMovementRequest;
 import atlas.presentation.economy.requests.RecordMovementRequest;
 import atlas.presentation.economy.responses.EconomyResponses;
@@ -107,6 +115,52 @@ public final class EconomyHandlers {
         }
 
         return HttpResponse.ok(Json.write(EconomyResponses.breakdown(result.value())));
+    }
+
+    public HttpResponse defineBudget(HttpRequest request) {
+        var body = DefineBudgetRequest.from(Json.parse(request.body()));
+
+        Result<BudgetDto> result = commands.dispatch(new DefineBudgetCommand(body.category(), body.limit()));
+        if (result.isFailure()) {
+            return HttpResponse.error(result.error());
+        }
+
+        return HttpResponse.created(
+            "/economy/budgets/" + result.value().id(), Json.write(EconomyResponses.budget(result.value())));
+    }
+
+    public HttpResponse changeBudgetLimit(HttpRequest request) {
+        var body = ChangeBudgetLimitRequest.from(Json.parse(request.body()));
+
+        Result<BudgetDto> result = commands.dispatch(
+            new ChangeBudgetLimitCommand(budgetId(request), body.limit()));
+        if (result.isFailure()) {
+            return HttpResponse.error(result.error());
+        }
+
+        return HttpResponse.ok(Json.write(EconomyResponses.budget(result.value())));
+    }
+
+    public HttpResponse removeBudget(HttpRequest request) {
+        Result<Void> result = commands.dispatch(new RemoveBudgetCommand(budgetId(request)));
+        if (result.isFailure()) {
+            return HttpResponse.error(result.error());
+        }
+
+        return HttpResponse.noContent();
+    }
+
+    public HttpResponse budgets(HttpRequest request) {
+        var result = queries.dispatch(new ListBudgetsQuery());
+        if (result.isFailure()) {
+            return HttpResponse.error(result.error());
+        }
+
+        return HttpResponse.ok(Json.write(EconomyResponses.budgets(result.value())));
+    }
+
+    private static BudgetId budgetId(HttpRequest request) {
+        return BudgetId.parse(request.pathParam("id"));
     }
 
     private static HttpResponse okOrError(Result<MovementDto> result) {

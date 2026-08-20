@@ -10,16 +10,52 @@
       "get": {
         "summary": "Lista los ultimos movimientos",
         "parameters": [
-          {"name": "from", "in": "query", "schema": {"type": "string", "format": "date"}},
-          {"name": "to", "in": "query", "schema": {"type": "string", "format": "date"}},
-          {"name": "category", "in": "query", "schema": {"$ref": "#/components/schemas/Category"}},
-          {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 20, "maximum": 200}}
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Category"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 200
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "Movimientos, del mas reciente al mas antiguo",
-            "content": {"application/json": {"schema": {
-              "type": "array", "items": {"$ref": "#/components/schemas/Movement"}}}}
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Movement"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -27,74 +63,153 @@
         "summary": "Registra un movimiento",
         "requestBody": {
           "required": true,
-          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RecordMovement"}}}
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordMovement"
+              }
+            }
+          }
         },
         "responses": {
           "201": {
             "description": "Registrado",
-            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Movement"}}}
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
+              }
+            }
           },
-          "400": {"$ref": "#/components/responses/Invalid"}
+          "400": {
+            "$ref": "#/components/responses/Invalid"
+          }
         }
       }
     },
     "/economy/movements/{id}": {
       "parameters": [
-        {"name": "id", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^M\\d{8}$"}}
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^M\\d{8}$"
+          }
+        }
       ],
       "get": {
         "summary": "Detalle de un movimiento",
         "responses": {
           "200": {
             "description": "El movimiento",
-            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Movement"}}}
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
+              }
+            }
           },
-          "404": {"$ref": "#/components/responses/NotFound"}
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       },
       "put": {
         "summary": "Corrige importe, nota y fecha",
         "requestBody": {
           "required": true,
-          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CorrectMovement"}}}
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectMovement"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Corregido",
-            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Movement"}}}
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
+              }
+            }
           },
-          "400": {"$ref": "#/components/responses/Invalid"},
-          "404": {"$ref": "#/components/responses/NotFound"}
+          "400": {
+            "$ref": "#/components/responses/Invalid"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       },
       "delete": {
         "summary": "Borra el movimiento",
         "responses": {
-          "204": {"description": "Borrado"},
-          "404": {"$ref": "#/components/responses/NotFound"}
+          "204": {
+            "description": "Borrado"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
     "/economy/movements/{id}/category": {
       "parameters": [
-        {"name": "id", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^M\\d{8}$"}}
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^M\\d{8}$"
+          }
+        }
       ],
       "put": {
         "summary": "Cambia la categoria, dentro del mismo tipo",
         "requestBody": {
           "required": true,
-          "content": {"application/json": {"schema": {
-            "type": "object",
-            "required": ["category"],
-            "properties": {"category": {"$ref": "#/components/schemas/Category"}}}}}
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "category"
+                ],
+                "properties": {
+                  "category": {
+                    "$ref": "#/components/schemas/Category"
+                  }
+                }
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Recategorizado",
-            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Movement"}}}
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
+              }
+            }
           },
-          "400": {"$ref": "#/components/responses/Invalid"},
-          "404": {"$ref": "#/components/responses/NotFound"}
+          "400": {
+            "$ref": "#/components/responses/Invalid"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -103,13 +218,33 @@
         "summary": "Saldo del periodo",
         "description": "Sin from ni to, el mes en curso.",
         "parameters": [
-          {"name": "from", "in": "query", "schema": {"type": "string", "format": "date"}},
-          {"name": "to", "in": "query", "schema": {"type": "string", "format": "date"}}
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "Ingresos, gastos y neto",
-            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Balance"}}}
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Balance"
+                }
+              }
+            }
           }
         }
       }
@@ -119,14 +254,155 @@
         "summary": "Desglose del gasto por categoria",
         "description": "Sin from ni to, el mes en curso. Solo gasto, de mayor a menor.",
         "parameters": [
-          {"name": "from", "in": "query", "schema": {"type": "string", "format": "date"}},
-          {"name": "to", "in": "query", "schema": {"type": "string", "format": "date"}}
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "Gasto por categoria",
-            "content": {"application/json": {"schema": {
-              "type": "array", "items": {"$ref": "#/components/schemas/CategorySpend"}}}}
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategorySpend"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/economy/budgets": {
+      "get": {
+        "summary": "Estado de cada presupuesto en el mes en curso",
+        "description": "De mayor a menor porcentaje comprometido del limite.",
+        "responses": {
+          "200": {
+            "description": "Presupuestos con su consumo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BudgetStatus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Define el limite de una categoria",
+        "description": "El limite es recurrente: vale para todos los meses hasta que se cambie.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefineBudget"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Definido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Budget"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Invalid"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/economy/budgets/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^P\\d{8}$"
+          }
+        }
+      ],
+      "put": {
+        "summary": "Cambia el limite",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "limit"
+                ],
+                "properties": {
+                  "limit": {
+                    "$ref": "#/components/schemas/Amount"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cambiado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Budget"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Invalid"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Quita el presupuesto",
+        "responses": {
+          "204": {
+            "description": "Quitado"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         }
       }
@@ -136,18 +412,55 @@
     "responses": {
       "Invalid": {
         "description": "Peticion invalida",
-        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
       },
       "NotFound": {
         "description": "No existe",
-        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApiError"}}}
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflicto de estado",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
       }
     },
     "schemas": {
-      "Kind": {"type": "string", "enum": ["INCOME", "EXPENSE"]},
+      "Kind": {
+        "type": "string",
+        "enum": [
+          "INCOME",
+          "EXPENSE"
+        ]
+      },
       "Category": {
         "type": "string",
-        "enum": ["FOOD", "TRANSPORT", "HOME", "LEISURE", "HEALTH", "SHOPPING", "OTHER", "INCOME"],
+        "enum": [
+          "FOOD",
+          "TRANSPORT",
+          "HOME",
+          "LEISURE",
+          "HEALTH",
+          "SHOPPING",
+          "OTHER",
+          "INCOME"
+        ],
         "description": "INCOME solo etiqueta ingresos; el resto, solo gastos."
       },
       "Amount": {
@@ -158,68 +471,232 @@
       },
       "RecordMovement": {
         "type": "object",
-        "required": ["kind", "amount", "category"],
+        "required": [
+          "kind",
+          "amount",
+          "category"
+        ],
         "properties": {
-          "kind": {"$ref": "#/components/schemas/Kind"},
-          "amount": {"$ref": "#/components/schemas/Amount"},
-          "category": {"$ref": "#/components/schemas/Category"},
-          "note": {"type": "string", "maxLength": 140, "nullable": true},
+          "kind": {
+            "$ref": "#/components/schemas/Kind"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 140,
+            "nullable": true
+          },
           "occurredOn": {
-            "type": "string", "format": "date", "nullable": true,
+            "type": "string",
+            "format": "date",
+            "nullable": true,
             "description": "Hoy si se omite. No admite fechas futuras."
           }
         }
       },
       "CorrectMovement": {
         "type": "object",
-        "required": ["amount"],
+        "required": [
+          "amount"
+        ],
         "properties": {
-          "amount": {"$ref": "#/components/schemas/Amount"},
-          "note": {"type": "string", "maxLength": 140, "nullable": true},
-          "occurredOn": {"type": "string", "format": "date", "nullable": true}
+          "amount": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 140,
+            "nullable": true
+          },
+          "occurredOn": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
         }
       },
       "Movement": {
         "type": "object",
         "properties": {
-          "id": {"type": "string", "example": "M00000007"},
-          "kind": {"$ref": "#/components/schemas/Kind"},
-          "amount": {"$ref": "#/components/schemas/Amount"},
-          "category": {"$ref": "#/components/schemas/Category"},
-          "categoryLabel": {"type": "string", "example": "Comida"},
-          "categoryIcon": {"type": "string"},
-          "note": {"type": "string", "nullable": true},
-          "occurredOn": {"type": "string", "format": "date"},
-          "recordedAt": {"type": "string", "format": "date-time"}
+          "id": {
+            "type": "string",
+            "example": "M00000007"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/Kind"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "categoryLabel": {
+            "type": "string",
+            "example": "Comida"
+          },
+          "categoryIcon": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "occurredOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "Balance": {
         "type": "object",
         "properties": {
-          "from": {"type": "string", "format": "date"},
-          "to": {"type": "string", "format": "date"},
-          "income": {"$ref": "#/components/schemas/Amount"},
-          "expense": {"$ref": "#/components/schemas/Amount"},
-          "net": {"$ref": "#/components/schemas/Amount"}
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "income": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "expense": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "net": {
+            "$ref": "#/components/schemas/Amount"
+          }
         }
       },
       "CategorySpend": {
         "type": "object",
         "properties": {
-          "category": {"$ref": "#/components/schemas/Category"},
-          "label": {"type": "string"},
-          "icon": {"type": "string"},
-          "total": {"$ref": "#/components/schemas/Amount"},
-          "percentage": {"type": "string", "example": "75.0"}
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "label": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "total": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "percentage": {
+            "type": "string",
+            "example": "75.0"
+          }
         }
       },
       "ApiError": {
         "type": "object",
         "properties": {
-          "status": {"type": "integer"},
-          "code": {"type": "string", "example": "Movement.CategoryDoesNotMatchKind"},
-          "message": {"type": "string"},
-          "correlationId": {"type": "string"}
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string",
+            "example": "Movement.CategoryDoesNotMatchKind"
+          },
+          "message": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          }
+        }
+      },
+      "BudgetStatusValue": {
+        "type": "string",
+        "enum": [
+          "WITHIN",
+          "AT_RISK",
+          "EXCEEDED"
+        ],
+        "description": "EXCEEDED si ya se gasto el limite; AT_RISK si la proyeccion lo supera."
+      },
+      "DefineBudget": {
+        "type": "object",
+        "required": [
+          "category",
+          "limit"
+        ],
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Amount"
+          }
+        }
+      },
+      "Budget": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "P00000003"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "label": {
+            "type": "string",
+            "example": "Comida"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Amount"
+          }
+        }
+      },
+      "BudgetStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "P00000003"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "label": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "spent": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "projected": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Amount"
+              }
+            ],
+            "description": "Gasto al cierre del mes al ritmo actual: gastado x diasDelMes / diasTranscurridos."
+          },
+          "status": {
+            "$ref": "#/components/schemas/BudgetStatusValue"
+          }
         }
       }
     }

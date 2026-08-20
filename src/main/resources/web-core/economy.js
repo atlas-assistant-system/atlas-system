@@ -50,7 +50,7 @@
         balancePeriod.textContent = periodText(balance);
     }
 
-    function breakdownRow(spend) {
+    function breakdownRow(spend, budget) {
         const item = document.createElement('li');
         item.className = 'economy-category';
 
@@ -63,17 +63,34 @@
 
         const total = document.createElement('span');
         total.className = 'economy-category-total';
-        total.textContent = euros(spend.total);
+        total.textContent = budget
+            ? euros(spend.total) + ' / ' + euros(budget.limit)
+            : euros(spend.total);
 
         head.append(name, total);
 
         const bar = document.createElement('div');
         bar.className = 'economy-bar';
+        if (budget) {
+            bar.dataset.status = budget.status;
+        }
         const fill = document.createElement('span');
-        fill.style.width = Math.min(100, Number(spend.percentage)) + '%';
+        fill.style.width = Math.min(100, budget
+            ? 100 * Number(budget.spent) / Number(budget.limit)
+            : Number(spend.percentage)) + '%';
         bar.append(fill);
 
         item.append(head, bar);
+
+        if (budget && budget.status !== 'WITHIN') {
+            const pace = document.createElement('p');
+            pace.className = 'economy-pace';
+            pace.textContent = budget.status === 'EXCEEDED'
+                ? 'Ya superado'
+                : 'A este ritmo, ' + euros(budget.projected);
+            item.append(pace);
+        }
+
         return item;
     }
 
@@ -112,8 +129,13 @@
     }
 
     async function refreshBreakdown() {
-        const spending = await read('/economy/breakdown');
-        replace(breakdownList, spending.map(breakdownRow));
+        const [spending, budgets] = await Promise.all([
+            read('/economy/breakdown'),
+            read('/economy/budgets'),
+        ]);
+        const byCategory = new Map(budgets.map(budget => [budget.category, budget]));
+
+        replace(breakdownList, spending.map(spend => breakdownRow(spend, byCategory.get(spend.category))));
         breakdownEmpty.hidden = spending.length > 0;
     }
 
@@ -149,7 +171,8 @@
             guard(refresh);
             guard(refreshSummary);
         };
-        ['movementRecorded', 'movementCorrected', 'movementRecategorized', 'movementDeleted']
+        ['movementRecorded', 'movementCorrected', 'movementRecategorized', 'movementDeleted',
+            'budgetDefined', 'budgetLimitChanged', 'budgetRemoved']
             .forEach(name => events.addEventListener(name, reload));
     }
 

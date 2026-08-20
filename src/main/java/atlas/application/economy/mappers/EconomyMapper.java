@@ -1,18 +1,23 @@
 package atlas.application.economy.mappers;
 
 import atlas.application.economy.dto.BalanceDto;
+import atlas.application.economy.dto.BudgetDto;
+import atlas.application.economy.dto.BudgetStatusDto;
 import atlas.application.economy.dto.CategorySpendDto;
 import atlas.application.economy.dto.MovementDto;
 import atlas.application.economy.ports.MovementReadModel.Balance;
 import atlas.application.economy.ports.MovementReadModel.CategorySpend;
 import atlas.application.economy.queries.Period;
+import atlas.domain.economy.Budget;
 import atlas.domain.economy.Movement;
 import atlas.domain.economy.vos.MovementNote;
+import atlas.domain.economy.vos.Pace;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
 public final class EconomyMapper {
 
@@ -79,6 +84,42 @@ public final class EconomyMapper {
         return BigDecimal.valueOf(cents)
             .multiply(ONE_HUNDRED)
             .divide(BigDecimal.valueOf(total), PERCENTAGE_SCALE, RoundingMode.HALF_UP);
+    }
+
+    public static BudgetDto toDto(Budget budget) {
+        var category = budget.category();
+
+        return new BudgetDto(
+            budget.id().toString(),
+            category.name(),
+            category.label(),
+            category.icon(),
+            budget.limit().toEuros());
+    }
+
+    public static List<BudgetStatusDto> toBudgets(Collection<Budget> budgets, Function<Budget, Pace> paceOf) {
+        return budgets.stream()
+            .map(budget -> toStatus(budget, paceOf.apply(budget)))
+            .sorted(Comparator.comparingDouble(EconomyMapper::commitment).reversed())
+            .toList();
+    }
+
+    private static BudgetStatusDto toStatus(Budget budget, Pace pace) {
+        var category = budget.category();
+
+        return new BudgetStatusDto(
+            budget.id().toString(),
+            category.name(),
+            category.label(),
+            category.icon(),
+            euros(pace.limitCents()),
+            euros(pace.spentCents()),
+            euros(pace.projectedCents()),
+            pace.status().name());
+    }
+
+    private static double commitment(BudgetStatusDto budget) {
+        return budget.spent().doubleValue() / budget.limit().doubleValue();
     }
 
     private static BigDecimal euros(long cents) {

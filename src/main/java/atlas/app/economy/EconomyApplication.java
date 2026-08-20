@@ -1,13 +1,20 @@
 package atlas.app.economy;
 
+import atlas.application.economy.commands.changebudgetlimit.ChangeBudgetLimitCommand;
+import atlas.application.economy.commands.changebudgetlimit.ChangeBudgetLimitCommandHandler;
 import atlas.application.economy.commands.correctmovement.CorrectMovementCommand;
 import atlas.application.economy.commands.correctmovement.CorrectMovementCommandHandler;
+import atlas.application.economy.commands.definebudget.DefineBudgetCommand;
+import atlas.application.economy.commands.definebudget.DefineBudgetCommandHandler;
 import atlas.application.economy.commands.deletemovement.DeleteMovementCommand;
 import atlas.application.economy.commands.deletemovement.DeleteMovementCommandHandler;
 import atlas.application.economy.commands.recategorizemovement.RecategorizeMovementCommand;
 import atlas.application.economy.commands.recategorizemovement.RecategorizeMovementCommandHandler;
 import atlas.application.economy.commands.recordmovement.RecordMovementCommand;
 import atlas.application.economy.commands.recordmovement.RecordMovementCommandHandler;
+import atlas.application.economy.commands.removebudget.RemoveBudgetCommand;
+import atlas.application.economy.commands.removebudget.RemoveBudgetCommandHandler;
+import atlas.application.economy.ports.BudgetReadModel;
 import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.economy.ports.MovementReadModel;
 import atlas.application.economy.queries.getbalance.GetBalanceQuery;
@@ -16,6 +23,8 @@ import atlas.application.economy.queries.getbreakdown.GetBreakdownQuery;
 import atlas.application.economy.queries.getbreakdown.GetBreakdownQueryHandler;
 import atlas.application.economy.queries.getmovement.GetMovementQuery;
 import atlas.application.economy.queries.getmovement.GetMovementQueryHandler;
+import atlas.application.economy.queries.listbudgets.ListBudgetsQuery;
+import atlas.application.economy.queries.listbudgets.ListBudgetsQueryHandler;
 import atlas.application.economy.queries.listmovements.ListMovementsQuery;
 import atlas.application.economy.queries.listmovements.ListMovementsQueryHandler;
 import atlas.application.sharedkernel.cqrs.SimpleCommandBus;
@@ -26,7 +35,9 @@ import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
 import atlas.application.sharedkernel.logging.LogEntryRenderer;
 import atlas.application.sharedkernel.logging.LoggingCommandHandler;
 import atlas.application.sharedkernel.logging.LoggingQueryHandler;
+import atlas.domain.economy.services.BudgetPace;
 import atlas.infrastructure.common.SqliteSequenceGenerator;
+import atlas.infrastructure.economy.persistence.SqliteBudgetReadModel;
 import atlas.infrastructure.economy.persistence.SqliteEconomyUnitOfWork;
 import atlas.infrastructure.economy.persistence.SqliteMovementReadModel;
 import atlas.infrastructure.sharedkernel.persistence.Migrations;
@@ -87,7 +98,7 @@ public final class EconomyApplication {
         new SchemaMigrator(connection, clock).migrate(Migrations.load(
             EconomyApplication.class, "/db-migrations/economy",
             "V001__create_movements.sql", "V002__create_sequences.sql",
-            "V003__index_movements_by_date.sql"));
+            "V003__index_movements_by_date.sql", "V004__create_budgets.sql"));
 
         var events = new SimpleDomainEventPublisher();
         var commands = new SimpleCommandBus();
@@ -98,9 +109,10 @@ public final class EconomyApplication {
             connection, new ImmediateEventDelivery(new PendingEventDispatcher(events)),
             new SqliteSequenceGenerator(connection));
         var readModel = new SqliteMovementReadModel(connection);
+        var budgets = new SqliteBudgetReadModel(connection);
 
         registerCommandHandlers(commands, unitOfWork, clock, renderer);
-        registerQueryHandlers(queries, readModel, clock, renderer);
+        registerQueryHandlers(queries, readModel, budgets, clock, renderer);
         EconomyEventsBroadcaster.subscribeAll(events, hub);
 
         var handlers = new EconomyHandlers(commands, queries);
@@ -168,6 +180,10 @@ public final class EconomyApplication {
                 .get("/movements", sessions.protect(handlers::list))
                 .get("/balance", sessions.protect(handlers::balance))
                 .get("/breakdown", sessions.protect(handlers::breakdown))
+                .post("/budgets", sessions.protect(handlers::defineBudget))
+                .get("/budgets", sessions.protect(handlers::budgets))
+                .put("/budgets/{id}", sessions.protect(handlers::changeBudgetLimit))
+                .delete("/budgets/{id}", sessions.protect(handlers::removeBudget))
                 .get("/docs", sessions.protect(DocsHandlers::docs))
                 .get("/openapi.json", sessions.protect(DocsHandlers::openapi))
                 .get("/movements/{id}", sessions.protect(handlers::detail))
@@ -188,10 +204,20 @@ public final class EconomyApplication {
             new RecategorizeMovementCommandHandler(unitOfWork, clock), renderer));
         commands.register(DeleteMovementCommand.class, new LoggingCommandHandler<>(
             new DeleteMovementCommandHandler(unitOfWork, clock), renderer));
+        commands.register(DefineBudgetCommand.class, new LoggingCommandHandler<>(
+            new DefineBudgetCommandHandler(unitOfWork, clock), renderer));
+        commands.register(ChangeBudgetLimitCommand.class, new LoggingCommandHandler<>(
+            new ChangeBudgetLimitCommandHandler(unitOfWork, clock), renderer));
+        commands.register(RemoveBudgetCommand.class, new LoggingCommandHandler<>(
+            new RemoveBudgetCommandHandler(unitOfWork, clock), renderer));
     }
 
     private static void registerQueryHandlers(
-        SimpleQueryBus queries, MovementReadModel readModel, Clock clock, LogEntryRenderer renderer) {
+        SimpleQueryBus queries,
+        MovementReadModel readModel,
+        BudgetReadModel budgets,
+        Clock clock,
+        LogEntryRenderer renderer) {
 
         queries.register(GetMovementQuery.class, new LoggingQueryHandler<>(
             new GetMovementQueryHandler(readModel), renderer));
@@ -201,5 +227,7 @@ public final class EconomyApplication {
             new GetBalanceQueryHandler(readModel, clock), renderer));
         queries.register(GetBreakdownQuery.class, new LoggingQueryHandler<>(
             new GetBreakdownQueryHandler(readModel, clock), renderer));
+        queries.register(ListBudgetsQuery.class, new LoggingQueryHandler<>(
+            new ListBudgetsQueryHandler(budgets, readModel, new BudgetPace(), clock), renderer));
     }
 }
