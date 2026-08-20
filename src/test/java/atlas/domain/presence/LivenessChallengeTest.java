@@ -23,10 +23,10 @@ class LivenessChallengeTest {
 
     @Test
     void shouldIssueChallengeThatExpiresAfterItsTypeTimeout() {
-        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.VICTORY, NONCE, ISSUED_AT);
+        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.FIST, NONCE, ISSUED_AT);
 
         assertThat(challenge.id()).isEqualTo(ID);
-        assertThat(challenge.type()).isEqualTo(LivenessChallengeType.VICTORY);
+        assertThat(challenge.type()).isEqualTo(LivenessChallengeType.FIST);
         assertThat(challenge.nonce()).isEqualTo(NONCE);
         assertThat(challenge.issuedAt()).isEqualTo(ISSUED_AT);
         assertThat(challenge.expiresAt()).isEqualTo(EXPIRES_AT);
@@ -34,7 +34,7 @@ class LivenessChallengeTest {
 
     @Test
     void shouldStartUnconsumedWhenIssued() {
-        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.VICTORY, NONCE, ISSUED_AT);
+        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.FIST, NONCE, ISSUED_AT);
 
         assertThat(challenge.isConsumed()).isFalse();
         assertThat(challenge.consumedAt()).isEmpty();
@@ -42,27 +42,27 @@ class LivenessChallengeTest {
 
     @Test
     void shouldRaiseIssuedEventWhenChallengeIsIssued() {
-        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.VICTORY, NONCE, ISSUED_AT);
+        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.FIST, NONCE, ISSUED_AT);
 
         assertThat(challenge.pendingEvents())
             .singleElement()
             .isInstanceOfSatisfying(LivenessChallengeIssuedEvent.class, event -> {
                 assertThat(event.challengeId()).isEqualTo(ID);
-                assertThat(event.type()).isEqualTo(LivenessChallengeType.VICTORY);
+                assertThat(event.type()).isEqualTo(LivenessChallengeType.FIST);
                 assertThat(event.occurredOn()).isEqualTo(ISSUED_AT);
             });
     }
 
     @Test
     void shouldNotCarryTheNonceInTheIssuedEvent() {
-        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.VICTORY, NONCE, ISSUED_AT);
+        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.FIST, NONCE, ISSUED_AT);
 
         assertThat(challenge.pendingEvents().getFirst().toString()).doesNotContain(NONCE.value());
     }
 
     @Test
     void shouldNotExposeTheNonceInToString() {
-        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.VICTORY, NONCE, ISSUED_AT);
+        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.FIST, NONCE, ISSUED_AT);
 
         assertThat(challenge.toString()).doesNotContain(NONCE.value());
     }
@@ -83,7 +83,7 @@ class LivenessChallengeTest {
     void shouldAcceptEvidenceCapturedExactlyAtIssue() {
         var challenge = issued();
 
-        var result = challenge.consume(evidence(NONCE, LivenessChallengeType.VICTORY, ISSUED_AT), STILL_ALIVE);
+        var result = challenge.consume(evidence(NONCE, LivenessChallengeType.FIST, ISSUED_AT), STILL_ALIVE);
 
         assertThat(result.isSuccess()).isTrue();
     }
@@ -141,7 +141,7 @@ class LivenessChallengeTest {
     void shouldFailWhenEvidenceWasCapturedBeforeIssue() {
         var challenge = issued();
 
-        var result = challenge.consume(evidence(NONCE, LivenessChallengeType.VICTORY, BEFORE_ISSUE), STILL_ALIVE);
+        var result = challenge.consume(evidence(NONCE, LivenessChallengeType.FIST, BEFORE_ISSUE), STILL_ALIVE);
 
         assertThat(result.error()).isEqualTo(PresenceErrors.LIVENESS_CHALLENGE_EXPIRED);
     }
@@ -150,7 +150,7 @@ class LivenessChallengeTest {
     void shouldFailWhenEvidenceWasCapturedAtExpiry() {
         var challenge = issued();
 
-        var result = challenge.consume(evidence(NONCE, LivenessChallengeType.VICTORY, EXPIRES_AT), STILL_ALIVE);
+        var result = challenge.consume(evidence(NONCE, LivenessChallengeType.FIST, EXPIRES_AT), STILL_ALIVE);
 
         assertThat(result.error()).isEqualTo(PresenceErrors.LIVENESS_CHALLENGE_EXPIRED);
     }
@@ -160,7 +160,7 @@ class LivenessChallengeTest {
         var challenge = issued();
 
         var result =
-            challenge.consume(evidence(WRONG_NONCE, LivenessChallengeType.VICTORY, AFTER_EXPIRY), AFTER_EXPIRY);
+            challenge.consume(evidence(WRONG_NONCE, LivenessChallengeType.FIST, AFTER_EXPIRY), AFTER_EXPIRY);
 
         assertThat(result.error()).isEqualTo(PresenceErrors.LIVENESS_CHALLENGE_EXPIRED);
     }
@@ -169,7 +169,7 @@ class LivenessChallengeTest {
     void shouldFailWhenNonceDoesNotMatch() {
         var challenge = issued();
 
-        var result = challenge.consume(evidence(WRONG_NONCE, LivenessChallengeType.VICTORY, STILL_ALIVE), STILL_ALIVE);
+        var result = challenge.consume(evidence(WRONG_NONCE, LivenessChallengeType.FIST, STILL_ALIVE), STILL_ALIVE);
 
         assertThat(result.error()).isEqualTo(PresenceErrors.LIVENESS_FAILED);
         assertThat(challenge.isConsumed()).isFalse();
@@ -178,7 +178,7 @@ class LivenessChallengeTest {
     @Test
     void shouldRemainConsumableAfterAFailedAttempt() {
         var challenge = issued();
-        challenge.consume(evidence(WRONG_NONCE, LivenessChallengeType.VICTORY, STILL_ALIVE), STILL_ALIVE);
+        challenge.consume(evidence(WRONG_NONCE, LivenessChallengeType.FIST, STILL_ALIVE), STILL_ALIVE);
 
         var result = challenge.consume(validEvidence(), STILL_ALIVE);
 
@@ -187,14 +187,14 @@ class LivenessChallengeTest {
     }
 
     private static LivenessChallenge issued() {
-        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.VICTORY, NONCE, ISSUED_AT);
+        var challenge = LivenessChallenge.issue(ID, LivenessChallengeType.FIST, NONCE, ISSUED_AT);
         challenge.clearEvents();
 
         return challenge;
     }
 
     private static LivenessEvidence validEvidence() {
-        return evidence(NONCE, LivenessChallengeType.VICTORY, STILL_ALIVE);
+        return evidence(NONCE, LivenessChallengeType.FIST, STILL_ALIVE);
     }
 
     private static LivenessEvidence evidence(

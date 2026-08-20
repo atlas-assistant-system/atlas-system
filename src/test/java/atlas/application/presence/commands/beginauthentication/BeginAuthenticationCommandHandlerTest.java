@@ -54,7 +54,7 @@ class BeginAuthenticationCommandHandlerTest {
         var result = handler.handle(new BeginAuthenticationCommand());
 
         assertThat(result.value().challengeId()).isEqualTo("L00000001");
-        assertThat(result.value().type()).isEqualTo("VICTORY");
+        assertThat(result.value().type()).isEqualTo("FIST");
         assertThat(result.value().nonce()).matches("[0-9a-f]{32}");
         assertThat(result.value().expiresAt()).isEqualTo(NOW.plusSeconds(10));
         verify(challenges).save(any());

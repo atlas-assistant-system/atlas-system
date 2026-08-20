@@ -14,6 +14,6 @@ public final class LivenessPolicy {
         ObjectGuard.notNull(random, "random");
 
         return LivenessChallenge.issue(
-            id, LivenessChallengeType.VICTORY, ChallengeNonce.generate(random), now);
+            id, LivenessChallengeType.FIST, ChallengeNonce.generate(random), now);
     }
 }

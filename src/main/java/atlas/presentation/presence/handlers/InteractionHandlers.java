@@ -21,7 +21,7 @@ public final class InteractionHandlers {
 
     private static final Set<String> GESTURES = Set.of(
         "FIST", "OPEN_PALM", "PALM_DOWN", "PALM_LEFT", "PALM_RIGHT", "PALM_UP",
-        "PINCH", "POINT", "THUMBS_UP", "VICTORY");
+        "PINCH", "POINT", "THUMBS_UP");
 
     private final CommandBus commands;
     private final QueryBus queries;
@@ -52,7 +52,7 @@ public final class InteractionHandlers {
         var observedAt = Values.instant(body, "observedAt");
         var session = active.value().orElseThrow();
         var sessionId = SessionId.parse(session.id());
-        if ("VICTORY".equals(type)) {
+        if ("FIST".equals(type)) {
             var closed = commands.dispatch(new CloseSessionCommand(sessionId));
             if (closed.isFailure()) {
                 return HttpResponse.error(closed.error());

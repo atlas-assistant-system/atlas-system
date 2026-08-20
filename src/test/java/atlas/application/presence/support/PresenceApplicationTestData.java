@@ -61,7 +61,7 @@ public final class PresenceApplicationTestData {
     }
 
     public static LivenessChallenge challenge() {
-        return LivenessChallenge.issue(CHALLENGE_ID, LivenessChallengeType.VICTORY, NONCE, NOW);
+        return LivenessChallenge.issue(CHALLENGE_ID, LivenessChallengeType.FIST, NONCE, NOW);
     }
 
     public static void wire(

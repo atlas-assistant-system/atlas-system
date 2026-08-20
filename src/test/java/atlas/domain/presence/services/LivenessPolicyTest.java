@@ -34,8 +34,8 @@ class LivenessPolicyTest {
     }
 
     @Test
-    void shouldAlwaysIssueTheVictoryChallenge() {
-        assertThat(policy.issue(ID, new Random(42), NOW).type()).isEqualTo(LivenessChallengeType.VICTORY);
+    void shouldAlwaysIssueTheFistChallenge() {
+        assertThat(policy.issue(ID, new Random(42), NOW).type()).isEqualTo(LivenessChallengeType.FIST);
     }
 
     @Test

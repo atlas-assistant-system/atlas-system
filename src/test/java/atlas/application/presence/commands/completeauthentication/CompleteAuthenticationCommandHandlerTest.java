@@ -93,7 +93,7 @@ class CompleteAuthenticationCommandHandlerTest {
         when(challenges.get(CHALLENGE_ID)).thenReturn(Optional.of(challenge()));
 
         var invalidModel = handlerAt(AUTHENTICATED_AT).handle(new CompleteAuthenticationCommand(
-            CHALLENGE_ID, " ", new float[]{1.0f}, "VICTORY", NONCE.value(), AUTHENTICATED_AT));
+            CHALLENGE_ID, " ", new float[]{1.0f}, "FIST", NONCE.value(), AUTHENTICATED_AT));
 
         assertThat(invalidModel.error()).isEqualTo(PresenceErrors.MODEL_VERSION_REQUIRED);
         verify(challenges).remove(CHALLENGE_ID);
@@ -105,7 +105,7 @@ class CompleteAuthenticationCommandHandlerTest {
         when(challenges.get(CHALLENGE_ID)).thenReturn(Optional.of(challenge()));
 
         var command = new CompleteAuthenticationCommand(
-            CHALLENGE_ID, MODEL.value(), null, "VICTORY", NONCE.value(), AUTHENTICATED_AT);
+            CHALLENGE_ID, MODEL.value(), null, "FIST", NONCE.value(), AUTHENTICATED_AT);
         var result = handlerAt(AUTHENTICATED_AT).handle(command);
 
         assertThat(result.error()).isEqualTo(PresenceErrors.DESCRIPTOR_REQUIRED);
@@ -176,7 +176,7 @@ class CompleteAuthenticationCommandHandlerTest {
         var gate = AuthenticationGate.initial();
         var challenge = challenge();
         challenge.consume(
-            LivenessEvidence.of(NONCE, atlas.domain.presence.enums.LivenessChallengeType.VICTORY, AUTHENTICATED_AT),
+            LivenessEvidence.of(NONCE, atlas.domain.presence.enums.LivenessChallengeType.FIST, AUTHENTICATED_AT),
             AUTHENTICATED_AT);
         when(gates.get()).thenReturn(gate);
         when(challenges.get(CHALLENGE_ID)).thenReturn(Optional.of(challenge));
@@ -203,7 +203,7 @@ class CompleteAuthenticationCommandHandlerTest {
             CHALLENGE_ID,
             MODEL.value(),
             descriptor,
-            "VICTORY",
+            "FIST",
             NONCE.value(),
             AUTHENTICATED_AT);
     }

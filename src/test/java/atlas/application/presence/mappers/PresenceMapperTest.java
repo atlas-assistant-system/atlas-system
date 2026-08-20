@@ -59,14 +59,14 @@ class PresenceMapperTest {
     void shouldMapAChallenge() {
         var challenge = LivenessChallenge.issue(
             LivenessChallengeId.of(1),
-            LivenessChallengeType.VICTORY,
+            LivenessChallengeType.FIST,
             ChallengeNonce.of("00112233445566778899aabbccddeeff"),
             NOW);
 
         var dto = PresenceMapper.toDto(challenge);
 
         assertThat(dto.challengeId()).isEqualTo("L00000001");
-        assertThat(dto.type()).isEqualTo("VICTORY");
+        assertThat(dto.type()).isEqualTo("FIST");
         assertThat(dto.nonce()).isEqualTo("00112233445566778899aabbccddeeff");
         assertThat(dto.expiresAt()).isEqualTo(NOW.plusSeconds(10));
     }

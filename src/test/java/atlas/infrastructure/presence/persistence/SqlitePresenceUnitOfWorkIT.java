@@ -182,7 +182,7 @@ class SqlitePresenceUnitOfWorkIT {
         var id = challenges.nextId();
         var challenge = atlas.domain.presence.LivenessChallenge.issue(
             id,
-            atlas.domain.presence.enums.LivenessChallengeType.VICTORY,
+            atlas.domain.presence.enums.LivenessChallengeType.FIST,
             atlas.domain.presence.vos.ChallengeNonce.of("00000000000000000000000000000000"),
             NOW);
 

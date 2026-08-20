@@ -275,8 +275,8 @@ async function deleteProfile(id) {
 }
 
 function challengeDetector(type) {
-    return result => type === 'VICTORY'
-        && result?.gestures?.[0]?.some(value => value.categoryName === 'Victory'
+    return result => type === 'FIST'
+        && result?.gestures?.[0]?.some(value => value.categoryName === 'Closed_Fist'
             && value.score >= HAND_CONFIDENCE);
 }
 
@@ -333,8 +333,8 @@ async function authenticate() {
     try {
         const challenge = await send('/authentication/challenges', {});
         dom.challenge.hidden = false;
-        dom.challengeInstruction.textContent = 'Introduce el código gestual';
-        setFeedback('Verificando código gestual…');
+        dom.challengeInstruction.textContent = 'Mantén el puño cerrado';
+        setFeedback('Verificando puño y rostro…');
         const face = await waitForChallenge(challenge);
         const session = await send(`/authentication/challenges/${challenge.challengeId}/complete`, {
             modelVersion: MODEL_VERSION,

@@ -15,16 +15,16 @@ class LivenessEvidenceTest {
 
     @Test
     void shouldExposeItsComponents() {
-        var evidence = LivenessEvidence.of(NONCE, LivenessChallengeType.VICTORY, CAPTURED_AT);
+        var evidence = LivenessEvidence.of(NONCE, LivenessChallengeType.FIST, CAPTURED_AT);
 
         assertThat(evidence.nonce()).isEqualTo(NONCE);
-        assertThat(evidence.observedType()).isEqualTo(LivenessChallengeType.VICTORY);
+        assertThat(evidence.observedType()).isEqualTo(LivenessChallengeType.FIST);
         assertThat(evidence.capturedAt()).isEqualTo(CAPTURED_AT);
     }
 
     @Test
     void shouldThrowWhenNonceIsMissing() {
-        assertThatThrownBy(() -> LivenessEvidence.of(null, LivenessChallengeType.VICTORY, CAPTURED_AT))
+        assertThatThrownBy(() -> LivenessEvidence.of(null, LivenessChallengeType.FIST, CAPTURED_AT))
             .isInstanceOf(GuardException.class);
     }
 
@@ -36,13 +36,13 @@ class LivenessEvidenceTest {
 
     @Test
     void shouldThrowWhenCapturedAtIsMissing() {
-        assertThatThrownBy(() -> LivenessEvidence.of(NONCE, LivenessChallengeType.VICTORY, null))
+        assertThatThrownBy(() -> LivenessEvidence.of(NONCE, LivenessChallengeType.FIST, null))
             .isInstanceOf(GuardException.class);
     }
 
     @Test
     void shouldBeEqualByValue() {
-        assertThat(LivenessEvidence.of(NONCE, LivenessChallengeType.VICTORY, CAPTURED_AT))
-            .isEqualTo(LivenessEvidence.of(NONCE, LivenessChallengeType.VICTORY, CAPTURED_AT));
+        assertThat(LivenessEvidence.of(NONCE, LivenessChallengeType.FIST, CAPTURED_AT))
+            .isEqualTo(LivenessEvidence.of(NONCE, LivenessChallengeType.FIST, CAPTURED_AT));
     }
 }

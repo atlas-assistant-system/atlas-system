@@ -119,7 +119,7 @@ class HttpApiIT {
     }
 
     @Test
-    void shouldPublishHandGesturesAndCloseTheSessionWithVictory() throws Exception {
+    void shouldPublishHandGesturesAndCloseTheSessionWithFist() throws Exception {
         enroll("Gesture user");
         var challenge = json(post("/authentication/challenges", ""));
         var completed = post(
@@ -150,15 +150,18 @@ class HttpApiIT {
 
         assertThat(post("/interactions/gestures", """
             {"type":"VICTORY","handIndex":0,"confidence":0.96,
+             "observedAt":"2026-08-19T10:00:01Z"}""").statusCode()).isEqualTo(400);
+        assertThat(post("/interactions/gestures", """
+            {"type":"FIST","handIndex":0,"confidence":0.96,
              "observedAt":"2026-08-19T10:00:01Z"}""").statusCode()).isEqualTo(204);
         assertThat(events.toString(StandardCharsets.UTF_8))
             .contains("event: sessionClosed")
             .contains("event: gestureDetected")
-            .contains("\"type\":\"VICTORY\"");
+            .contains("\"type\":\"FIST\"");
         assertThat(json(get("/sessions/active"))).isNull();
 
         assertThat(post("/interactions/gestures", """
-            {"type":"FIST","handIndex":0,"confidence":0.9,
+            {"type":"OPEN_PALM","handIndex":0,"confidence":0.9,
              "observedAt":"2026-08-19T10:00:00Z"}""").statusCode()).isEqualTo(401);
     }
 

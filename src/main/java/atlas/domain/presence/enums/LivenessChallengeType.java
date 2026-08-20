@@ -4,7 +4,7 @@ import java.time.Duration;
 
 public enum LivenessChallengeType {
 
-    VICTORY(Duration.ofSeconds(10));
+    FIST(Duration.ofSeconds(10));
 
     private final Duration timeout;
 

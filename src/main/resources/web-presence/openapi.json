@@ -54,7 +54,7 @@
     },
     "/interactions/gestures": {
       "post": {
-        "summary": "Publica un gesto de mano; VICTORY cierra la sesión",
+        "summary": "Publica un gesto de mano; FIST cierra la sesión",
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/HandGesture"}}}},
         "responses": {"204": {"description": "Gesto publicado por SSE"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}}
       }
@@ -75,12 +75,12 @@
     "schemas": {
       "FaceSample": {"type": "object", "required": ["modelVersion", "descriptor"], "properties": {"modelVersion": {"type": "string"}, "descriptor": {"type": "array", "minItems": 1, "items": {"type": "number", "format": "float"}}}},
       "EnrollProfile": {"allOf": [{"$ref": "#/components/schemas/FaceSample"}, {"type": "object", "required": ["displayName"], "properties": {"displayName": {"type": "string", "maxLength": 60}}}]},
-      "CompleteAuthentication": {"allOf": [{"$ref": "#/components/schemas/FaceSample"}, {"type": "object", "required": ["observedType", "nonce", "capturedAt"], "properties": {"observedType": {"type": "string", "enum": ["VICTORY"]}, "nonce": {"type": "string"}, "capturedAt": {"type": "string", "format": "date-time"}}}]},
+      "CompleteAuthentication": {"allOf": [{"$ref": "#/components/schemas/FaceSample"}, {"type": "object", "required": ["observedType", "nonce", "capturedAt"], "properties": {"observedType": {"type": "string", "enum": ["FIST"]}, "nonce": {"type": "string"}, "capturedAt": {"type": "string", "format": "date-time"}}}]},
       "Challenge": {"type": "object", "properties": {"challengeId": {"type": "string"}, "type": {"type": "string"}, "nonce": {"type": "string"}, "expiresAt": {"type": "string", "format": "date-time"}}},
       "Session": {"type": "object", "properties": {"id": {"type": "string"}, "profileId": {"type": "string"}, "openedAt": {"type": "string", "format": "date-time"}, "lastActivityAt": {"type": "string", "format": "date-time"}, "expiresAt": {"type": "string", "format": "date-time"}, "status": {"type": "string"}}},
       "Profile": {"type": "object", "properties": {"id": {"type": "string"}, "displayName": {"type": "string"}, "modelVersion": {"type": "string"}, "templateCount": {"type": "integer"}, "templates": {"type": "array", "items": {"type": "object"}}}},
       "AuthenticationState": {"type": "object", "properties": {"failedAttempts": {"type": "integer"}, "enrolledProfiles": {"type": "integer"}, "activeSession": {"allOf": [{"$ref": "#/components/schemas/Session"}], "nullable": true}, "maintenanceMode": {"type": "boolean"}}},
-      "HandGesture": {"type": "object", "required": ["type", "handIndex", "confidence", "observedAt"], "properties": {"type": {"type": "string", "enum": ["FIST", "OPEN_PALM", "PALM_DOWN", "PALM_LEFT", "PALM_RIGHT", "PALM_UP", "PINCH", "POINT", "THUMBS_UP", "VICTORY"]}, "handIndex": {"type": "integer", "minimum": 0}, "confidence": {"type": "number", "minimum": 0, "maximum": 1}, "observedAt": {"type": "string", "format": "date-time"}}},
+      "HandGesture": {"type": "object", "required": ["type", "handIndex", "confidence", "observedAt"], "properties": {"type": {"type": "string", "enum": ["FIST", "OPEN_PALM", "PALM_DOWN", "PALM_LEFT", "PALM_RIGHT", "PALM_UP", "PINCH", "POINT", "THUMBS_UP"]}, "handIndex": {"type": "integer", "minimum": 0}, "confidence": {"type": "number", "minimum": 0, "maximum": 1}, "observedAt": {"type": "string", "format": "date-time"}}},
       "Error": {"type": "object", "properties": {"status": {"type": "integer"}, "code": {"type": "string"}, "message": {"type": "string"}, "correlationId": {"type": "string"}}}
     }
   }
