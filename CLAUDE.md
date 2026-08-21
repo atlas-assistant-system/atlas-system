@@ -26,6 +26,7 @@ La arquitectura y las decisiones de stack de este proyecto están documentadas e
 - [docs/validation-specification-conventions.md](docs/validation-specification-conventions.md) — por qué no se adoptan Validator/Specification y qué se usa en su lugar
 - [docs/conventions.md](docs/conventions.md) — convenciones de código, naming, testing y flujo de trabajo
 - [docs/economy-context.md](docs/economy-context.md) — diseño del contexto `economy`; el ciclo 1 (movimientos y saldo) ya está implementado, los ciclos 2 y 3 siguen esbozados
+- [docs/nutrition-context.md](docs/nutrition-context.md) — diseño del contexto `nutrition`; sus dos ciclos (plan y consumo diario; peso y evolución) están completos y cableados
 
 Estos documentos son la fuente de verdad técnica del proyecto. Cualquier decisión arquitectónica nueva debe reflejarse ahí.
 
@@ -57,7 +58,8 @@ físico— y su propio bus de comandos y consultas.
 ## Estado actual
 
 - **`core` compuesto** — es dueño de `/` y de la interfaz espejo. Tras autenticarse ofrece
-  `Inicio`, `Agenda`, `Rutinas` y `Economía` como pestañas de una sola aplicación; consume los
+  `Inicio`, `Agenda`, `Rutinas`, `Economía` y `Nutrición` como pestañas de una sola aplicación;
+  consume los
   módulos por sus APIs públicas, sin introducir dependencias entre sus dominios.
 - **`appointments` migrado** — citas, recordatorios y calendario. Se monta en `/appointments`,
   conserva sus rutas auxiliares de recordatorios y documentación, y su SSE va en `/events`. Su
@@ -83,10 +85,25 @@ físico— y su propio bus de comandos y consultas.
   cadena en euros (`"12.50"`) y se guarda en céntimos con signo, sin columna de tipo: `kind` se
   deriva al leer con `MovementKind.of(...)`, que es la única definición del signo en el sistema.
   Los ciclos 2 (presupuesto) y 3 (objetivos de ahorro) siguen sin empezar.
-- **1256 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
+- **`nutrition` implementado (ciclo 1)** — plan de nutrición y consumo diario. Es **Fitia sin
+  alimentos**: no hay base de datos nutricional ni códigos de barras, se teclean los macros. Cuatro
+  capas completas, se monta en `/nutrition` tras la guardia de sesión de `presence`, y su SSE en
+  `/events/nutrition`. **Aquí sí se escribe desde el espejo**, al revés que en `economy`: nada de
+  esto nace fuera —tú decides las calorías y tú te pesas—, así que la pestaña tiene formularios y
+  la API queda abierta igualmente para un Atajo de iOS. **Las calorías se derivan de los macros**
+  (`4p+4c+9f` en `Macros.calories()`), no se persisten ni se aceptan en una petición: mandarlas es
+  un 400. Lo mismo con el objetivo, que sale de `Goal.of(pesoInicial, pesoObjetivo)` y no es un
+  campo elegible. Solo hay un plan activo a la vez, y quien lo sostiene es un índice parcial de
+  SQLite, no solo el handler; lo mismo con "una pesada por día", que es un `UNIQUE` de la tabla.
+  El **ciclo 2** añade `WeighIn`, el progreso contra el plan y la **gráfica de peso en SVG a
+  mano** —sin Chart.js: la escala la fijan la serie y las dos líneas de referencia juntas—.
+  Registrar dos pesadas el mismo día corrige la primera. La **tendencia** (media de los últimos
+  7 días contra los 7 anteriores) es cero si a alguna ventana le falta un dato: inventarla con
+  un solo punto es peor que no darla.
+- **1590 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
   ArchUnit.
 - **Mutation testing con PIT** sobre `atlas.domain.*` (excluido el kernel), umbral del 90%: hoy
-  el dominio está al 95% y `economy` al 97%. No cuelga de `check` porque son ~30 s — se lanza a
+  el dominio está al 95%, `economy` al 97% y `nutrition` entre el 94% y el 100%. No cuelga de `check` porque son ~30 s — se lanza a
   mano con `gradle pitest`. Ojo con las versiones: el plugin 1.15.0 no vale con Gradle 9 y PIT
   1.19.4 no lee bytecode de Java 25.
 - **El Shared Kernel es un contexto más**, repartido por sus anillos igual que los demás
@@ -95,11 +112,17 @@ físico— y su propio bus de comandos y consultas.
   interviene. Las reglas de ArchUnit lo excluyen por el patrón `..sharedkernel..`, y viven en
   `src/test/java/atlas/architecture/rules/` — no pueden ser un subproyecto porque importan
   `ValueObject` del propio kernel y se formaría un ciclo.
-- **Pendiente** — unificar la puerta de sesión: `appointments`, `economy` y `presence` devuelven
-  401 sin sesión, y `routines` sigue respondiendo abierta. Los tres cerrados comparten el
-  `SessionGuard` de `presentation/common/web/` y consultan la sesión de `presence` en memoria
-  mediante un contrato booleano cableado en el composition root; no hay HTTP interno ni rutas
-  proxy entre contextos.
+- **La puerta de sesión ya es única** — `appointments`, `economy`, `routines`, `nutrition` y
+  `presence` devuelven 401 sin sesión. Los cuatro primeros comparten el `SessionGuard` de
+  `presentation/common/web/` y consultan la sesión de `presence` en memoria mediante un contrato
+  booleano cableado en el composition root; no hay HTTP interno ni rutas proxy entre contextos.
+  Cada `wire(...)` conserva una sobrecarga sin guardia (`() -> true`) para montar el contexto
+  suelto en sus tests. **Los cuatro SSE (`/events`, `/events/routines`, `/events/economy`,
+  `/events/nutrition`) van tras la misma guardia**, y como esta solo mira en el handshake mientras
+  el stream dura mucho más, el composition root se suscribe a `SessionClosedEvent` y
+  `SessionExpiredEvent` de `presence` para cerrar los hubs de los cuatro contextos al cerrarse la
+  sesión. El de `presence` no se toca: es el
+  que la vista necesita para enterarse.
 - Las UIs independientes de `appointments` y `routines` se retiraron: la presentación de ambos
   módulos vive ahora en `core`; `routines` conserva su documentación en `/routines/docs`.
 - **El JS compartido vive en `web-presence/` y se sirve bajo `/presence/`**: `face-quality.js`
