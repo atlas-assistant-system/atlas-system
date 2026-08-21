@@ -38,15 +38,46 @@ public final class EconomySeeder {
     private EconomySeeder() {}
 
     public static void main(String[] args) {
-        Logger.getLogger("sharedkernel.command").setLevel(Level.WARNING);
+        Logger.getLogger("sharedkernel.command").setLevel(Level.OFF);
 
         var directory = Path.of(args.length > 0 ? args[0] : "data");
-        var summary = seed(directory, Clock.systemDefaultZone());
+
+        Summary summary;
+        try {
+            summary = seed(directory, Clock.systemDefaultZone());
+        } catch (RuntimeException e) {
+            if (!isDatabaseLocked(e)) {
+                throw e;
+            }
+
+            System.err.println(lockedMessage(directory));
+            System.exit(1);
+
+            return;
+        }
 
         System.out.println(summary.alreadyPopulated()
             ? "economy.db ya tiene movimientos: no se ha tocado nada."
             : summary.movements() + " movimientos, " + summary.budgets() + " presupuestos y "
                 + summary.goals() + " objetivos en " + directory.resolve("economy.db"));
+    }
+
+    private static boolean isDatabaseLocked(Throwable failure) {
+        for (var cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause.getMessage() != null && cause.getMessage().contains("database is locked")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static String lockedMessage(Path directory) {
+        return String.join(
+            System.lineSeparator(),
+            directory.resolve("economy.db") + " esta en uso por otro proceso.",
+            "SQLite admite un solo escritor: para Atlas, siembra, y vuelve a arrancarlo.",
+            "Si el seeder llego a escribir antes de fallar, borra economy.db y repite.");
     }
 
     public static Summary seed(Path dataDirectory, Clock clock) {
