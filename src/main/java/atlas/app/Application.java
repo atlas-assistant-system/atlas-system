@@ -8,6 +8,8 @@ import atlas.app.presence.PresenceApplication;
 import atlas.app.presence.PresenceSettings;
 import atlas.app.routines.RoutinesApplication;
 import atlas.application.sharedkernel.logging.LogEntryRenderer;
+import atlas.domain.presence.events.SessionClosedEvent;
+import atlas.domain.presence.events.SessionExpiredEvent;
 import atlas.presentation.sharedkernel.http.WebServer;
 import java.io.IOException;
 import java.time.Clock;
@@ -42,14 +44,25 @@ public final class Application {
         var data = presenceSettings.dataDirectory();
         var presence = PresenceApplication.wire(renderer, presenceSettings, clock);
 
-        return new Application(
+        var application = new Application(
             CoreApplication.wire(),
             HomeApplication.wire(
                 renderer, data, clock, presenceSettings.maintenanceMode(), presence::activeProfileId),
             AppointmentsApplication.wire(renderer, data, clock, presence::hasActiveSession),
             presence,
-            RoutinesApplication.wire(renderer, data, clock),
+            RoutinesApplication.wire(renderer, data, clock, presence::hasActiveSession),
             EconomyApplication.wire(renderer, data, clock, presence::hasActiveSession));
+
+        presence.events().subscribe(SessionClosedEvent.class, event -> application.closeContextStreams());
+        presence.events().subscribe(SessionExpiredEvent.class, event -> application.closeContextStreams());
+
+        return application;
+    }
+
+    private void closeContextStreams() {
+        appointments.hub().closeAll();
+        routines.hub().closeAll();
+        economy.hub().closeAll();
     }
 
     public Application start(int port) throws IOException {

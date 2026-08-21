@@ -80,6 +80,7 @@ public final class EconomyApplication {
     private final SimpleDomainEventPublisher events;
     private final SseHub hub;
     private final Router router;
+    private final SessionGuard sessions;
     private final Connection connection;
 
     private WebServer server;
@@ -90,12 +91,14 @@ public final class EconomyApplication {
         SimpleDomainEventPublisher events,
         SseHub hub,
         Router router,
+        SessionGuard sessions,
         Connection connection) {
         this.commands = commands;
         this.queries = queries;
         this.events = events;
         this.hub = hub;
         this.router = router;
+        this.sessions = sessions;
         this.connection = connection;
     }
 
@@ -130,21 +133,22 @@ public final class EconomyApplication {
         var handlers = new EconomyHandlers(commands, queries);
         var sessions = new SessionGuard(hasActiveSession);
 
-        return new EconomyApplication(commands, queries, events, hub, routes(handlers, sessions), connection);
+        return new EconomyApplication(
+            commands, queries, events, hub, routes(handlers, sessions), sessions, connection);
     }
 
     public EconomyApplication start(int port) throws IOException {
         server = WebServer
             .onLoopback(port)
             .mount("/", router)
-            .mount(EVENT_STREAM_PATH, new SseEndpoint(hub))
+            .mount(EVENT_STREAM_PATH, sessions.protect(new SseEndpoint(hub)))
             .start();
 
         return this;
     }
 
     public HttpHandler eventStream() {
-        return new SseEndpoint(hub);
+        return sessions.protect(new SseEndpoint(hub));
     }
 
     public Router router() {

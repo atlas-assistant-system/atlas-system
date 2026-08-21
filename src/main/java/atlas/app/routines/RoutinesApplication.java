@@ -49,6 +49,7 @@ import atlas.infrastructure.routines.persistence.SqliteRoutineUnitOfWork;
 import atlas.infrastructure.sharedkernel.persistence.Migrations;
 import atlas.infrastructure.sharedkernel.persistence.SchemaMigrator;
 import atlas.infrastructure.sharedkernel.persistence.SqliteConnections;
+import atlas.presentation.common.web.SessionGuard;
 import atlas.presentation.routines.handlers.RoutineHandlers;
 import atlas.presentation.routines.sse.RoutineEventsBroadcaster;
 import atlas.presentation.routines.web.DocsHandlers;
@@ -63,6 +64,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
+import java.util.function.BooleanSupplier;
 
 public final class RoutinesApplication {
 
@@ -73,6 +75,7 @@ public final class RoutinesApplication {
     private final SimpleDomainEventPublisher events;
     private final SseHub hub;
     private final Router router;
+    private final SessionGuard sessions;
     private final Connection connection;
 
     private WebServer server;
@@ -83,16 +86,23 @@ public final class RoutinesApplication {
         SimpleDomainEventPublisher events,
         SseHub hub,
         Router router,
+        SessionGuard sessions,
         Connection connection) {
         this.commands = commands;
         this.queries = queries;
         this.events = events;
         this.hub = hub;
         this.router = router;
+        this.sessions = sessions;
         this.connection = connection;
     }
 
     public static RoutinesApplication wire(LogEntryRenderer renderer, Path databaseDirectory, Clock clock) {
+        return wire(renderer, databaseDirectory, clock, () -> true);
+    }
+
+    public static RoutinesApplication wire(
+        LogEntryRenderer renderer, Path databaseDirectory, Clock clock, BooleanSupplier hasActiveSession) {
         var connection = SqliteConnections.openForContext(databaseDirectory, "routines");
         new SchemaMigrator(connection, clock).migrate(Migrations.load(
             RoutinesApplication.class, "/db-migrations/routines",
@@ -116,22 +126,24 @@ public final class RoutinesApplication {
         RoutineEventsBroadcaster.subscribeAll(events, hub);
 
         var handlers = new RoutineHandlers(commands, queries, clock);
+        var sessions = new SessionGuard(hasActiveSession);
 
-        return new RoutinesApplication(commands, queries, events, hub, routes(handlers), connection);
+        return new RoutinesApplication(
+            commands, queries, events, hub, routes(handlers, sessions), sessions, connection);
     }
 
     public RoutinesApplication start(int port) throws IOException {
         server = WebServer
             .onLoopback(port)
             .mount("/", router)
-            .mount(EVENT_STREAM_PATH, new SseEndpoint(hub))
+            .mount(EVENT_STREAM_PATH, sessions.protect(new SseEndpoint(hub)))
             .start();
 
         return this;
     }
 
     public HttpHandler eventStream() {
-        return new SseEndpoint(hub);
+        return sessions.protect(new SseEndpoint(hub));
     }
 
     public Router router() {
@@ -172,26 +184,26 @@ public final class RoutinesApplication {
         return hub;
     }
 
-    private static Router routes(RoutineHandlers handlers) {
+    private static Router routes(RoutineHandlers handlers, SessionGuard sessions) {
         return Router.builder()
             .mount(Routes.at("/routines")
-                .post("/", handlers::define)
-                .get("/", handlers::list)
-                .get("/today", handlers::today)
-                .get("/stats", handlers::complianceStats)
-                .get("/docs", DocsHandlers::docs)
-                .get("/openapi.json", DocsHandlers::openapi)
-                .get("/{id}", handlers::detail)
-                .delete("/{id}", handlers::delete)
-                .put("/{id}/details", handlers::changeDetails)
-                .put("/{id}/schedule", handlers::changeSchedule)
-                .post("/{id}/archive", handlers::archive)
-                .post("/{id}/unarchive", handlers::unarchive)
-                .get("/{id}/progress", handlers::progress)
-                .get("/{id}/history", handlers::history)
-                .get("/{id}/streak", handlers::streak)
-                .post("/{id}/entries", handlers::logProgress)
-                .delete("/{id}/entries/{day}", handlers::clearDay))
+                .post("/", sessions.protect(handlers::define))
+                .get("/", sessions.protect(handlers::list))
+                .get("/today", sessions.protect(handlers::today))
+                .get("/stats", sessions.protect(handlers::complianceStats))
+                .get("/docs", sessions.protect(DocsHandlers::docs))
+                .get("/openapi.json", sessions.protect(DocsHandlers::openapi))
+                .get("/{id}", sessions.protect(handlers::detail))
+                .delete("/{id}", sessions.protect(handlers::delete))
+                .put("/{id}/details", sessions.protect(handlers::changeDetails))
+                .put("/{id}/schedule", sessions.protect(handlers::changeSchedule))
+                .post("/{id}/archive", sessions.protect(handlers::archive))
+                .post("/{id}/unarchive", sessions.protect(handlers::unarchive))
+                .get("/{id}/progress", sessions.protect(handlers::progress))
+                .get("/{id}/history", sessions.protect(handlers::history))
+                .get("/{id}/streak", sessions.protect(handlers::streak))
+                .post("/{id}/entries", sessions.protect(handlers::logProgress))
+                .delete("/{id}/entries/{day}", sessions.protect(handlers::clearDay)))
             .build();
     }
 

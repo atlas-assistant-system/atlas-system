@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import atlas.app.presence.PresenceSettings;
 import atlas.application.presence.commands.beginauthentication.BeginAuthenticationCommand;
+import atlas.application.presence.commands.closesession.CloseSessionCommand;
 import atlas.application.presence.commands.completeauthentication.CompleteAuthenticationCommand;
 import atlas.application.presence.commands.enrollprofile.EnrollProfileCommand;
 import atlas.application.sharedkernel.logging.PlainLogEntryRenderer;
 import atlas.domain.presence.LivenessChallengeId;
+import atlas.domain.presence.SessionId;
 import atlas.domain.presence.vos.MatchThreshold;
 import atlas.domain.presence.vos.SessionDuration;
 import java.net.URI;
@@ -19,6 +21,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.function.BooleanSupplier;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -67,6 +70,10 @@ class ApplicationIT {
 
             assertThat(get(client, base, "/appointments/upcoming?limit=1").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/economy/balance").statusCode()).isEqualTo(401);
+            assertThat(get(client, base, "/routines/today").statusCode()).isEqualTo(401);
+            assertThat(get(client, base, "/events").statusCode()).isEqualTo(401);
+            assertThat(get(client, base, "/events/routines").statusCode()).isEqualTo(401);
+            assertThat(get(client, base, "/events/economy").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/authentication").statusCode()).isEqualTo(200);
             assertThat(get(client, base, "/presence/authentication").statusCode()).isEqualTo(404);
             assertThat(get(client, base, "/presence/sandbox").body())
@@ -101,8 +108,28 @@ class ApplicationIT {
             assertThat(authenticated.isSuccess()).isTrue();
             assertThat(get(client, base, "/appointments/upcoming?limit=1").statusCode()).isEqualTo(200);
             assertThat(get(client, base, "/economy/balance").statusCode()).isEqualTo(200);
+
+            var stream = client.sendAsync(
+                HttpRequest.newBuilder(URI.create(base + "/events/economy")).GET().build(),
+                HttpResponse.BodyHandlers.ofInputStream());
+            waitUntil(() -> application.economy().hub().connectedCount() == 1);
+            assertThat(application.economy().hub().connectedCount()).isOne();
+
+            commands.dispatch(new CloseSessionCommand(SessionId.parse(authenticated.value().id())));
+
+            waitUntil(() -> application.economy().hub().connectedCount() == 0);
+            assertThat(application.economy().hub().connectedCount()).isZero();
+            assertThat(get(client, base, "/economy/balance").statusCode()).isEqualTo(401);
+
+            stream.cancel(true);
         } finally {
             application.stop();
+        }
+    }
+
+    private static void waitUntil(BooleanSupplier condition) throws InterruptedException {
+        for (var attempt = 0; attempt < 100 && !condition.getAsBoolean(); attempt++) {
+            Thread.sleep(20);
         }
     }
 
