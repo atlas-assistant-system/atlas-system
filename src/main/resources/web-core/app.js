@@ -32,7 +32,7 @@ let eventSource = null;
 const DURATIONS = [30, 60, 90, 120];
 const LEAD_TIMES = [10, 30, 60, 1440];
 const MONTH_INITIALS = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-const VIEWS = ['inicio', 'agenda', 'rutinas', 'economia'];
+const VIEWS = ['inicio', 'agenda', 'rutinas', 'economia', 'nutricion'];
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
 const {
