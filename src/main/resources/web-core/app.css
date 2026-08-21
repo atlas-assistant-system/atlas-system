@@ -330,6 +330,39 @@ nav {
     margin-top: 0.8rem;
 }
 
+.enrollment-form input {
+    flex: 1 1 10rem;
+}
+
+.home-news-categories {
+    border: 0;
+    display: grid;
+    gap: 0.45rem 0.8rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 1rem 0;
+}
+
+.home-news-categories legend {
+    color: var(--ink-dim);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    margin-bottom: 0.55rem;
+    text-transform: uppercase;
+}
+
+.home-news-categories label {
+    align-items: center;
+    color: var(--ink-dim);
+    display: flex;
+    font-size: 0.78rem;
+    gap: 0.45rem;
+}
+
+.home-news-categories input {
+    accent-color: var(--ink);
+}
+
 .enrollment input {
     background: rgba(0, 0, 0, 0.35);
     border: none;
@@ -338,6 +371,40 @@ nav {
     font: inherit;
     min-width: 0;
     padding: 0.35rem;
+}
+
+.enrollment-steps {
+    display: grid;
+    gap: 0.35rem;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    list-style: none;
+    margin-top: 1rem;
+}
+
+.enrollment-steps li {
+    color: var(--ink-faint);
+    font-size: 0.68rem;
+    text-align: center;
+}
+
+.enrollment-steps li::before {
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    content: '';
+    display: block;
+    height: 0.55rem;
+    margin: 0 auto 0.35rem;
+    width: 0.55rem;
+}
+
+.enrollment-steps li.active,
+.enrollment-steps li.complete {
+    color: var(--ink);
+}
+
+.enrollment-steps li.active::before,
+.enrollment-steps li.complete::before {
+    background: currentColor;
 }
 
 .profiles {
@@ -384,25 +451,26 @@ body.locked #voice-control {
     max-width: 34rem;
 }
 
-.agenda-block .plain-list {
-    margin-top: 1.6rem;
-}
-
-.routines-block {
+.home-block + .home-block {
     margin-top: 2.5rem;
 }
 
-.next-when {
-    font-size: clamp(2rem, 4.5vw, 3.6rem);
+.home-block .plain-list {
+    margin-top: 1rem;
+}
+
+.home-headline {
+    font-size: clamp(1.6rem, 3vw, 2.6rem);
     font-weight: 300;
     line-height: 1.1;
 }
 
-.next-title {
+.home-detail {
     color: var(--ink-dim);
     font-size: 1.05rem;
     font-weight: 500;
     margin-top: 0.35rem;
+    min-height: 1.05rem;
 }
 
 .today-label {

@@ -10,17 +10,21 @@ const state = {
     authentication: null,
     authBusy: false,
     cameraReady: false,
+    home: null,
+    homeProfileId: null,
     human: null,
     recognition: null,
     recognitionVersion: 0,
+    faceCenter: null,
     handRecognizer: null,
     handResult: null,
+    handResultVersion: 0,
     handVideoTime: -1,
     gesture: {
         candidate: null, candidateSince: 0, missingSince: 0, latched: null,
     },
     pointer: { target: null, candidate: null, frames: 0, position: null, missing: 0 },
-    voice: { recognition: null, target: null, listening: false },
+    voice: { recognition: null, target: null, listening: false, preparing: false },
 };
 
 let eventSource = null;
@@ -31,11 +35,20 @@ const MONTH_INITIALS = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', '
 const VIEWS = ['inicio', 'agenda', 'rutinas', 'economia'];
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
-const MIN_FACE_SIZE = 224;
-const MAX_FACE_ANGLE = 0.45;
-const ENROLLMENT_SAMPLES = 3;
+const FACE_RESULT_MAX_AGE_MS = 750;
+const ENROLLMENT_HOLD_FRAMES = 2;
+const ENROLLMENT_FRONT_FRAMES = 4;
+const ENROLLMENT_POSES = [
+    { id: 'front', instruction: 'Mira de frente' },
+    { id: 'side', instruction: 'Gira ligeramente hacia el lado que prefieras' },
+    { id: 'opposite', instruction: 'Ahora gira ligeramente hacia el otro lado' },
+    { id: 'up', instruction: 'Mira ligeramente hacia arriba' },
+    { id: 'down', instruction: 'Mira ligeramente hacia abajo' },
+];
 const HAND_CONFIDENCE = 0.65;
 const GESTURE_HOLD_MS = 180;
+const PINCH_HOLD_MS = 100;
+const PINCH_DISTANCE_RATIO = 0.4;
 const INTERACTIVE = 'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), '
     + 'select:not(:disabled), .clickable, .day, .item';
 // ponytail: pinned CDN keeps face recognition out of the Agenda build; self-host it if offline use is required.
@@ -44,6 +57,7 @@ const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vi
 const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';
 const GESTURE_MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/'
     + 'gesture_recognizer/float16/1/gesture_recognizer.task';
+const VOICE_LANGUAGE = 'es-ES';
 
 function todayIso() {
     return isoDate(new Date());
@@ -77,6 +91,10 @@ function formatLeadTime(minutes) {
 }
 
 const ERROR_MESSAGES = {
+    MALFORMED_INPUT: 'Los datos enviados no son válidos.',
+    UNEXPECTED: 'Se ha producido un error inesperado.',
+    'General.ValueIsRequired': 'Falta un dato obligatorio.',
+    'General.InvalidValue': 'Uno de los datos no es válido.',
     'Appointment.NotFound': 'Esa cita ya no existe.',
     'Appointment.ReminderNotFound': 'Ese aviso ya no existe.',
     'Appointment.TitleRequired': 'Hace falta un título.',
@@ -94,12 +112,86 @@ const ERROR_MESSAGES = {
     'Appointment.CannotAddReminderToPastAppointment': 'No puedes avisar de algo que ya pasó.',
     'Appointment.DuplicateReminderLeadTime': 'Ya tienes un aviso con esa antelación.',
     'Appointment.TooManyReminders': 'Una cita admite como mucho 5 avisos.',
+    'Profile.NameRequired': 'Introduce un nombre para el perfil.',
+    'Profile.NameTooLong': 'El nombre del perfil es demasiado largo.',
+    'Profile.DescriptorRequired': 'No se ha podido obtener la firma facial.',
+    'Profile.ModelVersionRequired': 'Falta la versión del modelo facial.',
+    'Profile.DescriptorDimensionMismatch': 'La captura facial no es compatible con el modelo actual.',
+    'Profile.TooManyTemplates': 'El perfil ya tiene el máximo de capturas faciales.',
+    'Profile.LastTemplateCannotBeRemoved': 'No se puede eliminar la última captura del perfil.',
+    'Profile.ModelVersionMismatch': 'Las capturas pertenecen a versiones distintas del modelo facial.',
+    'Profile.NotFound': 'Ese perfil biométrico ya no existe.',
+    'Profile.TemplateNotFound': 'Esa captura facial ya no existe.',
+    'Authentication.NoProfilesEnrolled': 'No hay perfiles biométricos registrados.',
+    'Verification.InvalidSimilarityScore': 'La puntuación de similitud no es válida.',
+    'Verification.InvalidMatchThreshold': 'El umbral de reconocimiento no es válido.',
+    'Verification.NoMatch': 'El rostro no coincide con ningún perfil registrado.',
+    'Liveness.ChallengeExpired': 'La prueba de vida ha caducado. Inténtalo de nuevo.',
+    'Liveness.ChallengeAlreadyUsed': 'Esa prueba de vida ya se ha utilizado.',
+    'Liveness.ChallengeNotFound': 'La prueba de vida ya no está disponible.',
+    'Liveness.Failed': 'No se ha superado la prueba de vida.',
+    'Session.InvalidDuration': 'La duración de la sesión no es válida.',
+    'Session.Expired': 'La sesión ha caducado.',
+    'Session.Closed': 'La sesión ya está cerrada.',
+    'Session.NotFound': 'La sesión ya no existe.',
+    'Interaction.RequiresSession': 'Necesitas una sesión activa para usar los gestos.',
+    'Presence.MaintenanceModeRequired': 'Esta operación requiere iniciar Atlas en modo mantenimiento.',
+    'Routine.NameRequired': 'Introduce un nombre para la rutina.',
+    'Routine.NameTooLong': 'El nombre de la rutina es demasiado largo.',
+    'Routine.DescriptionTooLong': 'La descripción de la rutina es demasiado larga.',
+    'Routine.TargetMustBePositive': 'El objetivo debe ser mayor que cero.',
+    'Routine.AmountMustBePositive': 'La cantidad registrada debe ser mayor que cero.',
+    'Routine.UnitTooLong': 'La unidad es demasiado larga.',
+    'Routine.ActiveDaysRequiredForDailyRoutine': 'Selecciona al menos un día para la rutina diaria.',
+    'Routine.ActiveDaysNotAllowedForThisPeriod': 'Solo las rutinas diarias pueden limitarse por semana.',
+    'Routine.DaysOfMonthNotAllowedForThisPeriod': 'Solo las rutinas mensuales pueden limitar días del mes.',
+    'Routine.DayOfMonthOutOfRange': 'El día del mes debe estar entre 1 y 31, o ser 0 para el último día.',
+    'Routine.IsArchived': 'Una rutina archivada no admite cambios ni nuevos registros.',
+    'Routine.AlreadyArchived': 'La rutina ya está archivada.',
+    'Routine.NotArchived': 'Solo se puede recuperar una rutina archivada.',
+    'Routine.DayNotScheduled': 'La rutina no está programada para ese día.',
+    'Routine.NotFound': 'Esa rutina ya no existe.',
+    'Routine.EntryNotFound': 'La rutina no tiene un registro para ese día.',
+    'Home.LocationNameRequired': 'Introduce una ubicación.',
+    'Home.LocationNameTooLong': 'El nombre de la ubicación es demasiado largo.',
+    'Home.InvalidCoordinates': 'No se han podido validar las coordenadas de esa ubicación.',
+    'Home.InvalidTimeZone': 'No se ha podido determinar la zona horaria de esa ubicación.',
+    'Home.NewsCategoriesRequired': 'Selecciona al menos una categoría de noticias.',
+    'Home.ProfileNotFound': 'Este perfil todavía no ha completado el onboarding de Inicio.',
+    'Home.AccessDenied': 'No puedes consultar la configuración de otro perfil.',
+};
+
+const STATUS_MESSAGES = {
+    400: 'Los datos enviados no son válidos.',
+    401: 'Necesitas autenticarte de nuevo.',
+    403: 'No tienes permiso para realizar esta operación.',
+    404: 'El recurso solicitado ya no existe.',
+    409: 'La operación entra en conflicto con el estado actual.',
+    500: 'Se ha producido un error inesperado.',
+    503: 'El servicio no está disponible en este momento.',
 };
 
 function errorMessage(response) {
     const code = response.body && response.body.code;
 
-    return ERROR_MESSAGES[code] || 'No se pudo completar la operación.';
+    return ERROR_MESSAGES[code] || STATUS_MESSAGES[response.status] || 'No se pudo completar la operación.';
+}
+
+function cameraErrorMessage(error) {
+    return ({
+        NotAllowedError: 'No se ha concedido permiso para usar la cámara.',
+        NotFoundError: 'No se encuentra ninguna cámara disponible.',
+        NotReadableError: 'La cámara está siendo utilizada por otra aplicación.',
+        OverconstrainedError: 'La cámara no admite la configuración solicitada.',
+        SecurityError: 'El navegador ha bloqueado el acceso a la cámara.',
+    })[error?.name] || 'No se pudo iniciar la cámara.';
+}
+
+function frontendErrorMessage(error, fallback) {
+    if (error instanceof TypeError) {
+        return 'No se pudo conectar con el servicio.';
+    }
+    return error?.name === 'Error' && error.message ? error.message : fallback;
 }
 
 function el(tag, className, text) {
@@ -164,7 +256,7 @@ async function startCamera() {
                 enabled: true,
                 detector: {
                     rotation: true, return: false, maxDetected: 2,
-                    minConfidence: MIN_CONFIDENCE, minSize: MIN_FACE_SIZE,
+                    minConfidence: MIN_CONFIDENCE, minSize: AtlasFaceQuality.DETECTOR_MIN_FACE_SIZE,
                 },
                 mesh: { enabled: true },
                 iris: { enabled: false },
@@ -177,7 +269,7 @@ async function startCamera() {
             hand: { enabled: false },
             object: { enabled: false },
             segmentation: { enabled: false },
-            gesture: { enabled: false },
+            gesture: { enabled: true },
         });
         await state.human.load();
         await state.human.warmup();
@@ -195,8 +287,9 @@ async function startCamera() {
         });
         state.cameraReady = true;
         detectFaces();
+        detectHands();
     } catch (error) {
-        setAuthFeedback(error.message || 'Autoriza el uso de la cámara para continuar.', true);
+        setAuthFeedback(cameraErrorMessage(error), true);
     } finally {
         state.authBusy = false;
         updatePresenceActions();
@@ -215,40 +308,36 @@ async function detectFaces() {
             state.recognitionVersion++;
             renderAuthenticationStatus();
         }
-        if (video.currentTime !== state.handVideoTime) {
-            state.handVideoTime = video.currentTime;
-            state.handResult = state.handRecognizer.recognizeForVideo(video, performance.now());
-            trackHandGesture(state.handResult);
-        }
     } catch (_) {
         document.getElementById('access-message').textContent = 'No se pudo procesar la imagen.';
     }
     requestAnimationFrame(detectFaces);
 }
 
-function faceStatus(result) {
-    if (!result || result.face.length !== 1) {
-        return { ready: false, reason: result && result.face.length > 1
-            ? 'Debe aparecer una sola persona.' : 'Mira hacia la cámara.' };
+function detectHands() {
+    if (!state.cameraReady) {
+        return;
     }
+    try {
+        const video = document.getElementById('mirror');
+        if (video.currentTime !== state.handVideoTime) {
+            state.handVideoTime = video.currentTime;
+            state.handResult = state.handRecognizer.recognizeForVideo(video, performance.now());
+            state.handResultVersion++;
+            trackHandGesture(state.handResult);
+        }
+    } catch (_) {
+        state.handResult = null;
+    }
+    requestAnimationFrame(detectHands);
+}
 
-    const face = result.face[0];
-    const confidence = face.faceScore || face.boxScore || 0;
-    if (confidence < MIN_CONFIDENCE || Math.min(face.box[2], face.box[3]) < MIN_FACE_SIZE) {
-        return { ready: false, reason: 'Acércate un poco y mira hacia la cámara.' };
-    }
-    const angle = face.rotation?.angle;
-    if (angle && Math.max(Math.abs(angle.yaw), Math.abs(angle.pitch), Math.abs(angle.roll)) > MAX_FACE_ANGLE) {
-        return { ready: false, reason: 'Mira de frente a la cámara.' };
-    }
-    if (!face.embedding || face.embedding.length === 0) {
-        return { ready: false, reason: 'Calculando la firma facial…' };
-    }
-    if ((face.real || 0) < MIN_CONFIDENCE || (face.live || 0) < MIN_CONFIDENCE) {
-        return { ready: false, reason: 'No se ha podido confirmar que sea un rostro real.' };
-    }
-
-    return { ready: true, face, reason: 'Rostro preparado.' };
+function faceStatus(result, options = {}) {
+    return AtlasFaceQuality.evaluate(result, {
+        handResult: state.handResult,
+        center: state.faceCenter,
+        ...options,
+    });
 }
 
 function trackHandGesture(result) {
@@ -272,7 +361,8 @@ function trackHandGesture(result) {
         tracking.candidateSince = now;
         return;
     }
-    if (now - tracking.candidateSince < GESTURE_HOLD_MS || tracking.latched === observed.type) {
+    const hold = observed.type === 'PINCH' ? PINCH_HOLD_MS : GESTURE_HOLD_MS;
+    if (now - tracking.candidateSince < hold || tracking.latched === observed.type) {
         return;
     }
 
@@ -407,14 +497,21 @@ function recognizedHandGesture(result) {
 
     const pose = result.worldLandmarks?.[0] || landmarks;
     const gesture = result.gestures?.[0]?.[0];
+    const openPalm = isOpenPalmPose(pose) || pose !== landmarks && isOpenPalmPose(landmarks);
     let type = null;
-    if (isPinch(pose)) {
+    if (openPalm && gesture?.categoryName === 'Open_Palm') {
+        type = 'OPEN_PALM';
+    } else if (isPinch(pose) || pose !== landmarks && isPinch(landmarks)) {
         type = 'PINCH';
     } else if (isDirectionalPose(pose)) {
-        type = staticDirection(landmarks);
+        type = staticDirection(pose);
         if (!type) {
             return null;
         }
+    } else if (isPointingPose(pose) || pose !== landmarks && isPointingPose(landmarks)) {
+        type = 'POINT';
+    } else if (openPalm) {
+        type = 'OPEN_PALM';
     } else {
         type = ({
             Closed_Fist: 'FIST', Open_Palm: 'OPEN_PALM', Pointing_Up: 'POINT',
@@ -436,11 +533,20 @@ function isDirectionalPose(points) {
         && palmWidth > 0 && pointDistance(points[8], points[12]) <= palmWidth * 0.55;
 }
 
+function isPointingPose(points) {
+    return fingerIsExtended(points, 5)
+        && !fingerIsExtended(points, 9)
+        && !fingerIsExtended(points, 13)
+        && !fingerIsExtended(points, 17);
+}
+
+function isOpenPalmPose(points) {
+    return [5, 9, 13, 17].every(base => fingerIsExtended(points, base));
+}
+
 function isPinch(points) {
     const palmWidth = pointDistance(points[5], points[17]);
-    return palmWidth > 0 && pointDistance(points[4], points[8]) <= palmWidth * 0.28
-        && !(fingerIsExtended(points, 9) && fingerIsExtended(points, 13)
-            && fingerIsExtended(points, 17));
+    return palmWidth > 0 && pointDistance(points[4], points[8]) <= palmWidth * PINCH_DISTANCE_RATIO;
 }
 
 function fingerIsExtended(points, base) {
@@ -474,6 +580,8 @@ function pointCoordinates(point) {
 }
 
 function staticDirection(points) {
+    // dx va del dedo hacia la palma a proposito: el video se muestra en espejo (scaleX(-1)),
+    // asi que la izquierda del usuario es la derecha de la imagen cruda.
     const indexBase = pointCoordinates(points[5]);
     const middleBase = pointCoordinates(points[9]);
     const indexTip = pointCoordinates(points[8]);
@@ -483,10 +591,10 @@ function staticDirection(points) {
     if (Math.hypot(dx, dy) < pointDistance(points[5], points[17]) * 0.65) {
         return null;
     }
-    if (Math.abs(dx) > Math.abs(dy) * 1.35) {
+    if (Math.abs(dx) > Math.abs(dy) * 1.2) {
         return dx > 0 ? 'PALM_RIGHT' : 'PALM_LEFT';
     }
-    if (Math.abs(dy) > Math.abs(dx) * 1.35) {
+    if (Math.abs(dy) > Math.abs(dx) * 1.2) {
         return dy > 0 ? 'PALM_DOWN' : 'PALM_UP';
     }
     return null;
@@ -516,7 +624,7 @@ function applyGesture(type) {
         return;
     }
     if (type === 'OPEN_PALM') {
-        if (state.voice.listening) {
+        if (state.voice.listening || state.voice.preparing) {
             stopVoiceInput();
         } else if (!document.getElementById('panel').hidden) {
             closePanel();
@@ -540,7 +648,7 @@ function activatePointerTarget() {
         return;
     }
     if (isTextField(target)) {
-        target.focus();
+        target.focus({ preventScroll: true });
         startVoiceInput(target);
         return;
     }
@@ -592,20 +700,31 @@ function setInteractionStatus(text) {
     interactionStatusHandle = setTimeout(() => status.classList.remove('visible'), 2500);
 }
 
-function startVoiceInput(target) {
+async function startVoiceInput(target) {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) {
         setInteractionStatus('El dictado no está disponible en este navegador.');
         return;
     }
     stopVoiceInput();
+    const request = voiceRequest;
+    state.voice = { recognition: null, target, listening: false, preparing: true };
+    updateVoiceControl();
+
+    const local = await prepareOnDeviceVoice(Recognition);
+    if (request !== voiceRequest) {
+        return;
+    }
 
     const recognition = new Recognition();
-    recognition.lang = 'es-ES';
+    recognition.lang = VOICE_LANGUAGE;
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    state.voice = { recognition, target, listening: true };
+    if (local) {
+        recognition.processLocally = true;
+    }
+    state.voice = { recognition, target, listening: true, preparing: false };
     recognition.onstart = () => {
         updateVoiceControl();
         setInteractionStatus('Escuchando…');
@@ -618,16 +737,40 @@ function startVoiceInput(target) {
     };
     recognition.onend = () => {
         if (state.voice.recognition === recognition) {
-            state.voice = { recognition: null, target, listening: false };
+            state.voice = { recognition: null, target, listening: false, preparing: false };
             updateVoiceControl();
         }
     };
     try {
         recognition.start();
     } catch (_) {
-        state.voice = { recognition: null, target, listening: false };
+        state.voice = { recognition: null, target, listening: false, preparing: false };
         updateVoiceControl();
         setInteractionStatus('No se pudo iniciar el dictado.');
+    }
+}
+
+async function prepareOnDeviceVoice(Recognition) {
+    if (!('processLocally' in Recognition.prototype)
+        || typeof Recognition.available !== 'function'
+        || typeof Recognition.install !== 'function') {
+        return false;
+    }
+
+    try {
+        const options = { langs: [VOICE_LANGUAGE], processLocally: true };
+        const availability = await Recognition.available(options);
+        if (availability === 'available') {
+            return true;
+        }
+        if (availability === 'unavailable') {
+            return false;
+        }
+
+        setInteractionStatus('Descargando el reconocimiento de voz en español…');
+        return await Recognition.install({ langs: [VOICE_LANGUAGE] });
+    } catch (_) {
+        return false;
     }
 }
 
@@ -637,13 +780,13 @@ function voiceErrorMessage(error) {
         'service-not-allowed': 'Este navegador no permite usar su servicio de voz.',
         'audio-capture': 'No se encuentra un micrófono disponible.',
         'no-speech': 'No se ha detectado voz. Inténtalo de nuevo.',
-        'network': 'El servicio de voz no tiene conexión.',
+        'network': 'No se puede acceder al reconocimiento de voz remoto. Actualiza Chrome para usar el dictado local.',
         'language-not-supported': 'El reconocimiento no admite español.',
     })[error] || 'No se pudo reconocer la voz.';
 }
 
 function toggleVoiceInput() {
-    if (state.voice.listening) {
+    if (state.voice.listening || state.voice.preparing) {
         stopVoiceInput();
         return;
     }
@@ -653,7 +796,7 @@ function toggleVoiceInput() {
         setInteractionStatus('Selecciona primero un campo de texto.');
         return;
     }
-    target.focus();
+    target.focus({ preventScroll: true });
     startVoiceInput(target);
 }
 
@@ -661,10 +804,12 @@ function updateVoiceControl() {
     const control = document.getElementById('voice-control');
     const supported = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
     control.hidden = false;
-    control.disabled = !supported;
+    control.disabled = !supported || state.voice.preparing;
     control.classList.toggle('listening', state.voice.listening);
     control.setAttribute('aria-pressed', String(state.voice.listening));
-    control.textContent = supported ? state.voice.listening ? 'Detener voz' : 'Dictar' : 'Voz no disponible';
+    control.textContent = !supported ? 'Voz no disponible'
+        : state.voice.preparing ? 'Preparando voz…'
+            : state.voice.listening ? 'Detener voz' : 'Dictar';
 }
 
 function appendDictation(target, transcript) {
@@ -681,12 +826,15 @@ function appendDictation(target, transcript) {
     setInteractionStatus('Texto reconocido.');
 }
 
+let voiceRequest = 0;
+
 function stopVoiceInput() {
+    voiceRequest += 1;
     const target = state.voice.target;
     if (state.voice.recognition) {
         state.voice.recognition.abort();
     }
-    state.voice = { recognition: null, target, listening: false };
+    state.voice = { recognition: null, target, listening: false, preparing: false };
     updateVoiceControl();
 }
 
@@ -746,9 +894,10 @@ function degrees(value) {
 }
 
 async function refreshWeather() {
-    const place = window.AtlasConfig?.weather;
+    const place = state.home?.location;
     const block = document.getElementById('weather');
     if (!place) {
+        block.hidden = true;
         return;
     }
 
@@ -761,14 +910,14 @@ async function refreshWeather() {
     try {
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error('HTTP ' + response.status);
+            throw new Error('No se pudo consultar el tiempo.');
         }
         const data = await response.json();
         document.getElementById('weather-now').textContent = degrees(data.current.temperature_2m);
         renderSkyIcon(data.current.weather_code);
         const sky = SKY[data.current.weather_code];
         const range = degrees(data.daily.temperature_2m_max[0]) + ' / ' + degrees(data.daily.temperature_2m_min[0]);
-        document.getElementById('weather-detail').textContent = sky ? sky + ' · ' + range : range;
+        document.getElementById('weather-detail').textContent = (sky ? sky + ' · ' : '') + range + ' · ' + place.name;
         block.hidden = false;
     } catch (_) {
         block.hidden = true;
@@ -777,10 +926,15 @@ async function refreshWeather() {
 
 async function refreshNews() {
     const block = document.getElementById('news');
+    const categories = state.home?.newsCategories;
+    if (!categories?.length) {
+        block.hidden = true;
+        return;
+    }
     try {
-        const response = await api('/news');
+        const response = await api('/news?categories=' + encodeURIComponent(categories.join(',')));
         if (response.status !== 200 || !Array.isArray(response.body) || response.body.length === 0) {
-            throw new Error('News unavailable');
+            throw new Error('Las noticias no están disponibles.');
         }
         const list = document.getElementById('news-list');
         list.replaceChildren();
@@ -808,9 +962,12 @@ function formatNewsDate(date) {
 
 function tickClock() {
     const now = new Date();
-    document.getElementById('clock').textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    const timeZone = state.home?.location.timeZone;
+    document.getElementById('clock').textContent = new Intl.DateTimeFormat('es-ES', {
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone,
+    }).format(now);
     document.getElementById('clock-date').textContent = capitalize(new Intl.DateTimeFormat('es-ES', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone,
     }).format(now));
     renderNextCountdown();
 }
@@ -1015,7 +1172,7 @@ function appendDayItems(cellNode, items, total, limit) {
 function onDayPicked(iso) {
     return () => {
         document.getElementById('add-date').value = iso;
-        document.getElementById('add-title').focus();
+        document.getElementById('add-title').focus({ preventScroll: true });
         updateAddHint();
     };
 }
@@ -1466,6 +1623,9 @@ function setAuthenticated(authenticated) {
     document.body.classList.toggle('locked', !authenticated);
 
     if (!authenticated) {
+        if (!state.authBusy) {
+            state.faceCenter = null;
+        }
         if (changed) {
             Object.assign(state.gesture, {
                 candidate: null, candidateSince: 0, missingSince: 0, latched: null,
@@ -1478,6 +1638,10 @@ function setAuthenticated(authenticated) {
         disconnectEvents();
         closePanel();
         document.getElementById('toasts').replaceChildren();
+        state.home = null;
+        state.homeProfileId = null;
+        document.getElementById('weather').hidden = true;
+        document.getElementById('news').hidden = true;
         state.next = null;
         state.view = 'inicio';
         document.body.classList.remove('routines-active');
@@ -1510,10 +1674,28 @@ async function refreshAuthentication() {
     const active = Boolean(state.authentication.activeSession);
     document.getElementById('enrollment').hidden = !state.authentication.maintenanceMode;
     setAuthenticated(active);
+    if (active) {
+        await refreshHomeProfile(state.authentication.activeSession.profileId);
+    }
     renderAuthenticationStatus();
     updatePresenceActions();
     if (state.authentication.maintenanceMode) {
         await refreshProfiles();
+    }
+}
+
+async function refreshHomeProfile(profileId) {
+    if (state.homeProfileId === profileId) {
+        return;
+    }
+
+    const response = await api('/home/profiles/' + encodeURIComponent(profileId));
+    state.homeProfileId = profileId;
+    state.home = response.status === 200 ? response.body : null;
+    tickClock();
+    await Promise.all([refreshWeather(), refreshNews()]);
+    if (response.status === 404) {
+        setInteractionStatus('Completa el onboarding de Inicio en modo mantenimiento.');
     }
 }
 
@@ -1550,13 +1732,13 @@ function updatePresenceActions() {
     document.getElementById('authenticate').disabled = state.authBusy || !state.cameraReady || !enrolled
         || Boolean(active);
     document.getElementById('enroll').disabled = state.authBusy || !state.cameraReady
-        || !document.getElementById('display-name').value.trim();
+        || Boolean(active) || !document.getElementById('display-name').value.trim()
+        || !document.getElementById('home-location').value.trim()
+        || selectedNewsCategories().length === 0;
 }
 
 function presenceError(response) {
-    return response.body && response.body.message
-        ? response.body.message
-        : 'No se pudo completar la operación.';
+    return errorMessage(response);
 }
 
 function setAuthFeedback(text, error = false) {
@@ -1577,6 +1759,7 @@ async function refreshProfiles() {
         const item = el('li');
         item.appendChild(el('span', null, profile.displayName + ' · ' + profile.templateCount + ' captura(s)'));
         const actions = el('span', 'profile-actions');
+        actions.appendChild(button('quiet', 'Añadir variante', () => addProfileVariant(profile)));
         actions.appendChild(button('quiet', 'Eliminar', () => {
             actions.replaceChildren(
                 button('quiet', 'Confirmar', () => deleteProfile(profile.id)),
@@ -1591,8 +1774,16 @@ async function enrollProfile() {
     state.authBusy = true;
     updatePresenceActions();
     try {
-        const descriptors = await captureFaceDescriptors(ENROLLMENT_SAMPLES,
-            count => setAuthFeedback(`Capturando rostro ${count}/${ENROLLMENT_SAMPLES}…`));
+        setAuthFeedback('Buscando la ubicación…');
+        const location = await resolveOnboardingLocation();
+        const newsCategories = selectedNewsCategories();
+        const descriptors = await captureEnrollmentDescriptors(
+            () => state.recognition,
+            () => state.recognitionVersion,
+            (index, pose, detail) => {
+                showEnrollmentStep(index);
+                setAuthFeedback(`${index + 1}/${ENROLLMENT_POSES.length} · ${detail || pose.instruction}`);
+            });
         const response = await send('POST', '/profiles', {
             displayName: document.getElementById('display-name').value.trim(),
             modelVersion: MODEL_VERSION,
@@ -1609,19 +1800,60 @@ async function enrollProfile() {
                 modelVersion: MODEL_VERSION,
                 descriptor,
             });
-            if (added.status < 300) {
-                captures++;
+            if (added.status >= 300) {
+                await api('/profiles/' + response.body.id, { method: 'DELETE' });
+                throw new Error(presenceError(added));
             }
+            captures++;
+        }
+        const configured = await send('PUT', `/home/profiles/${response.body.id}`, {
+            locationName: location.name,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            timeZone: location.timezone,
+            newsCategories,
+        });
+        if (configured.status >= 300) {
+            await api('/profiles/' + response.body.id, { method: 'DELETE' });
+            throw new Error(errorMessage(configured));
         }
         document.getElementById('display-name').value = '';
-        setAuthFeedback(`Rostro registrado con ${captures} capturas. Reinicia Atlas sin --maintenance.`);
+        document.getElementById('home-location').value = '';
+        showEnrollmentStep(ENROLLMENT_POSES.length);
+        setAuthFeedback(`Onboarding completado para ${location.name} con ${captures} capturas. Reinicia Atlas sin --maintenance.`);
         await refreshAuthentication();
     } catch (error) {
-        setAuthFeedback(error.message || 'No se pudo capturar el rostro.', true);
+        setAuthFeedback(frontendErrorMessage(error, 'No se pudo capturar el rostro.'), true);
     } finally {
         state.authBusy = false;
         updatePresenceActions();
     }
+}
+
+function selectedNewsCategories() {
+    return Array.from(document.querySelectorAll('#home-news-categories input:checked'), input => input.value);
+}
+
+async function resolveOnboardingLocation() {
+    const query = document.getElementById('home-location').value.trim();
+    const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(query)
+        + '&count=1&language=es&format=json';
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error('No se pudo consultar la ubicación.');
+    }
+    const place = (await response.json()).results?.[0];
+    if (!place) {
+        throw new Error('No se ha encontrado esa ubicación. Añade la ciudad y el país.');
+    }
+
+    return {
+        name: [place.name, place.admin1, place.country].filter(Boolean)
+            .filter((value, index, values) => values.indexOf(value) === index).join(', '),
+        latitude: place.latitude,
+        longitude: place.longitude,
+        timezone: place.timezone,
+    };
 }
 
 async function deleteProfile(id) {
@@ -1639,45 +1871,174 @@ function challengeDetector(type) {
             && value.score >= HAND_CONFIDENCE);
 }
 
+function faceResultIsRecent(result) {
+    const age = Date.now() - Number(result?.timestamp);
+    return Number.isFinite(age) && age >= 0 && age <= FACE_RESULT_MAX_AGE_MS;
+}
+
 function sleep(milliseconds) {
     return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
-async function captureFaceDescriptors(count, onCapture) {
-    const descriptors = [];
-    let lastVersion = -1;
-    const expiresAt = Date.now() + 10000;
-    while (descriptors.length < count && Date.now() < expiresAt) {
-        if (state.recognitionVersion !== lastVersion) {
-            lastVersion = state.recognitionVersion;
-            const status = faceStatus(state.recognition);
-            if (status.ready) {
-                descriptors.push(Array.from(status.face.embedding));
-                onCapture(descriptors.length);
-            }
+function showEnrollmentStep(active) {
+    document.querySelectorAll('.enrollment-steps li').forEach((node, index) => {
+        node.classList.toggle('active', index === active);
+        node.classList.toggle('complete', index < active);
+        if (index === active) {
+            node.setAttribute('aria-current', 'step');
+        } else {
+            node.removeAttribute('aria-current');
         }
-        await sleep(60);
-    }
-    if (descriptors.length < count) {
-        throw new Error('Mantén el rostro centrado y bien iluminado durante unos segundos.');
+    });
+}
+
+async function captureEnrollmentDescriptors(currentResult, currentVersion, onStep) {
+    const descriptors = [];
+    let firstSide = 0;
+    state.faceCenter = null;
+    for (const [index, pose] of ENROLLMENT_POSES.entries()) {
+        onStep(index, pose);
+        let lastVersion = -1;
+        let stableFaces = [];
+        let missedFrames = 0;
+        const requiredFrames = pose.id === 'front' ? ENROLLMENT_FRONT_FRAMES : ENROLLMENT_HOLD_FRAMES;
+        const expiresAt = Date.now() + 20000;
+        while (Date.now() < expiresAt) {
+            const version = currentVersion();
+            if (version !== lastVersion) {
+                lastVersion = version;
+                const result = currentResult();
+                const status = faceStatus(result, {
+                    neutral: false, minSize: AtlasFaceQuality.ENROLLMENT_MIN_FACE_SIZE,
+                });
+                const poseState = status.ready ? AtlasFaceQuality.poseState(
+                    status.face, pose.id, state.faceCenter, stableFaces.length > 0, firstSide) : null;
+                if (poseState?.matches) {
+                    stableFaces.push(status.face);
+                    missedFrames = 0;
+                } else if (++missedFrames >= 3) {
+                    stableFaces = [];
+                    missedFrames = 0;
+                }
+                onStep(index, pose, enrollmentPoseFeedback(
+                    status, pose, poseState, stableFaces.length, requiredFrames));
+                if (stableFaces.length >= requiredFrames) {
+                    if (pose.id === 'front') {
+                        state.faceCenter = AtlasFaceQuality.calibration(stableFaces);
+                    } else if (pose.id === 'side') {
+                        firstSide = Math.sign(AtlasFaceQuality.offsets(status.face, state.faceCenter).yaw) || 1;
+                    }
+                    descriptors.push(AtlasFaceQuality.averageDescriptors(stableFaces, state.faceCenter));
+                    break;
+                }
+            }
+            await sleep(60);
+        }
+        if (descriptors.length !== index + 1) {
+            throw new Error(`No se pudo capturar: ${pose.instruction.toLowerCase()}.`);
+        }
     }
     return descriptors;
+}
+
+function enrollmentPoseFeedback(status, pose, poseState, stableFrames, requiredFrames) {
+    if (!status.ready) {
+        return status.reason;
+    }
+    if (stableFrames > 0) {
+        return `Mantén la posición · confirmando ${stableFrames}/${requiredFrames}`;
+    }
+    if (pose.id === 'front') {
+        return 'Mantén el rostro centrado un instante';
+    }
+    if (!poseState.aligned) {
+        return pose.id === 'side' || pose.id === 'opposite'
+            ? `${pose.instruction} · mantén la cabeza nivelada`
+            : `${pose.instruction} · evita girar hacia un lado`;
+    }
+    const progress = Math.floor(poseState.progress * 1800 / Math.PI) / 10;
+    const target = Math.round(poseState.target * 180 / Math.PI);
+    return `${pose.instruction} · ${progress.toFixed(1)}° / ${target}°`;
+}
+
+async function captureNeutralFaces(count, expiresAt, onProgress) {
+    const faces = [];
+    let lastVersion = -1;
+    while (Date.now() < expiresAt) {
+        if (state.recognitionVersion !== lastVersion) {
+            lastVersion = state.recognitionVersion;
+            const status = faceStatus(state.recognition, { center: state.faceCenter });
+            if (status.ready) {
+                faces.push(status.face);
+                onProgress?.(faces.length, count);
+                if (faces.length >= count) {
+                    return faces;
+                }
+            } else {
+                faces.length = 0;
+                onProgress?.(0, count, status.reason);
+            }
+        }
+        await sleep(40);
+    }
+    throw new Error('No se han podido obtener capturas frontales estables.');
+}
+
+async function calibrateFaceCenter() {
+    state.faceCenter = null;
+    setAuthFeedback('Mira de frente: calibrando tu posición neutral…');
+    const faces = await captureNeutralFaces(5, Date.now() + 5000,
+        (current, total, reason) => setAuthFeedback(reason || `Calibrando posición ${current}/${total}…`));
+    state.faceCenter = AtlasFaceQuality.calibration(faces);
+    return faces;
+}
+
+async function addProfileVariant(profile) {
+    state.authBusy = true;
+    updatePresenceActions();
+    try {
+        setAuthFeedback(`Cambia tu aspecto si lo necesitas y mira de frente para añadirlo a ${profile.displayName}.`);
+        await calibrateFaceCenter();
+        const faces = await captureNeutralFaces(3, Date.now() + 5000,
+            (current, total, reason) => setAuthFeedback(reason || `Capturando variante ${current}/${total}…`));
+        const added = await send('POST', `/profiles/${profile.id}/templates`, {
+            modelVersion: MODEL_VERSION,
+            descriptor: AtlasFaceQuality.averageDescriptors(faces, state.faceCenter),
+        });
+        if (added.status >= 300) {
+            throw added;
+        }
+        setAuthFeedback(`Variante añadida al perfil de ${profile.displayName}.`);
+        await refreshProfiles();
+    } catch (error) {
+        setAuthFeedback(error.status ? presenceError(error)
+            : frontendErrorMessage(error, 'No se pudo añadir la variante facial.'), true);
+    } finally {
+        state.authBusy = false;
+        updatePresenceActions();
+    }
 }
 
 async function waitForChallenge(challenge) {
     const detected = challengeDetector(challenge.type);
     const expiresAt = Date.parse(challenge.expiresAt);
     let consecutiveFrames = 0;
-    let lastVersion = -1;
+    let lastHandVersion = -1;
     while (Date.now() < expiresAt) {
         document.getElementById('challenge-time').textContent = Math.max(0,
             Math.ceil((expiresAt - Date.now()) / 1000)) + ' s';
-        if (state.recognitionVersion !== lastVersion) {
-            lastVersion = state.recognitionVersion;
-            const status = faceStatus(state.recognition);
-            consecutiveFrames = status.ready && detected(state.handResult) ? consecutiveFrames + 1 : 0;
+        if (state.handResultVersion !== lastHandVersion) {
+            lastHandVersion = state.handResultVersion;
+            const status = faceStatus(state.recognition, { neutral: false });
+            const recentFace = faceResultIsRecent(state.recognition);
+            const closedFist = detected(state.handResult);
+            consecutiveFrames = recentFace && status.ready && closedFist ? consecutiveFrames + 1 : 0;
+            setAuthFeedback(!recentFace ? 'Actualizando la captura facial…'
+                : !status.ready ? status.reason
+                    : !closedFist ? 'Mantén el puño cerrado dentro de la imagen.'
+                        : `Confirmando el puño ${consecutiveFrames}/3…`);
             if (consecutiveFrames >= 3) {
-                return status.face;
+                return;
             }
         }
         await sleep(60);
@@ -1691,6 +2052,7 @@ async function authenticate() {
     setAuthFeedback('Preparando prueba de vida…');
     const challengeNode = document.getElementById('auth-challenge');
     try {
+        await calibrateFaceCenter();
         const started = await send('POST', '/authentication/challenges', {});
         if (started.status >= 300) {
             throw started;
@@ -1699,11 +2061,15 @@ async function authenticate() {
         challengeNode.hidden = false;
         document.getElementById('challenge-instruction').textContent = 'Mantén el puño cerrado';
         setAuthFeedback('Verificando puño y rostro…');
-        const face = await waitForChallenge(challenge);
+        await waitForChallenge(challenge);
+        document.getElementById('challenge-instruction').textContent = 'Suelta el puño y mira de frente';
+        const faces = await captureNeutralFaces(3, Date.parse(challenge.expiresAt),
+            (current, total, reason) => setAuthFeedback(reason || `Seleccionando captura frontal ${current}/${total}…`));
+        const descriptor = AtlasFaceQuality.averageDescriptors(faces, state.faceCenter);
         const completed = await send('POST',
             '/authentication/challenges/' + challenge.challengeId + '/complete', {
                 modelVersion: MODEL_VERSION,
-                descriptor: Array.from(face.embedding),
+                descriptor,
                 observedType: challenge.type,
                 nonce: challenge.nonce,
                 capturedAt: new Date().toISOString(),
@@ -1715,7 +2081,7 @@ async function authenticate() {
         await refreshAuthentication();
     } catch (error) {
         setAuthFeedback(error.status ? presenceError(error)
-            : error.message || 'No se pudo completar la autenticación.', true);
+            : frontendErrorMessage(error, 'No se pudo completar la autenticación.'), true);
     } finally {
         challengeNode.hidden = true;
         state.authBusy = false;
@@ -1772,9 +2138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startCamera();
     tickClock();
     setInterval(tickClock, 1000);
-    refreshWeather();
     setInterval(refreshWeather, WEATHER_REFRESH);
-    refreshNews();
     setInterval(refreshNews, NEWS_REFRESH);
     refreshAuthentication();
     setInterval(refreshAuthentication, 2000);
@@ -1786,6 +2150,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authenticate').addEventListener('click', authenticate);
     document.getElementById('enroll').addEventListener('click', enrollProfile);
     document.getElementById('display-name').addEventListener('input', updatePresenceActions);
+    document.getElementById('home-location').addEventListener('input', updatePresenceActions);
+    document.getElementById('home-news-categories').addEventListener('change', updatePresenceActions);
     for (const link of document.querySelectorAll('.period-link')) {
         link.addEventListener('click', () => switchPeriod(link.dataset.period));
     }

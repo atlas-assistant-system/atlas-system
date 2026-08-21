@@ -2,8 +2,8 @@ package atlas.app;
 
 import atlas.app.appointments.AppointmentsApplication;
 import atlas.app.core.CoreApplication;
-import atlas.app.core.CoreSettings;
 import atlas.app.economy.EconomyApplication;
+import atlas.app.home.HomeApplication;
 import atlas.app.presence.PresenceApplication;
 import atlas.app.presence.PresenceSettings;
 import atlas.app.routines.RoutinesApplication;
@@ -15,6 +15,7 @@ import java.time.Clock;
 public final class Application {
 
     private final CoreApplication core;
+    private final HomeApplication home;
     private final AppointmentsApplication appointments;
     private final PresenceApplication presence;
     private final RoutinesApplication routines;
@@ -24,11 +25,13 @@ public final class Application {
 
     private Application(
         CoreApplication core,
+        HomeApplication home,
         AppointmentsApplication appointments,
         PresenceApplication presence,
         RoutinesApplication routines,
         EconomyApplication economy) {
         this.core = core;
+        this.home = home;
         this.appointments = appointments;
         this.presence = presence;
         this.routines = routines;
@@ -40,7 +43,9 @@ public final class Application {
         var presence = PresenceApplication.wire(renderer, presenceSettings, clock);
 
         return new Application(
-            CoreApplication.wire(CoreSettings.fromEnvironment()),
+            CoreApplication.wire(),
+            HomeApplication.wire(
+                renderer, data, clock, presenceSettings.maintenanceMode(), presence::activeProfileId),
             AppointmentsApplication.wire(renderer, data, clock, presence::hasActiveSession),
             presence,
             RoutinesApplication.wire(renderer, data, clock),
@@ -60,10 +65,13 @@ public final class Application {
             .mount("/events/routines", routines.eventStream())
             .mount("/economy", economy.router())
             .mount("/events/economy", economy.eventStream())
+            .mount("/home", home.router())
+            .mount("/news", home.router())
             .mount("/authentication", presence.router())
             .mount("/interactions", presence.router())
             .mount("/profiles", presence.router())
             .mount("/sessions", presence.router())
+            .mount("/presence", presence.router())
             .mount("/events/presence", presence.eventStream())
             .start();
 
@@ -82,6 +90,7 @@ public final class Application {
         presence.stop();
         routines.stop();
         economy.stop();
+        home.stop();
     }
 
     public int port() {
@@ -102,5 +111,9 @@ public final class Application {
 
     public EconomyApplication economy() {
         return economy;
+    }
+
+    public HomeApplication home() {
+        return home;
     }
 }

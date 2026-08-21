@@ -1,7 +1,8 @@
-package atlas.presentation.core.web;
+package atlas.presentation.home.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import atlas.domain.home.enums.NewsCategory;
 import org.junit.jupiter.api.Test;
 
 class NewsHandlersTest {
@@ -18,5 +19,11 @@ class NewsHandlersTest {
         var html = "<a href=\"/dev/2026-08-19\"><div class=\"issue\">Java &amp; AI</div></a>";
 
         assertThat(NewsHandlers.extractArchiveTitle("dev", html)).isEqualTo("Java & AI");
+    }
+
+    @Test
+    void parsesTheRequestedCategories() {
+        assertThat(Values.categories("AI,development"))
+            .containsExactlyInAnyOrder(NewsCategory.AI, NewsCategory.DEVELOPMENT);
     }
 }

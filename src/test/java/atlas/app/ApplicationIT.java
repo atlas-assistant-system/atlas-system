@@ -63,19 +63,32 @@ class ApplicationIT {
             assertThat(get(client, base, "/assets/economy.css").statusCode()).isEqualTo(200);
             assertThat(get(client, base, "/assets/economy.js").body())
                 .contains("'/events/economy'");
-            var config = get(client, base, "/assets/config.js");
-            assertThat(config.statusCode()).isEqualTo(200);
-            assertThat(config.body()).contains("window.AtlasConfig")
-                .contains("latitude: 28.1235")
-                .contains("longitude: -15.4363");
+            assertThat(get(client, base, "/assets/config.js").statusCode()).isEqualTo(404);
 
             assertThat(get(client, base, "/appointments/upcoming?limit=1").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/economy/balance").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/authentication").statusCode()).isEqualTo(200);
             assertThat(get(client, base, "/presence/authentication").statusCode()).isEqualTo(404);
+            assertThat(get(client, base, "/presence/sandbox").body())
+                .contains("Vision sandbox", "/presence/sandbox.js", "/presence/sandbox.css");
+            assertThat(get(client, base, "/presence/sandbox.js").statusCode()).isEqualTo(200);
+            assertThat(get(client, base, "/presence/face-quality.js").statusCode()).isEqualTo(200);
 
             var commands = application.presence().commands();
-            commands.dispatch(new EnrollProfileCommand("Ada", "face-v1", new float[]{1.0f, 0.0f}));
+            var profile = commands.dispatch(
+                new EnrollProfileCommand("Ada", "face-v1", new float[]{1.0f, 0.0f})).value();
+            var configured = put(client, base, "/home/profiles/" + profile.id(), """
+                {
+                  "locationName": "Las Palmas",
+                  "latitude": 28.1235,
+                  "longitude": -15.4363,
+                  "timeZone": "Atlantic/Canary",
+                  "newsCategories": ["AI", "DEVELOPMENT"]
+                }
+                """);
+            assertThat(configured.statusCode()).isEqualTo(200);
+            assertThat(get(client, base, "/home/profiles/" + profile.id()).body())
+                .contains("Las Palmas", "Atlantic/Canary", "AI", "DEVELOPMENT");
             var challenge = commands.dispatch(new BeginAuthenticationCommand()).value();
             var authenticated = commands.dispatch(new CompleteAuthenticationCommand(
                 LivenessChallengeId.parse(challenge.challengeId()),
@@ -96,6 +109,15 @@ class ApplicationIT {
     private static HttpResponse<String> get(HttpClient client, String base, String path) throws Exception {
         return client.send(
             HttpRequest.newBuilder(URI.create(base + path)).GET().build(),
+            HttpResponse.BodyHandlers.ofString());
+    }
+
+    private static HttpResponse<String> put(HttpClient client, String base, String path, String body) throws Exception {
+        return client.send(
+            HttpRequest.newBuilder(URI.create(base + path))
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(body))
+                .build(),
             HttpResponse.BodyHandlers.ofString());
     }
 }

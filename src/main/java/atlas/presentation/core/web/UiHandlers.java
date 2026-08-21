@@ -29,12 +29,6 @@ public final class UiHandlers {
         return new HttpResponse(200, "text/javascript; charset=utf-8", SCRIPT, Map.of());
     }
 
-    public static HttpResponse config(double latitude, double longitude) {
-        var script = "window.AtlasConfig = { weather: { latitude: " + latitude + ", longitude: " + longitude + " } };";
-
-        return new HttpResponse(200, "text/javascript; charset=utf-8", script, Map.of());
-    }
-
     public static HttpResponse routinesStyles(HttpRequest request) {
         return new HttpResponse(200, "text/css; charset=utf-8", ROUTINES_STYLES, Map.of());
     }
