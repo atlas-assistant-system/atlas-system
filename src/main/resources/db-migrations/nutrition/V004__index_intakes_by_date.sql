@@ -1,0 +1,1 @@
+CREATE INDEX ix_intakes_consumed_on ON intakes (consumed_on)

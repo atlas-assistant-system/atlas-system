@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX ux_plans_single_active ON plans (status) WHERE status = 'ACTIVE'
