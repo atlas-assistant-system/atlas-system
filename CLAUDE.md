@@ -63,14 +63,23 @@ físico— y su propio bus de comandos y consultas.
   conserva sus rutas auxiliares de recordatorios y documentación, y su SSE va en `/events`. Su
   API está detrás de la guardia de sesión de `presence`.
 - **`presence` migrado** — identidad biométrica facial con prueba de vida e interacción por
-  gesto. Se monta en sus propios prefijos (`/profiles`, `/sessions`, `/authentication`...) y su
-  SSE en `/events/presence`.
+  gesto. El desafío sigue siendo el `FIST` fijo: primero calibra la pose neutral, comprueba el
+  gesto sin bloquear la percepción facial y después agrega las tres mejores capturas frontales.
+  `real` y `live` son telemetría, no una puerta por frame; la calidad operativa exige 340 px y
+  rechaza manos superpuestas al rostro. El onboarding guarda cinco poses como plantillas del
+  mismo perfil y permite añadir variantes posteriores (por ejemplo, con o sin gafas). Se monta
+  en sus propios prefijos (`/profiles`, `/sessions`, `/authentication`...) y su SSE en
+  `/events/presence`; `/presence/sandbox` mide por separado acción, calidad, señales pasivas,
+  oclusión y recuperación.
 - **`routines` migrado** — hábitos como cuota dentro de un periodo. Cuatro capas completas, se
   monta en `/routines` y su SSE en `/events/routines`.
 - **`economy` implementado (ciclo 1)** — movimientos, saldo y desglose por categoría. Cuatro
   capas completas, se monta en `/economy` tras la guardia de sesión de `presence`, y su SSE en
-  `/events/economy`. **El espejo es de solo consulta**: la escritura entra por HTTP (un Atajo de
-  iOS, un script, curl) y la vista se refresca sola oyendo los eventos. El importe viaja como
+  `/events/economy`. **El espejo no inventa lo que viene de fuera, pero sí captura lo que nace en
+  él**: los movimientos son el reflejo del banco y solo entran por HTTP (un Atajo de iOS, un
+  script, curl), mientras que presupuestos y objetivos de ahorro no existen en ninguna otra parte
+  —los decides mirando el propio desglose— y se fijan desde la vista. En ambos casos la vista se
+  refresca sola oyendo los eventos. El importe viaja como
   cadena en euros (`"12.50"`) y se guarda en céntimos con signo, sin columna de tipo: `kind` se
   deriva al leer con `MovementKind.of(...)`, que es la única definición del signo en el sistema.
   Los ciclos 2 (presupuesto) y 3 (objetivos de ahorro) siguen sin empezar.
