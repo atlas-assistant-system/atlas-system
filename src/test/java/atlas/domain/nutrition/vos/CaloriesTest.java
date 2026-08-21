@@ -36,6 +36,29 @@ class CaloriesTest {
         assertThat(new Calories(1_800).percentageOf(new Calories(0))).isZero();
     }
 
+    @ParameterizedTest
+    @CsvSource({"2136, 1922", "2000, 1800", "0, 0", "1, 1"})
+    void shouldPlaceItsLowerBoundBelowTheTarget(int target, int expected) {
+        assertThat(new Calories(target).lowerBound()).isEqualTo(new Calories(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"2136, 2350", "2000, 2200", "0, 0", "1, 1"})
+    void shouldPlaceItsUpperBoundAboveTheTarget(int target, int expected) {
+        assertThat(new Calories(target).upperBound()).isEqualTo(new Calories(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1922, true", "2136, true", "2350, true", "1921, false", "2351, false", "0, false"})
+    void shouldCoverOnlyWhatFallsInsideTheTolerance(int consumed, boolean expected) {
+        assertThat(new Calories(2_136).covers(new Calories(consumed))).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldCoverNothingWithoutATarget() {
+        assertThat(new Calories(0).covers(new Calories(0))).isFalse();
+    }
+
     @Test
     void shouldBeEqualByValue() {
         assertThat(new Calories(1_940)).isEqualTo(new Calories(1_940));

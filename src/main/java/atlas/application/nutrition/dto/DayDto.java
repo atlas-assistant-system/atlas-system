@@ -9,5 +9,8 @@ public record DayDto(
     MacrosDto target,
     MacrosDto remaining,
     int caloriePercentage,
+    int lowerCalories,
+    int upperCalories,
+    boolean withinRange,
     boolean overBudget,
     List<IntakeDto> intakes) {}

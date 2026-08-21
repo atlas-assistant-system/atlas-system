@@ -53,6 +53,9 @@ public final class NutritionResponses {
         body.put("target", macros(dto.target()));
         body.put("remaining", macros(dto.remaining()));
         body.put("caloriePercentage", dto.caloriePercentage());
+        body.put("lowerCalories", dto.lowerCalories());
+        body.put("upperCalories", dto.upperCalories());
+        body.put("withinRange", dto.withinRange());
         body.put("overBudget", dto.overBudget());
         body.put("intakes", intakes(dto.intakes()));
 
@@ -68,6 +71,7 @@ public final class NutritionResponses {
         body.put("date", dto.date().toString());
         body.put("consumed", macros(dto.consumed()));
         body.put("caloriePercentage", dto.caloriePercentage());
+        body.put("withinRange", dto.withinRange());
         body.put("overBudget", dto.overBudget());
 
         return body;

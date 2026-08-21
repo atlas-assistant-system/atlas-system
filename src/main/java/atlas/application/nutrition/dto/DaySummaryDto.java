@@ -6,4 +6,5 @@ public record DaySummaryDto(
     LocalDate date,
     MacrosDto consumed,
     int caloriePercentage,
+    boolean withinRange,
     boolean overBudget) {}

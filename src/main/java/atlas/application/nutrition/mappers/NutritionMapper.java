@@ -99,12 +99,15 @@ public final class NutritionMapper {
             toDto(totals.target()),
             remainingOf(totals),
             totals.caloriePercentage(),
+            totals.lowerTarget().kcal(),
+            totals.upperTarget().kcal(),
+            totals.isWithinRange(),
             totals.isOverBudget(),
             toDtos(intakes));
     }
 
     public static DayDto toDto(LocalDate date, Macros consumed, Collection<Intake> intakes) {
-        return new DayDto(date, toDto(consumed), null, null, 0, false, toDtos(intakes));
+        return new DayDto(date, toDto(consumed), null, null, 0, 0, 0, false, false, toDtos(intakes));
     }
 
     public static List<DaySummaryDto> toDays(Collection<DayConsumption> consumption, Calories dailyCalories) {
@@ -121,6 +124,7 @@ public final class NutritionMapper {
             day.date(),
             toDto(day.macros()),
             consumed.percentageOf(dailyCalories),
+            dailyCalories.covers(consumed),
             dailyCalories.kcal() > 0 && consumed.remainingFor(dailyCalories) < 0);
     }
 

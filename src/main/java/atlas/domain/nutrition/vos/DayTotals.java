@@ -38,6 +38,18 @@ public record DayTotals(Macros consumed, Macros target) implements ValueObject {
         return consumedCalories().percentageOf(targetCalories());
     }
 
+    public Calories lowerTarget() {
+        return targetCalories().lowerBound();
+    }
+
+    public Calories upperTarget() {
+        return targetCalories().upperBound();
+    }
+
+    public boolean isWithinRange() {
+        return targetCalories().covers(consumedCalories());
+    }
+
     public boolean isOverBudget() {
         return remainingCalories() < 0;
     }
