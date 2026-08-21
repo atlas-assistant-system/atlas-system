@@ -85,3 +85,13 @@ tasks.register<JavaExec>("seedEconomy") {
     systemProperty("log.format", "console")
     jvmArgs("--enable-native-access=org.xerial.sqlitejdbc")
 }
+
+tasks.register<JavaExec>("importEconomy") {
+    group = "application"
+    description = "Importa un extracto bancario en CSV a data/economy.db. No hace nada si ya tiene movimientos."
+    mainModule = "atlas"
+    mainClass = "atlas.app.economy.EconomyImporter"
+    classpath = files(tasks.named("jar")) + configurations.runtimeClasspath.get()
+    systemProperty("log.format", "console")
+    jvmArgs("--enable-native-access=org.xerial.sqlitejdbc")
+}

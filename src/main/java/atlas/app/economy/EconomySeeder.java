@@ -62,7 +62,7 @@ public final class EconomySeeder {
                 + summary.goals() + " objetivos en " + directory.resolve("economy.db"));
     }
 
-    private static boolean isDatabaseLocked(Throwable failure) {
+    static boolean isDatabaseLocked(Throwable failure) {
         for (var cause = failure; cause != null; cause = cause.getCause()) {
             if (cause.getMessage() != null && cause.getMessage().contains("database is locked")) {
                 return true;
@@ -72,7 +72,7 @@ public final class EconomySeeder {
         return false;
     }
 
-    private static String lockedMessage(Path directory) {
+    static String lockedMessage(Path directory) {
         return String.join(
             System.lineSeparator(),
             directory.resolve("economy.db") + " esta en uso por otro proceso.",
@@ -151,7 +151,7 @@ public final class EconomySeeder {
         return 2;
     }
 
-    private static LogEntryRenderer quietRenderer() {
+    static LogEntryRenderer quietRenderer() {
         return LogEntryRenderers.forConsole(false, ZoneOffset.UTC);
     }
 
