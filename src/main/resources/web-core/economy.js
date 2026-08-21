@@ -36,7 +36,7 @@
         });
         if (!response.ok) {
             const payload = await response.json().catch(() => null);
-            throw new Error(payload?.message || 'No se pudo guardar.');
+            throw new Error(errorMessage({ status: response.status, body: payload }));
         }
         await refresh();
     }

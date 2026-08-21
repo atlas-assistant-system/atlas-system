@@ -102,6 +102,11 @@ físico— y su propio bus de comandos y consultas.
   proxy entre contextos.
 - Las UIs independientes de `appointments` y `routines` se retiraron: la presentación de ambos
   módulos vive ahora en `core`; `routines` conserva su documentación en `/routines/docs`.
+- **Los mensajes de error que ve la persona están en un único sitio**:
+  `web-shared/error-messages.js`, servido por `ErrorMessagesHandler` a `/assets/errors.js` (core)
+  y `/errors.js` (presence). El `message` del catálogo de dominio está en inglés y es para
+  depurar: ningún JS debe mostrarlo. `ErrorMessagesTest` compara los códigos literales de los
+  `*Errors.java` con las claves del fichero y falla si alguno se queda sin traducir.
 
 ## Notas de trabajo
 

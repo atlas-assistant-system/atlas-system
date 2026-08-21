@@ -90,91 +90,11 @@ function formatLeadTime(minutes) {
     return minutes + ' min';
 }
 
-const ERROR_MESSAGES = {
-    MALFORMED_INPUT: 'Los datos enviados no son válidos.',
-    UNEXPECTED: 'Se ha producido un error inesperado.',
-    'General.ValueIsRequired': 'Falta un dato obligatorio.',
-    'General.InvalidValue': 'Uno de los datos no es válido.',
-    'Appointment.NotFound': 'Esa cita ya no existe.',
-    'Appointment.ReminderNotFound': 'Ese aviso ya no existe.',
-    'Appointment.TitleRequired': 'Hace falta un título.',
-    'Appointment.TitleTooLong': 'El título es demasiado largo.',
-    'Appointment.DescriptionTooLong': 'La descripción es demasiado larga.',
-    'Appointment.TimeSlotRequired': 'Hace falta una franja horaria.',
-    'Appointment.InvalidTimeSlot': 'La hora de fin tiene que ir después de la de inicio.',
-    'Appointment.CannotScheduleInThePast': 'No puedes agendar algo en el pasado.',
-    'Appointment.InvalidReminderLeadTime': 'Esa antelación no es válida.',
-    'Appointment.Overlaps': 'Esa franja ya está ocupada por otra cita.',
-    'Appointment.NotCancelled': 'Esta cita no está cancelada.',
-    'Appointment.CannotRestorePastAppointment': 'Su hora ya pasó: reprográmala en vez de recuperarla.',
-    'Appointment.CannotModifyCancelled': 'Una cita cancelada no se puede modificar.',
-    'Appointment.CannotModifyPastAppointment': 'Una cita que ya pasó no se puede modificar.',
-    'Appointment.CannotAddReminderToPastAppointment': 'No puedes avisar de algo que ya pasó.',
-    'Appointment.DuplicateReminderLeadTime': 'Ya tienes un aviso con esa antelación.',
-    'Appointment.TooManyReminders': 'Una cita admite como mucho 5 avisos.',
-    'Profile.NameRequired': 'Introduce un nombre para el perfil.',
-    'Profile.NameTooLong': 'El nombre del perfil es demasiado largo.',
-    'Profile.DescriptorRequired': 'No se ha podido obtener la firma facial.',
-    'Profile.ModelVersionRequired': 'Falta la versión del modelo facial.',
-    'Profile.DescriptorDimensionMismatch': 'La captura facial no es compatible con el modelo actual.',
-    'Profile.TooManyTemplates': 'El perfil ya tiene el máximo de capturas faciales.',
-    'Profile.LastTemplateCannotBeRemoved': 'No se puede eliminar la última captura del perfil.',
-    'Profile.ModelVersionMismatch': 'Las capturas pertenecen a versiones distintas del modelo facial.',
-    'Profile.NotFound': 'Ese perfil biométrico ya no existe.',
-    'Profile.TemplateNotFound': 'Esa captura facial ya no existe.',
-    'Authentication.NoProfilesEnrolled': 'No hay perfiles biométricos registrados.',
-    'Verification.InvalidSimilarityScore': 'La puntuación de similitud no es válida.',
-    'Verification.InvalidMatchThreshold': 'El umbral de reconocimiento no es válido.',
-    'Verification.NoMatch': 'El rostro no coincide con ningún perfil registrado.',
-    'Liveness.ChallengeExpired': 'La prueba de vida ha caducado. Inténtalo de nuevo.',
-    'Liveness.ChallengeAlreadyUsed': 'Esa prueba de vida ya se ha utilizado.',
-    'Liveness.ChallengeNotFound': 'La prueba de vida ya no está disponible.',
-    'Liveness.Failed': 'No se ha superado la prueba de vida.',
-    'Session.InvalidDuration': 'La duración de la sesión no es válida.',
-    'Session.Expired': 'La sesión ha caducado.',
-    'Session.Closed': 'La sesión ya está cerrada.',
-    'Session.NotFound': 'La sesión ya no existe.',
-    'Interaction.RequiresSession': 'Necesitas una sesión activa para usar los gestos.',
-    'Presence.MaintenanceModeRequired': 'Esta operación requiere iniciar Atlas en modo mantenimiento.',
-    'Routine.NameRequired': 'Introduce un nombre para la rutina.',
-    'Routine.NameTooLong': 'El nombre de la rutina es demasiado largo.',
-    'Routine.DescriptionTooLong': 'La descripción de la rutina es demasiado larga.',
-    'Routine.TargetMustBePositive': 'El objetivo debe ser mayor que cero.',
-    'Routine.AmountMustBePositive': 'La cantidad registrada debe ser mayor que cero.',
-    'Routine.UnitTooLong': 'La unidad es demasiado larga.',
-    'Routine.ActiveDaysRequiredForDailyRoutine': 'Selecciona al menos un día para la rutina diaria.',
-    'Routine.ActiveDaysNotAllowedForThisPeriod': 'Solo las rutinas diarias pueden limitarse por semana.',
-    'Routine.DaysOfMonthNotAllowedForThisPeriod': 'Solo las rutinas mensuales pueden limitar días del mes.',
-    'Routine.DayOfMonthOutOfRange': 'El día del mes debe estar entre 1 y 31, o ser 0 para el último día.',
-    'Routine.IsArchived': 'Una rutina archivada no admite cambios ni nuevos registros.',
-    'Routine.AlreadyArchived': 'La rutina ya está archivada.',
-    'Routine.NotArchived': 'Solo se puede recuperar una rutina archivada.',
-    'Routine.DayNotScheduled': 'La rutina no está programada para ese día.',
-    'Routine.NotFound': 'Esa rutina ya no existe.',
-    'Routine.EntryNotFound': 'La rutina no tiene un registro para ese día.',
-    'Home.LocationNameRequired': 'Introduce una ubicación.',
-    'Home.LocationNameTooLong': 'El nombre de la ubicación es demasiado largo.',
-    'Home.InvalidCoordinates': 'No se han podido validar las coordenadas de esa ubicación.',
-    'Home.InvalidTimeZone': 'No se ha podido determinar la zona horaria de esa ubicación.',
-    'Home.NewsCategoriesRequired': 'Selecciona al menos una categoría de noticias.',
-    'Home.ProfileNotFound': 'Este perfil todavía no ha completado el onboarding de Inicio.',
-    'Home.AccessDenied': 'No puedes consultar la configuración de otro perfil.',
-};
-
-const STATUS_MESSAGES = {
-    400: 'Los datos enviados no son válidos.',
-    401: 'Necesitas autenticarte de nuevo.',
-    403: 'No tienes permiso para realizar esta operación.',
-    404: 'El recurso solicitado ya no existe.',
-    409: 'La operación entra en conflicto con el estado actual.',
-    500: 'Se ha producido un error inesperado.',
-    503: 'El servicio no está disponible en este momento.',
-};
-
 function errorMessage(response) {
     const code = response.body && response.body.code;
 
-    return ERROR_MESSAGES[code] || STATUS_MESSAGES[response.status] || 'No se pudo completar la operación.';
+    return window.AtlasErrorMessages[code] || window.AtlasStatusMessages[response.status]
+        || 'No se pudo completar la operación.';
 }
 
 function cameraErrorMessage(error) {

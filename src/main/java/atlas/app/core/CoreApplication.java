@@ -1,5 +1,6 @@
 package atlas.app.core;
 
+import atlas.presentation.common.web.ErrorMessagesHandler;
 import atlas.presentation.core.web.UiHandlers;
 import atlas.presentation.sharedkernel.http.Router;
 import atlas.presentation.sharedkernel.http.Routes;
@@ -16,6 +17,7 @@ public final class CoreApplication {
         return new CoreApplication(Router.builder()
             .mount(Routes.at("/")
                 .get("/", UiHandlers::index)
+                .get("/assets/errors.js", ErrorMessagesHandler::script)
                 .get("/assets/app.css", UiHandlers::styles)
                 .get("/assets/app.js", UiHandlers::script)
                 .get("/assets/routines.css", UiHandlers::routinesStyles)

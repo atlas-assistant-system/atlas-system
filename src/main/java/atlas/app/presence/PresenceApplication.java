@@ -48,6 +48,7 @@ import atlas.infrastructure.presence.persistence.SqliteAuthenticationAttemptRead
 import atlas.infrastructure.presence.persistence.SqlitePresenceUnitOfWork;
 import atlas.infrastructure.sharedkernel.persistence.SchemaMigrator;
 import atlas.infrastructure.sharedkernel.persistence.SqliteConnections;
+import atlas.presentation.common.web.ErrorMessagesHandler;
 import atlas.presentation.presence.handlers.InteractionHandlers;
 import atlas.presentation.presence.handlers.PresenceHandlers;
 import atlas.presentation.presence.sse.PresenceEventsBroadcaster;
@@ -217,6 +218,7 @@ public final class PresenceApplication {
                 .get("/sandbox.js", UiHandlers::sandboxScript))
             .mount(Routes.at("/")
                 .get("/", UiHandlers::index)
+                .get("/errors.js", ErrorMessagesHandler::script)
                 .get("/app.css", UiHandlers::styles)
                 .get("/app.js", UiHandlers::script)
                 .get("/docs", DocsHandlers::docs)

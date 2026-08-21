@@ -18,47 +18,6 @@ const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0
 const GESTURE_MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/'
     + 'gesture_recognizer/float16/1/gesture_recognizer.task';
 
-const ERROR_MESSAGES = {
-    MALFORMED_INPUT: 'Los datos enviados no son válidos.',
-    UNEXPECTED: 'Se ha producido un error inesperado.',
-    'General.ValueIsRequired': 'Falta un dato obligatorio.',
-    'General.InvalidValue': 'Uno de los datos no es válido.',
-    'Profile.NameRequired': 'Introduce un nombre para el perfil.',
-    'Profile.NameTooLong': 'El nombre del perfil es demasiado largo.',
-    'Profile.DescriptorRequired': 'No se ha podido obtener la firma facial.',
-    'Profile.ModelVersionRequired': 'Falta la versión del modelo facial.',
-    'Profile.DescriptorDimensionMismatch': 'La captura facial no es compatible con el modelo actual.',
-    'Profile.TooManyTemplates': 'El perfil ya tiene el máximo de capturas faciales.',
-    'Profile.LastTemplateCannotBeRemoved': 'No se puede eliminar la última captura del perfil.',
-    'Profile.ModelVersionMismatch': 'Las capturas pertenecen a versiones distintas del modelo facial.',
-    'Profile.NotFound': 'Ese perfil biométrico ya no existe.',
-    'Profile.TemplateNotFound': 'Esa captura facial ya no existe.',
-    'Authentication.NoProfilesEnrolled': 'No hay perfiles biométricos registrados.',
-    'Verification.InvalidSimilarityScore': 'La puntuación de similitud no es válida.',
-    'Verification.InvalidMatchThreshold': 'El umbral de reconocimiento no es válido.',
-    'Verification.NoMatch': 'El rostro no coincide con ningún perfil registrado.',
-    'Liveness.ChallengeExpired': 'La prueba de vida ha caducado. Inténtalo de nuevo.',
-    'Liveness.ChallengeAlreadyUsed': 'Esa prueba de vida ya se ha utilizado.',
-    'Liveness.ChallengeNotFound': 'La prueba de vida ya no está disponible.',
-    'Liveness.Failed': 'No se ha superado la prueba de vida.',
-    'Session.InvalidDuration': 'La duración de la sesión no es válida.',
-    'Session.Expired': 'La sesión ha caducado.',
-    'Session.Closed': 'La sesión ya está cerrada.',
-    'Session.NotFound': 'La sesión ya no existe.',
-    'Interaction.RequiresSession': 'Necesitas una sesión activa para usar los gestos.',
-    'Presence.MaintenanceModeRequired': 'Esta operación requiere iniciar Presence en modo mantenimiento.',
-};
-
-const STATUS_MESSAGES = {
-    400: 'Los datos enviados no son válidos.',
-    401: 'Necesitas autenticarte de nuevo.',
-    403: 'No tienes permiso para realizar esta operación.',
-    404: 'El recurso solicitado ya no existe.',
-    409: 'La operación entra en conflicto con el estado actual.',
-    500: 'Se ha producido un error inesperado.',
-    503: 'El servicio no está disponible en este momento.',
-};
-
 const state = {
     authentication: null,
     busy: false,
@@ -113,7 +72,7 @@ function message(error) {
     if (error instanceof TypeError) {
         return 'No se pudo conectar con el servicio.';
     }
-    return ERROR_MESSAGES[error?.code] || STATUS_MESSAGES[error?.status]
+    return window.AtlasErrorMessages[error?.code] || window.AtlasStatusMessages[error?.status]
         || (error?.name === 'Error' ? error.message : null) || 'No se pudo completar la operación.';
 }
 
