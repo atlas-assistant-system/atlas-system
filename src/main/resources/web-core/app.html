@@ -299,13 +299,16 @@
 <main id="view-nutricion" class="view nutrition-view" hidden>
     <div class="nutrition-layout">
         <section class="nutrition-section nutrition-today">
-            <p id="nutrition-date" class="nutrition-date"></p>
+            <ol id="nutrition-week" class="nutrition-week"></ol>
+
             <p id="nutrition-headline" class="nutrition-headline">&mdash;</p>
-            <p class="nutrition-headline-detail">
-                <span>Consumidas <b id="nutrition-consumed">&mdash;</b></span>
-                <span>Cuota <b id="nutrition-target">&mdash;</b></span>
-            </p>
+            <p class="nutrition-headline-unit">kcal</p>
+
+            <div id="nutrition-gauge" class="nutrition-gauge"></div>
+
             <ul id="nutrition-macros" class="nutrition-macros"></ul>
+
+            <p id="nutrition-date" class="nutrition-date"></p>
             <p id="nutrition-no-plan" class="nutrition-empty" hidden>
                 Todav&iacute;a no has definido un plan.
             </p>
@@ -336,7 +339,7 @@
         </section>
 
         <section class="nutrition-section">
-            <p class="label">Hoy</p>
+            <p id="nutrition-intakes-label" class="label">Hoy</p>
             <ul id="nutrition-intakes" class="nutrition-intakes"></ul>
             <p id="nutrition-intakes-empty" class="nutrition-empty">Nada apuntado todav&iacute;a.</p>
         </section>

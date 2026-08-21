@@ -1,12 +1,13 @@
 (() => {
     const dateLabel = document.getElementById('nutrition-date');
     const headline = document.getElementById('nutrition-headline');
-    const consumedLabel = document.getElementById('nutrition-consumed');
-    const targetLabel = document.getElementById('nutrition-target');
+    const weekStrip = document.getElementById('nutrition-week');
+    const gauge = document.getElementById('nutrition-gauge');
     const macroList = document.getElementById('nutrition-macros');
     const noPlan = document.getElementById('nutrition-no-plan');
     const intakeList = document.getElementById('nutrition-intakes');
     const intakesEmpty = document.getElementById('nutrition-intakes-empty');
+    const intakesLabel = document.getElementById('nutrition-intakes-label');
     const dayList = document.getElementById('nutrition-days');
     const daysEmpty = document.getElementById('nutrition-days-empty');
     const intakeForm = document.getElementById('nutrition-intake-form');
@@ -26,8 +27,14 @@
     const weighInForm = document.getElementById('nutrition-weighin-form');
     const chart = document.getElementById('nutrition-chart');
     let started = false;
+    let selected = null;
 
     const CHART = { width: 640, height: 180, padding: 14 };
+    const GAUGE = {
+        width: 320, height: 96, from: [16, 78], peak: [160, 10], to: [304, 78],
+        headroom: 1.18,
+    };
+    const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
     const MONTHS = [
         'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -35,9 +42,9 @@
     ];
 
     const MACROS = [
-        { key: 'protein', label: 'Proteína' },
+        { key: 'protein', label: 'Proteínas' },
         { key: 'carbs', label: 'Carbos' },
-        { key: 'fat', label: 'Grasa' },
+        { key: 'fat', label: 'Grasas' },
     ];
 
     async function read(path) {
@@ -89,6 +96,36 @@
         return Number(value).toLocaleString('es-ES') + ' kcal';
     }
 
+    function number(value) {
+        return Number(value).toLocaleString('es-ES');
+    }
+
+    function isoOf(date) {
+        return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 10);
+    }
+
+    function dateOf(iso) {
+        return new Date(iso + 'T00:00:00');
+    }
+
+    /** La semana del espejo empieza en lunes, como la tira de la agenda. */
+    function mondayOf(iso) {
+        const date = dateOf(iso);
+        date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+        return date;
+    }
+
+    function weekOf(iso) {
+        const monday = mondayOf(iso);
+        return WEEKDAYS.map((label, index) => {
+            const day = new Date(monday);
+            day.setDate(monday.getDate() + index);
+            return { label, iso: isoOf(day), number: day.getDate() };
+        });
+    }
+
     function dayText(day) {
         const date = new Date(day + 'T00:00:00');
         return date.getDate() + ' ' + MONTHS[date.getMonth()].slice(0, 3);
@@ -99,12 +136,9 @@
         return date.getDate() + ' de ' + MONTHS[date.getMonth()];
     }
 
-    function macroRow(day, macro) {
+    function macroColumn(day, macro) {
         const item = document.createElement('li');
         item.className = 'nutrition-macro';
-
-        const head = document.createElement('div');
-        head.className = 'nutrition-macro-head';
 
         const name = document.createElement('span');
         name.className = 'nutrition-macro-name';
@@ -116,19 +150,57 @@
             ? day.consumed[macro.key] + ' / ' + day.target[macro.key] + ' g'
             : day.consumed[macro.key] + ' g';
 
-        head.append(name, amount);
+        const share = day.target && day.target[macro.key] > 0
+            ? 100 * day.consumed[macro.key] / day.target[macro.key]
+            : 0;
 
         const bar = document.createElement('div');
         bar.className = 'nutrition-bar';
         const fill = document.createElement('span');
-        const share = day.target && day.target[macro.key] > 0
-            ? 100 * day.consumed[macro.key] / day.target[macro.key]
-            : 0;
         fill.style.width = Math.min(100, share) + '%';
         if (share > 100) bar.dataset.status = 'EXCEEDED';
         bar.append(fill);
 
-        item.append(head, bar);
+        item.append(name, amount, bar);
+        return item;
+    }
+
+    function weekDot(summary, iso, today) {
+        const dot = document.createElement('span');
+        dot.className = 'nutrition-week-dot';
+        if (!summary) {
+            dot.dataset.state = iso > today ? 'FUTURE' : 'EMPTY';
+        } else if (summary.withinRange) {
+            dot.dataset.state = 'WITHIN';
+        } else {
+            dot.dataset.state = summary.overBudget ? 'OVER' : 'UNDER';
+        }
+        return dot;
+    }
+
+    function weekCell(day, byDate, today) {
+        const item = document.createElement('li');
+        item.className = 'nutrition-week-day';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'nutrition-week-button';
+        button.setAttribute('aria-label', longDayText(day.iso));
+        if (day.iso === selected) button.dataset.selected = 'true';
+        if (day.iso === today) button.dataset.today = 'true';
+        if (day.iso > today) button.disabled = true;
+        button.addEventListener('click', () => guard(() => show(day.iso)));
+
+        const label = document.createElement('span');
+        label.className = 'nutrition-week-label';
+        label.textContent = day.label;
+
+        const number = document.createElement('span');
+        number.className = 'nutrition-week-number';
+        number.textContent = day.number;
+
+        button.append(label, number, weekDot(byDate.get(day.iso), day.iso, today));
+        item.append(button);
         return item;
     }
 
@@ -267,24 +339,81 @@
             : signedKilos(progress.trendPerWeek) + ' por semana';
     }
 
+    /**
+     * El arco va de cero al limite superior del rango, con dos marcas en el rango mismo. La
+     * escala la fija el limite y no lo consumido, para que pasarse se vea como pasarse.
+     */
+    function renderGauge(day) {
+        gauge.replaceChildren();
+        if (!day.target) return;
+
+        const { width, height, from, peak, to } = GAUGE;
+        const canvas = svg('svg', {
+            viewBox: `0 0 ${width} ${height}`,
+            role: 'img',
+            'aria-label': `${number(day.consumed.calories)} de ${number(day.target.calories)} kcal`,
+        });
+        const shape = `M ${from[0]} ${from[1]} Q ${peak[0]} ${peak[1]} ${to[0]} ${to[1]}`;
+
+        const track = svg('path', { class: 'nutrition-gauge-track', d: shape });
+        const progress = svg('path', { class: 'nutrition-gauge-progress', d: shape });
+        if (day.overBudget) progress.dataset.status = 'EXCEEDED';
+        canvas.append(track, progress);
+        gauge.append(canvas);
+
+        const scale = day.upperCalories * GAUGE.headroom;
+        const share = value => Math.max(0, Math.min(1, value / scale));
+        const length = track.getTotalLength();
+        progress.style.strokeDasharray = length;
+        progress.style.strokeDashoffset = length * (1 - share(day.consumed.calories));
+
+        for (const bound of [day.lowerCalories, day.upperCalories]) {
+            const at = track.getPointAtLength(length * share(bound));
+            canvas.append(
+                svg('line', {
+                    class: 'nutrition-gauge-tick',
+                    x1: at.x, x2: at.x, y1: at.y - 5, y2: at.y + 5,
+                }),
+                text(at.x, GAUGE.from[1] + 22, number(bound)));
+        }
+    }
+
+    function text(x, y, content) {
+        const node = svg('text', { class: 'nutrition-gauge-label', x, y, 'text-anchor': 'middle' });
+        node.textContent = content;
+        return node;
+    }
+
     function renderDay(day) {
+        selected = day.date;
         dateLabel.textContent = longDayText(day.date);
-        consumedLabel.textContent = kcal(day.consumed.calories);
+        intakesLabel.textContent = day.date === isoOf(new Date()) ? 'Hoy' : longDayText(day.date);
         noPlan.hidden = Boolean(day.target);
 
-        if (day.target) {
-            headline.textContent = kcal(Math.abs(day.remaining.calories));
-            headline.classList.toggle('negative', day.overBudget);
-            targetLabel.textContent = kcal(day.target.calories);
-        } else {
-            headline.textContent = kcal(day.consumed.calories);
-            headline.classList.remove('negative');
-            targetLabel.textContent = '—';
-        }
+        headline.textContent = day.target
+            ? number(day.consumed.calories) + ' / ' + number(day.target.calories)
+            : number(day.consumed.calories);
+        headline.dataset.status = day.target && day.overBudget ? 'EXCEEDED' : '';
 
-        replace(macroList, MACROS.map(macro => macroRow(day, macro)));
+        renderGauge(day);
+        replace(macroList, MACROS.map(macro => macroColumn(day, macro)));
         replace(intakeList, day.intakes.map(intakeRow));
         intakesEmpty.hidden = day.intakes.length > 0;
+    }
+
+    async function renderWeek() {
+        const today = isoOf(new Date());
+        const week = weekOf(selected || today);
+        const summaries = await read(
+            '/nutrition/days?from=' + week[0].iso + '&to=' + week[6].iso);
+        const byDate = new Map(summaries.map(summary => [summary.date, summary]));
+
+        replace(weekStrip, week.map(day => weekCell(day, byDate, today)));
+    }
+
+    async function show(iso) {
+        selected = iso;
+        await refresh();
     }
 
     function renderPlan(plan) {
@@ -295,7 +424,9 @@
     }
 
     async function refreshDay() {
-        renderDay(await read('/nutrition/today'));
+        const today = isoOf(new Date());
+        renderDay(await read(
+            !selected || selected === today ? '/nutrition/today' : '/nutrition/days/' + selected));
     }
 
     async function refreshPlan() {
@@ -317,7 +448,8 @@
     }
 
     async function refresh() {
-        await Promise.all([refreshDay(), refreshPlan(), refreshDays(), refreshWeight()]);
+        await refreshDay();
+        await Promise.all([renderWeek(), refreshPlan(), refreshDays(), refreshWeight()]);
     }
 
     async function refreshSummary() {

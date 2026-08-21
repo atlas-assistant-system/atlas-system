@@ -1,4 +1,8 @@
 .nutrition-view {
+    --nutrition-accent: #f2c94c;
+}
+
+.nutrition-view {
     max-width: 76rem;
     margin: 0 auto;
     padding-top: 2.5rem;
@@ -24,31 +28,148 @@
 }
 
 .nutrition-date {
-    margin: 0 0 0.5rem;
+    margin: 2.4rem 0 0;
     font-size: 1rem;
-    opacity: 0.4;
+    opacity: 0.35;
+    text-align: center;
 }
 
 .nutrition-headline {
     margin: 0;
-    font-size: 5.5rem;
-    font-weight: 200;
-    letter-spacing: -0.03em;
+    font-size: 4.4rem;
+    font-weight: 300;
+    letter-spacing: -0.02em;
     line-height: 1;
+    text-align: center;
 }
 
-.nutrition-headline.negative {
-    opacity: 0.75;
+.nutrition-headline[data-status="EXCEEDED"] {
+    color: var(--nutrition-accent);
 }
 
-.nutrition-headline-detail {
-    margin: 0.9rem 0 0;
-    font-size: 1.05rem;
-    opacity: 0.55;
+.nutrition-headline-unit {
+    margin: 0.4rem 0 0;
+    font-size: 1rem;
+    opacity: 0.4;
+    text-align: center;
 }
 
-.nutrition-headline-detail span + span {
-    margin-left: 1.8rem;
+.nutrition-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    list-style: none;
+    margin: 0 0 2.6rem;
+    padding: 0;
+}
+
+.nutrition-week-button {
+    align-items: center;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    font: inherit;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+    width: 100%;
+}
+
+.nutrition-week-button:disabled {
+    cursor: default;
+    opacity: 0.35;
+}
+
+.nutrition-week-label {
+    font-size: 0.85rem;
+    opacity: 0.45;
+}
+
+.nutrition-week-number {
+    align-items: center;
+    border-radius: 50%;
+    display: flex;
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+    height: 2.2rem;
+    justify-content: center;
+    opacity: 0.85;
+    width: 2.2rem;
+}
+
+.nutrition-week-button[data-today="true"] .nutrition-week-number {
+    background: var(--ink, #fff);
+    color: #000;
+    opacity: 1;
+}
+
+.nutrition-week-button[data-selected="true"]:not([data-today="true"]) .nutrition-week-number {
+    box-shadow: inset 0 0 0 1px var(--hairline, rgba(255, 255, 255, 0.26));
+    opacity: 1;
+}
+
+.nutrition-week-dot {
+    border-radius: 50%;
+    height: 0.4rem;
+    width: 0.4rem;
+}
+
+.nutrition-week-dot[data-state="WITHIN"] {
+    background: var(--nutrition-accent);
+}
+
+.nutrition-week-dot[data-state="UNDER"],
+.nutrition-week-dot[data-state="OVER"] {
+    box-shadow: inset 0 0 0 1px var(--nutrition-accent);
+}
+
+.nutrition-week-dot[data-state="EMPTY"] {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.nutrition-week-dot[data-state="FUTURE"] {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.nutrition-gauge {
+    margin: 1.6rem auto 0;
+    max-width: 34rem;
+}
+
+.nutrition-gauge svg {
+    display: block;
+    overflow: visible;
+    width: 100%;
+}
+
+.nutrition-gauge-track,
+.nutrition-gauge-progress {
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 6;
+}
+
+.nutrition-gauge-track {
+    stroke: rgba(255, 255, 255, 0.14);
+}
+
+.nutrition-gauge-progress {
+    stroke: var(--nutrition-accent);
+}
+
+.nutrition-gauge-progress[data-status="EXCEEDED"] {
+    stroke: var(--ink, #fff);
+}
+
+.nutrition-gauge-tick {
+    stroke: rgba(255, 255, 255, 0.28);
+    stroke-width: 1;
+}
+
+.nutrition-gauge-label {
+    fill: rgba(255, 255, 255, 0.4);
+    font-size: 11px;
 }
 
 .nutrition-macros,
@@ -61,26 +182,37 @@
 
 .nutrition-macros {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 2.5rem;
-    margin-top: 2rem;
+    margin: 2.8rem auto 0;
+    max-width: 34rem;
 }
 
-.nutrition-macro-head {
+.nutrition-macro {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1.5rem;
-    font-size: 1.15rem;
+    flex-direction: column;
+    gap: 0.4rem;
+    text-align: center;
 }
 
 .nutrition-macro-name {
-    opacity: 0.85;
+    font-size: 0.95rem;
+    opacity: 0.45;
 }
 
 .nutrition-macro-amount {
-    opacity: 0.55;
+    font-size: 1.15rem;
     font-variant-numeric: tabular-nums;
+    opacity: 0.85;
+}
+
+.nutrition-macro .nutrition-bar {
+    margin: 0.5rem auto 0;
+    width: 60%;
+}
+
+.nutrition-macro .nutrition-bar > span {
+    background: var(--nutrition-accent);
 }
 
 .nutrition-bar {
@@ -176,6 +308,7 @@
     flex-wrap: wrap;
     gap: 0.6rem;
     margin-top: 1.6rem;
+    max-width: 34rem;
 }
 
 .nutrition-form-row {
@@ -197,12 +330,23 @@
     background: rgba(0, 0, 0, 0.35);
     border: none;
     border-radius: 0.4rem;
+    box-sizing: border-box;
     color: inherit;
-    flex: 1 1 7rem;
     font: inherit;
     font-size: 0.95rem;
+    line-height: 1.3;
     opacity: 1;
     padding: 0.45rem 0.55rem;
+}
+
+/* Dentro del label el eje es vertical: un flex-basis ahí sería altura, no anchura. */
+.nutrition-form label > input {
+    flex: none;
+    width: 100%;
+}
+
+.nutrition-form > input {
+    flex: 1 1 12rem;
 }
 
 .nutrition-live {
@@ -322,7 +466,7 @@
     }
 
     .nutrition-headline {
-        font-size: 4rem;
+        font-size: 3.2rem;
     }
 
     .nutrition-weight-headline {
