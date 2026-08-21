@@ -4,6 +4,7 @@ import atlas.app.appointments.AppointmentsApplication;
 import atlas.app.core.CoreApplication;
 import atlas.app.economy.EconomyApplication;
 import atlas.app.home.HomeApplication;
+import atlas.app.nutrition.NutritionApplication;
 import atlas.app.presence.PresenceApplication;
 import atlas.app.presence.PresenceSettings;
 import atlas.app.routines.RoutinesApplication;
@@ -22,6 +23,7 @@ public final class Application {
     private final PresenceApplication presence;
     private final RoutinesApplication routines;
     private final EconomyApplication economy;
+    private final NutritionApplication nutrition;
 
     private WebServer server;
 
@@ -31,13 +33,15 @@ public final class Application {
         AppointmentsApplication appointments,
         PresenceApplication presence,
         RoutinesApplication routines,
-        EconomyApplication economy) {
+        EconomyApplication economy,
+        NutritionApplication nutrition) {
         this.core = core;
         this.home = home;
         this.appointments = appointments;
         this.presence = presence;
         this.routines = routines;
         this.economy = economy;
+        this.nutrition = nutrition;
     }
 
     public static Application wire(LogEntryRenderer renderer, PresenceSettings presenceSettings, Clock clock) {
@@ -51,7 +55,8 @@ public final class Application {
             AppointmentsApplication.wire(renderer, data, clock, presence::hasActiveSession),
             presence,
             RoutinesApplication.wire(renderer, data, clock, presence::hasActiveSession),
-            EconomyApplication.wire(renderer, data, clock, presence::hasActiveSession));
+            EconomyApplication.wire(renderer, data, clock, presence::hasActiveSession),
+            NutritionApplication.wire(renderer, data, clock, presence::hasActiveSession));
 
         presence.events().subscribe(SessionClosedEvent.class, event -> application.closeContextStreams());
         presence.events().subscribe(SessionExpiredEvent.class, event -> application.closeContextStreams());
@@ -63,6 +68,7 @@ public final class Application {
         appointments.hub().closeAll();
         routines.hub().closeAll();
         economy.hub().closeAll();
+        nutrition.hub().closeAll();
     }
 
     public Application start(int port) throws IOException {
@@ -78,6 +84,8 @@ public final class Application {
             .mount("/events/routines", routines.eventStream())
             .mount("/economy", economy.router())
             .mount("/events/economy", economy.eventStream())
+            .mount("/nutrition", nutrition.router())
+            .mount("/events/nutrition", nutrition.eventStream())
             .mount("/home", home.router())
             .mount("/news", home.router())
             .mount("/authentication", presence.router())
@@ -103,6 +111,7 @@ public final class Application {
         presence.stop();
         routines.stop();
         economy.stop();
+        nutrition.stop();
         home.stop();
     }
 
@@ -124,6 +133,10 @@ public final class Application {
 
     public EconomyApplication economy() {
         return economy;
+    }
+
+    public NutritionApplication nutrition() {
+        return nutrition;
     }
 
     public HomeApplication home() {

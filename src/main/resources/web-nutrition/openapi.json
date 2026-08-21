@@ -1,0 +1,907 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Atlas — Nutricion",
+    "version": "1.0.0",
+    "description": "Plan de nutricion, consumo diario y evolucion de peso. Los pesos viajan como cadena en kilos (\"78.4\") y los macros como gramos enteros. Las calorias se derivan de los macros y no se aceptan en ninguna peticion."
+  },
+  "paths": {
+    "/nutrition/plan": {
+      "get": {
+        "summary": "El plan activo",
+        "responses": {
+          "200": {
+            "description": "El plan activo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Todavia no hay plan"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      },
+      "post": {
+        "summary": "Define un plan y archiva el anterior",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinePlan"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Plan definido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Peso fuera de rango, cuota vacia o fecha futura"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      },
+      "put": {
+        "summary": "Ajusta la cuota diaria y el peso objetivo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustPlan"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan ajustado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Peso fuera de rango o cuota vacia"
+          },
+          "404": {
+            "description": "No hay plan activo"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Archiva el plan activo",
+        "responses": {
+          "204": {
+            "description": "Plan archivado"
+          },
+          "404": {
+            "description": "No hay plan activo"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      }
+    },
+    "/nutrition/intakes": {
+      "get": {
+        "summary": "Lista los consumos del rango",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consumos, del mas reciente al mas antiguo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Intake"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      },
+      "post": {
+        "summary": "Registra un consumo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordIntake"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Consumo registrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intake"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Macros vacios, negativos o fecha futura"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      }
+    },
+    "/nutrition/intakes/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "I00000007"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Un consumo",
+        "responses": {
+          "200": {
+            "description": "El consumo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intake"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      },
+      "put": {
+        "summary": "Corrige los macros y la nota. La fecha no se corrige",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectIntake"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Consumo corregido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intake"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Macros vacios o negativos"
+          },
+          "404": {
+            "description": "No existe"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Borra un consumo",
+        "responses": {
+          "204": {
+            "description": "Borrado"
+          },
+          "404": {
+            "description": "No existe"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      }
+    },
+    "/nutrition/today": {
+      "get": {
+        "summary": "Los totales de hoy frente a la cuota",
+        "responses": {
+          "200": {
+            "description": "El dia de hoy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Day"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      }
+    },
+    "/nutrition/days/{date}": {
+      "get": {
+        "summary": "Los totales de un dia frente a la cuota",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-08-22"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "El dia pedido. Sin plan activo, target y remaining vienen a null",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Day"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "La fecha no es una fecha ISO"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      }
+    },
+    "/nutrition/days": {
+      "get": {
+        "summary": "Resumen por dia del rango. Por defecto, los ultimos siete dias",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Un resumen por dia, del mas reciente al mas antiguo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DaySummary"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      }
+    },
+    "/nutrition/weigh-ins": {
+      "get": {
+        "summary": "La serie de pesadas del rango. Por defecto, los ultimos 90 dias",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pesadas, de la mas antigua a la mas reciente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeighIn"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      },
+      "post": {
+        "summary": "Registra una pesada. Registrar dos veces el mismo dia corrige la anterior",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordWeighIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pesada registrada o corregida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeighIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Peso fuera de rango o fecha futura"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      }
+    },
+    "/nutrition/weigh-ins/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "W00000003"
+          }
+        }
+      ],
+      "put": {
+        "summary": "Corrige el peso de una pesada. La fecha no se corrige",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectWeighIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pesada corregida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeighIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Peso fuera de rango"
+          },
+          "404": {
+            "description": "No existe"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Borra una pesada",
+        "responses": {
+          "204": {
+            "description": "Borrada"
+          },
+          "404": {
+            "description": "No existe"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      }
+    },
+    "/nutrition/progress": {
+      "get": {
+        "summary": "Cuanto falta para el objetivo y a que ritmo vas",
+        "responses": {
+          "200": {
+            "description": "El progreso contra el plan activo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Progress"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No hay plan activo"
+          },
+          "401": {
+            "description": "Sin sesion"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Macros": {
+        "type": "object",
+        "description": "Gramos de cada macro y las calorias que dictan: 4p + 4c + 9f",
+        "properties": {
+          "protein": {
+            "type": "integer",
+            "example": 150
+          },
+          "carbs": {
+            "type": "integer",
+            "example": 200
+          },
+          "fat": {
+            "type": "integer",
+            "example": 60
+          },
+          "calories": {
+            "type": "integer",
+            "readOnly": true,
+            "example": 1940
+          }
+        }
+      },
+      "Plan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "N00000001"
+          },
+          "startWeight": {
+            "type": "string",
+            "example": "84"
+          },
+          "targetWeight": {
+            "type": "string",
+            "example": "78"
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "LOSE",
+              "MAINTAIN",
+              "GAIN"
+            ],
+            "readOnly": true
+          },
+          "goalLabel": {
+            "type": "string",
+            "readOnly": true,
+            "example": "Perder peso"
+          },
+          "dailyMacros": {
+            "$ref": "#/components/schemas/Macros"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
+          },
+          "startedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "definedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DefinePlan": {
+        "type": "object",
+        "required": [
+          "startWeight",
+          "targetWeight"
+        ],
+        "properties": {
+          "startWeight": {
+            "type": "string",
+            "example": "84.0"
+          },
+          "targetWeight": {
+            "type": "string",
+            "example": "78.0"
+          },
+          "protein": {
+            "type": "integer",
+            "default": 0,
+            "example": 150
+          },
+          "carbs": {
+            "type": "integer",
+            "default": 0,
+            "example": 200
+          },
+          "fat": {
+            "type": "integer",
+            "default": 0,
+            "example": 60
+          },
+          "startedOn": {
+            "type": "string",
+            "format": "date",
+            "description": "Por defecto, hoy"
+          }
+        }
+      },
+      "AdjustPlan": {
+        "type": "object",
+        "required": [
+          "targetWeight"
+        ],
+        "properties": {
+          "targetWeight": {
+            "type": "string",
+            "example": "76.0"
+          },
+          "protein": {
+            "type": "integer",
+            "default": 0,
+            "example": 160
+          },
+          "carbs": {
+            "type": "integer",
+            "default": 0,
+            "example": 180
+          },
+          "fat": {
+            "type": "integer",
+            "default": 0,
+            "example": 55
+          }
+        }
+      },
+      "Intake": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "I00000007"
+          },
+          "macros": {
+            "$ref": "#/components/schemas/Macros"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "example": "Tortilla y pan"
+          },
+          "consumedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RecordIntake": {
+        "type": "object",
+        "description": "Un macro ausente vale cero, pero los tres a cero se rechazan",
+        "properties": {
+          "protein": {
+            "type": "integer",
+            "default": 0,
+            "example": 30
+          },
+          "carbs": {
+            "type": "integer",
+            "default": 0,
+            "example": 60
+          },
+          "fat": {
+            "type": "integer",
+            "default": 0,
+            "example": 10
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 140,
+            "example": "Tortilla y pan"
+          },
+          "consumedOn": {
+            "type": "string",
+            "format": "date",
+            "description": "Por defecto, hoy"
+          }
+        }
+      },
+      "CorrectIntake": {
+        "type": "object",
+        "properties": {
+          "protein": {
+            "type": "integer",
+            "default": 0,
+            "example": 35
+          },
+          "carbs": {
+            "type": "integer",
+            "default": 0,
+            "example": 55
+          },
+          "fat": {
+            "type": "integer",
+            "default": 0,
+            "example": 12
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 140
+          }
+        }
+      },
+      "Day": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "consumed": {
+            "$ref": "#/components/schemas/Macros"
+          },
+          "target": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Macros"
+              }
+            ],
+            "nullable": true
+          },
+          "remaining": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Macros"
+              }
+            ],
+            "nullable": true,
+            "description": "Negativo en el macro del que te hayas pasado"
+          },
+          "caloriePercentage": {
+            "type": "integer",
+            "example": 50
+          },
+          "overBudget": {
+            "type": "boolean"
+          },
+          "intakes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Intake"
+            }
+          }
+        }
+      },
+      "DaySummary": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "consumed": {
+            "$ref": "#/components/schemas/Macros"
+          },
+          "caloriePercentage": {
+            "type": "integer",
+            "example": 50
+          },
+          "overBudget": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WeighIn": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "W00000003"
+          },
+          "weight": {
+            "type": "string",
+            "example": "82.4"
+          },
+          "measuredOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RecordWeighIn": {
+        "type": "object",
+        "required": [
+          "weight"
+        ],
+        "properties": {
+          "weight": {
+            "type": "string",
+            "example": "82.4"
+          },
+          "measuredOn": {
+            "type": "string",
+            "format": "date",
+            "description": "Por defecto, hoy"
+          }
+        }
+      },
+      "CorrectWeighIn": {
+        "type": "object",
+        "required": [
+          "weight"
+        ],
+        "properties": {
+          "weight": {
+            "type": "string",
+            "example": "82.1"
+          }
+        }
+      },
+      "Progress": {
+        "type": "object",
+        "description": "El peso actual es la ultima pesada; sin ninguna, el de partida del plan",
+        "properties": {
+          "startWeight": {
+            "type": "string",
+            "example": "84"
+          },
+          "currentWeight": {
+            "type": "string",
+            "example": "81"
+          },
+          "targetWeight": {
+            "type": "string",
+            "example": "78"
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "LOSE",
+              "MAINTAIN",
+              "GAIN"
+            ]
+          },
+          "goalLabel": {
+            "type": "string",
+            "example": "Perder peso"
+          },
+          "remaining": {
+            "type": "string",
+            "description": "Kilos que faltan, con signo",
+            "example": "-3"
+          },
+          "percentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 50
+          },
+          "reached": {
+            "type": "boolean"
+          },
+          "trendPerWeek": {
+            "type": "string",
+            "description": "Media de los ultimos 7 dias contra los 7 anteriores; 0 sin dos semanas de pesadas",
+            "example": "-0.4"
+          }
+        }
+      }
+    }
+  }
+}
