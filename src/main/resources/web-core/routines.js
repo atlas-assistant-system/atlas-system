@@ -10,6 +10,8 @@
     const todayEmpty = document.getElementById('routines-today-empty');
     const routineList = document.getElementById('routines-list');
     const summaryList = document.getElementById('today-routines');
+    const summaryProgress = document.getElementById('routines-progress');
+    const summaryDetail = document.getElementById('routines-detail');
     const includeArchived = document.getElementById('routines-include-archived');
     const defineForm = document.getElementById('routines-define-form');
     const periodSelect = defineForm.elements.period;
@@ -27,7 +29,7 @@
 
         const payload = await response.json().catch(() => null);
         if (!response.ok) {
-            throw new Error(payload?.message || 'Error ' + response.status);
+            throw new Error(errorMessage({ status: response.status, body: payload }));
         }
         return payload;
     }
@@ -43,7 +45,7 @@
         try {
             await work();
         } catch (error) {
-            notify(error.message, 'error');
+            notify(frontendErrorMessage(error, 'No se pudo completar la operación.'), 'error');
         }
     }
 
@@ -128,13 +130,27 @@
             notify(routine.archived ? 'Desarchivada' : 'Archivada');
             await refresh();
         });
-        const remove = action('Borrar', 'routines-danger', async () => {
-            if (!window.confirm('Borrar "' + routine.name + '" y todo su historial?')) return;
-            await call('DELETE', '/routines/' + routine.id);
-            notify('Borrada');
-            await refresh();
+        const actions = document.createElement('div');
+        actions.className = 'routines-card-actions';
+        const remove = action('Borrar', 'routines-danger', () => {
+            const warning = document.createElement('span');
+            warning.className = 'routines-card-meta';
+            warning.textContent = 'Se borrarán la rutina y todo su historial.';
+            warning.setAttribute('role', 'status');
+            const confirm = action('Borrar definitivamente', 'routines-danger', async () => {
+                await call('DELETE', '/routines/' + routine.id);
+                notify('Borrada');
+                await refresh();
+            });
+            const cancel = action('Mejor no', '', () => {
+                actions.replaceChildren(toggle, remove);
+                remove.focus();
+            });
+            actions.replaceChildren(warning, confirm, cancel);
+            confirm.focus();
         });
-        item.append(main, toggle, remove);
+        actions.append(toggle, remove);
+        item.append(main, actions);
         return item;
     }
 
@@ -165,7 +181,12 @@
 
     async function refreshSummary() {
         const entries = await call('GET', '/routines/today');
+        const met = entries.filter(entry => entry.progress.met).length;
         summaryList.replaceChildren();
+        summaryProgress.textContent = entries.length === 0 ? '—' : met + '/' + entries.length;
+        summaryDetail.textContent = entries.length === 0
+            ? 'Sin rutinas para hoy'
+            : (met === entries.length ? 'Todo cumplido' : 'Cumplidas hoy');
 
         if (entries.length === 0) {
             const empty = document.createElement('li');

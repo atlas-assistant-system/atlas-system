@@ -96,6 +96,14 @@
     line-height: 1.5;
 }
 
+.routines-card-actions {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 1.6rem;
+}
+
 .routines-quota {
     font-size: 1.05rem;
     font-weight: 600;
