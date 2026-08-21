@@ -11,6 +11,8 @@ public final class UiHandlers {
     private static final String STYLES = StaticResources.read("/web-presence/app.css");
     private static final String SCRIPT = StaticResources.read("/web-presence/app.js");
     private static final String FACE_QUALITY_SCRIPT = StaticResources.read("/web-presence/face-quality.js");
+    private static final String GESTURES_SCRIPT = StaticResources.read("/web-presence/gestures.js");
+    private static final String ENROLLMENT_SCRIPT = StaticResources.read("/web-presence/enrollment.js");
     private static final String SANDBOX_PAGE = StaticResources.read("/web-presence/sandbox.html");
     private static final String SANDBOX_STYLES = StaticResources.read("/web-presence/sandbox.css");
     private static final String SANDBOX_SCRIPT = StaticResources.read("/web-presence/sandbox.js");
@@ -31,6 +33,14 @@ public final class UiHandlers {
 
     public static HttpResponse faceQualityScript(HttpRequest request) {
         return new HttpResponse(200, "text/javascript; charset=utf-8", FACE_QUALITY_SCRIPT, Map.of());
+    }
+
+    public static HttpResponse gesturesScript(HttpRequest request) {
+        return new HttpResponse(200, "text/javascript; charset=utf-8", GESTURES_SCRIPT, Map.of());
+    }
+
+    public static HttpResponse enrollmentScript(HttpRequest request) {
+        return new HttpResponse(200, "text/javascript; charset=utf-8", ENROLLMENT_SCRIPT, Map.of());
     }
 
     public static HttpResponse sandbox(HttpRequest request) {

@@ -102,6 +102,12 @@ físico— y su propio bus de comandos y consultas.
   proxy entre contextos.
 - Las UIs independientes de `appointments` y `routines` se retiraron: la presentación de ambos
   módulos vive ahora en `core`; `routines` conserva su documentación en `/routines/docs`.
+- **El JS compartido vive en `web-presence/` y se sirve bajo `/presence/`**: `face-quality.js`
+  (umbrales y calidad facial), `gestures.js` (geometría de la mano, umbrales del reconocedor y
+  el detector del desafío) y `enrollment.js` (las cinco poses y el bucle de captura). Los tres
+  son módulos IIFE puros que cada página engancha desestructurando; `enrollment.bind` recibe de
+  quien lo usa el `faceStatus` y el acceso a la pose neutral. **El sandbox mide este mismo
+  código, no una copia** — antes tenía su propia versión de la geometría y ya había derivado.
 - **Los mensajes de error que ve la persona están en un único sitio**:
   `web-shared/error-messages.js`, servido por `ErrorMessagesHandler` a `/assets/errors.js` (core)
   y `/errors.js` (presence). El `message` del catálogo de dominio está en inglés y es para

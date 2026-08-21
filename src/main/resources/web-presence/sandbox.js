@@ -3,10 +3,12 @@ const MIN_CONFIDENCE = 0.6;
 const DETECTOR_MIN_FACE_SIZE = AtlasFaceQuality.DETECTOR_MIN_FACE_SIZE;
 const CAPTURE_MIN_FACE_SIZE = AtlasFaceQuality.CAPTURE_MIN_FACE_SIZE;
 const MAX_FACE_ANGLE = AtlasFaceQuality.MAX_CAPTURE_ANGLE;
-const HAND_CONFIDENCE = 0.65;
-const GESTURE_HOLD_MS = 180;
-const PINCH_HOLD_MS = 100;
-const PINCH_DISTANCE_RATIO = 0.4;
+const {
+    pointCoordinates, pointDistance, jointAngle, fingerIsExtended, isPinch,
+    isDirectionalPose, isPointingPose, isOpenPalmPose, staticDirection,
+    PINCH_DISTANCE_RATIO, fingerMetrics, pinchMetrics, directionMetrics,
+    HAND_CONFIDENCE, GESTURE_HOLD_MS, PINCH_HOLD_MS,
+} = AtlasGestures;
 const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
 const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs';
 const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';
@@ -1907,136 +1909,19 @@ function drawVideoRegion(canvas, x, y, width, height) {
     ctx.restore();
 }
 
-function pinchMetrics(points) {
-    const palmWidth = pointDistance(points[5], points[17]);
-    const distance = pointDistance(points[4], points[8]);
-    return { palmWidth, distance, ratio: palmWidth ? distance / palmWidth : Infinity };
-}
-
-function isPinch(points) {
-    return pinchMetrics(points).ratio <= PINCH_DISTANCE_RATIO;
-}
-
-function isDirectionalPose(points) {
-    const palmWidth = pointDistance(points[5], points[17]);
-    return fingerIsExtended(points, 5) && fingerIsExtended(points, 9)
-        && !fingerIsExtended(points, 13) && !fingerIsExtended(points, 17)
-        && palmWidth > 0 && pointDistance(points[8], points[12]) <= palmWidth * .55;
-}
-
-function isPointingPose(points) {
-    return fingerIsExtended(points, 5)
-        && !fingerIsExtended(points, 9)
-        && !fingerIsExtended(points, 13)
-        && !fingerIsExtended(points, 17);
-}
-
-function isOpenPalmPose(points) {
-    return [5, 9, 13, 17].every(base => fingerIsExtended(points, base));
-}
-
 function handPoseSelfCheck() {
+    // Las poses las comprueba el propio módulo; aquí solo queda lo que es del sandbox: que el
+    // clasificador que las envuelve siga llamando OPEN_PALM a una palma abierta.
+    AtlasGestures.selfCheck();
     const points = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }));
     [5, 9, 13, 17].forEach((base, index) => {
         const x = (index - 1.5) * .2;
         [0, 1, 2, 3].forEach(offset => points[base + offset] = { x, y: .2 + offset * .2, z: 0 });
     });
-    if (!isOpenPalmPose(points)) {
-        throw new Error('Open palm pose self-check failed.');
-    }
     if (analyzeHand({ landmarks: [points], worldLandmarks: [points], gestures: [[]] }).recognized?.type
         !== 'OPEN_PALM') {
         throw new Error('Open palm classifier self-check failed.');
     }
-    points[12] = points[10];
-    if (isOpenPalmPose(points)) {
-        throw new Error('Folded finger pose self-check failed.');
-    }
-    directionSelfCheck();
-}
-
-function directionSelfCheck() {
-    const twoFingers = rotate => {
-        const points = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }));
-        [5, 9, 13, 17].forEach((base, index) => {
-            const x = (index - 1.5) * .2;
-            [0, 1, 2, 3].forEach(offset => {
-                const y = .2 + offset * .2;
-                points[base + offset] = rotate ? { x: y, y: -x, z: 0 } : { x, y, z: 0 };
-            });
-        });
-        points[16] = points[14];
-        points[20] = points[18];
-        return points;
-    };
-    if (!isDirectionalPose(twoFingers(false)) || staticDirection(twoFingers(false)) !== 'PALM_DOWN') {
-        throw new Error('Direction self-check failed for PALM_DOWN.');
-    }
-    if (staticDirection(twoFingers(true)) !== 'PALM_LEFT') {
-        throw new Error('Direction self-check failed for PALM_LEFT.');
-    }
-}
-
-function fingerIsExtended(points, base) {
-    return fingerMetrics(points, '', base).extended;
-}
-
-function fingerMetrics(points, name, base) {
-    const angle1 = jointAngle(points[base], points[base + 1], points[base + 3]);
-    const angle2 = jointAngle(points[base + 1], points[base + 2], points[base + 3]);
-    const reach = pointDistance(points[0], points[base + 3]) / pointDistance(points[0], points[base + 1]);
-    return { name, angle1, angle2, reach, extended: angle1 > 155 && angle2 > 145 && reach > 1.12 };
-}
-
-function jointAngle(first, middle, last) {
-    const a = pointCoordinates(first);
-    const b = pointCoordinates(middle);
-    const c = pointCoordinates(last);
-    const ab = Math.hypot(a.x - b.x, a.y - b.y, (a.z || 0) - (b.z || 0));
-    const cb = Math.hypot(c.x - b.x, c.y - b.y, (c.z || 0) - (b.z || 0));
-    if (!ab || !cb) {
-        return 0;
-    }
-    const cosine = ((a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y)
-        + ((a.z || 0) - (b.z || 0)) * ((c.z || 0) - (b.z || 0))) / (ab * cb);
-    return Math.acos(Math.max(-1, Math.min(1, cosine))) * 180 / Math.PI;
-}
-
-function pointDistance(first, second) {
-    const a = pointCoordinates(first);
-    const b = pointCoordinates(second);
-    return Math.hypot(a.x - b.x, a.y - b.y, (a.z || 0) - (b.z || 0));
-}
-
-function pointCoordinates(point) {
-    return Array.isArray(point) ? { x: point[0], y: point[1], z: point[2] || 0 } : point;
-}
-
-function directionMetrics(points) {
-    // dx va del dedo hacia la palma a proposito: el video se muestra en espejo (scaleX(-1)),
-    // asi que la izquierda del usuario es la derecha de la imagen cruda.
-    const indexBase = pointCoordinates(points[5]);
-    const middleBase = pointCoordinates(points[9]);
-    const indexTip = pointCoordinates(points[8]);
-    const middleTip = pointCoordinates(points[12]);
-    const dx = (indexBase.x + middleBase.x - indexTip.x - middleTip.x) / 2;
-    const dy = (indexTip.y + middleTip.y - indexBase.y - middleBase.y) / 2;
-    const palmWidth = pointDistance(points[5], points[17]);
-    return { dx, dy, magnitude: Math.hypot(dx, dy), deadZone: palmWidth * .65 };
-}
-
-function staticDirection(points) {
-    const { dx, dy, magnitude, deadZone } = directionMetrics(points);
-    if (magnitude < deadZone) {
-        return null;
-    }
-    if (Math.abs(dx) > Math.abs(dy) * 1.2) {
-        return dx > 0 ? 'PALM_RIGHT' : 'PALM_LEFT';
-    }
-    if (Math.abs(dy) > Math.abs(dx) * 1.2) {
-        return dy > 0 ? 'PALM_DOWN' : 'PALM_UP';
-    }
-    return null;
 }
 
 function renderPerformance() {

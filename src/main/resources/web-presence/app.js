@@ -1,16 +1,10 @@
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
-const FACE_RESULT_MAX_AGE_MS = 750;
-const ENROLLMENT_HOLD_FRAMES = 2;
-const ENROLLMENT_FRONT_FRAMES = 4;
-const ENROLLMENT_POSES = [
-    { id: 'front', instruction: 'Mira de frente' },
-    { id: 'side', instruction: 'Gira ligeramente hacia el lado que prefieras' },
-    { id: 'opposite', instruction: 'Ahora gira ligeramente hacia el otro lado' },
-    { id: 'up', instruction: 'Mira ligeramente hacia arriba' },
-    { id: 'down', instruction: 'Mira ligeramente hacia abajo' },
-];
-const HAND_CONFIDENCE = 0.65;
+const { HAND_CONFIDENCE, challengeDetector } = AtlasGestures;
+const {
+    ENROLLMENT_POSES, ENROLLMENT_HOLD_FRAMES, ENROLLMENT_FRONT_FRAMES,
+    sleep, faceResultIsRecent, showEnrollmentStep, enrollmentPoseFeedback,
+} = AtlasEnrollment;
 // ponytail: pinned CDN keeps this UI adapter small; serve the same assets locally for offline deployment.
 const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
 const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs';
@@ -31,6 +25,11 @@ const state = {
     handResultVersion: 0,
     handVideoTime: -1,
 };
+
+const enrollment = AtlasEnrollment.bind({
+    faceStatus: (result, options) => faceStatus(result, options),
+    center: { get: () => state.faceCenter, set: value => { state.faceCenter = value; } },
+});
 
 const dom = {
     authenticate: document.getElementById('authenticate'),
@@ -265,7 +264,7 @@ async function enroll() {
     state.busy = true;
     updateActions();
     try {
-        const descriptors = await captureEnrollmentDescriptors(
+        const descriptors = await enrollment.capture(
             () => state.result,
             () => state.resultVersion,
             (index, pose, detail) => {
@@ -309,102 +308,6 @@ async function deleteProfile(id) {
     } catch (error) {
         setFeedback(message(error), true);
     }
-}
-
-function challengeDetector(type) {
-    return result => type === 'FIST'
-        && result?.gestures?.[0]?.some(value => value.categoryName === 'Closed_Fist'
-            && value.score >= HAND_CONFIDENCE);
-}
-
-function faceResultIsRecent(result) {
-    const age = Date.now() - Number(result?.timestamp);
-    return Number.isFinite(age) && age >= 0 && age <= FACE_RESULT_MAX_AGE_MS;
-}
-
-function sleep(milliseconds) {
-    return new Promise(resolve => setTimeout(resolve, milliseconds));
-}
-
-function showEnrollmentStep(active) {
-    document.querySelectorAll('.enrollment-steps li').forEach((node, index) => {
-        node.classList.toggle('active', index === active);
-        node.classList.toggle('complete', index < active);
-        if (index === active) {
-            node.setAttribute('aria-current', 'step');
-        } else {
-            node.removeAttribute('aria-current');
-        }
-    });
-}
-
-async function captureEnrollmentDescriptors(currentResult, currentVersion, onStep) {
-    const descriptors = [];
-    let firstSide = 0;
-    state.faceCenter = null;
-    for (const [index, pose] of ENROLLMENT_POSES.entries()) {
-        onStep(index, pose);
-        let lastVersion = -1;
-        let stableFaces = [];
-        let missedFrames = 0;
-        const requiredFrames = pose.id === 'front' ? ENROLLMENT_FRONT_FRAMES : ENROLLMENT_HOLD_FRAMES;
-        const expiresAt = Date.now() + 20000;
-        while (Date.now() < expiresAt) {
-            const version = currentVersion();
-            if (version !== lastVersion) {
-                lastVersion = version;
-                const result = currentResult();
-                const status = faceStatus(result, {
-                    neutral: false, minSize: AtlasFaceQuality.ENROLLMENT_MIN_FACE_SIZE,
-                });
-                const poseState = status.ready ? AtlasFaceQuality.poseState(
-                    status.face, pose.id, state.faceCenter, stableFaces.length > 0, firstSide) : null;
-                if (poseState?.matches) {
-                    stableFaces.push(status.face);
-                    missedFrames = 0;
-                } else if (++missedFrames >= 3) {
-                    stableFaces = [];
-                    missedFrames = 0;
-                }
-                onStep(index, pose, enrollmentPoseFeedback(
-                    status, pose, poseState, stableFaces.length, requiredFrames));
-                if (stableFaces.length >= requiredFrames) {
-                    if (pose.id === 'front') {
-                        state.faceCenter = AtlasFaceQuality.calibration(stableFaces);
-                    } else if (pose.id === 'side') {
-                        firstSide = Math.sign(AtlasFaceQuality.offsets(status.face, state.faceCenter).yaw) || 1;
-                    }
-                    descriptors.push(AtlasFaceQuality.averageDescriptors(stableFaces, state.faceCenter));
-                    break;
-                }
-            }
-            await sleep(60);
-        }
-        if (descriptors.length !== index + 1) {
-            throw new Error(`No se pudo capturar: ${pose.instruction.toLowerCase()}.`);
-        }
-    }
-    return descriptors;
-}
-
-function enrollmentPoseFeedback(status, pose, poseState, stableFrames, requiredFrames) {
-    if (!status.ready) {
-        return status.reason;
-    }
-    if (stableFrames > 0) {
-        return `Mantén la posición · confirmando ${stableFrames}/${requiredFrames}`;
-    }
-    if (pose.id === 'front') {
-        return 'Mantén el rostro centrado un instante';
-    }
-    if (!poseState.aligned) {
-        return pose.id === 'side' || pose.id === 'opposite'
-            ? `${pose.instruction} · mantén la cabeza nivelada`
-            : `${pose.instruction} · evita girar hacia un lado`;
-    }
-    const progress = Math.floor(poseState.progress * 1800 / Math.PI) / 10;
-    const target = Math.round(poseState.target * 180 / Math.PI);
-    return `${pose.instruction} · ${progress.toFixed(1)}° / ${target}°`;
 }
 
 async function captureNeutralFaces(count, expiresAt, onProgress) {

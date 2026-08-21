@@ -192,6 +192,10 @@ class HttpApiIT {
         assertThat(get("/presence/sandbox.css").statusCode()).isEqualTo(200);
         assertThat(get("/presence/face-quality.js").body())
             .contains("CAPTURE_MIN_FACE_SIZE", "handOccludesFace", "averageDescriptors", "selfCheck");
+        assertThat(get("/presence/gestures.js").body())
+            .contains("AtlasGestures", "PINCH_DISTANCE_RATIO", "staticDirection", "challengeDetector");
+        assertThat(get("/presence/enrollment.js").body())
+            .contains("AtlasEnrollment", "ENROLLMENT_POSES", "enrollmentPoseFeedback", "bind");
         assertThat(get("/presence/sandbox.js").body())
             .contains("GestureRecognizer", "renderFace", "renderHand", "updateGestureStability",
                 "!state.faceEnabled || !state.faceModelReady", "!state.handEnabled || !state.handModelReady",

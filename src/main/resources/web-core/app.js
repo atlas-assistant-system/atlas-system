@@ -35,20 +35,19 @@ const MONTH_INITIALS = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', '
 const VIEWS = ['inicio', 'agenda', 'rutinas', 'economia'];
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
-const FACE_RESULT_MAX_AGE_MS = 750;
-const ENROLLMENT_HOLD_FRAMES = 2;
-const ENROLLMENT_FRONT_FRAMES = 4;
-const ENROLLMENT_POSES = [
-    { id: 'front', instruction: 'Mira de frente' },
-    { id: 'side', instruction: 'Gira ligeramente hacia el lado que prefieras' },
-    { id: 'opposite', instruction: 'Ahora gira ligeramente hacia el otro lado' },
-    { id: 'up', instruction: 'Mira ligeramente hacia arriba' },
-    { id: 'down', instruction: 'Mira ligeramente hacia abajo' },
-];
-const HAND_CONFIDENCE = 0.65;
-const GESTURE_HOLD_MS = 180;
-const PINCH_HOLD_MS = 100;
-const PINCH_DISTANCE_RATIO = 0.4;
+const {
+    pointCoordinates, pointDistance, jointAngle, fingerIsExtended, isPinch,
+    isDirectionalPose, isPointingPose, isOpenPalmPose, staticDirection,
+    PINCH_DISTANCE_RATIO, HAND_CONFIDENCE, GESTURE_HOLD_MS, PINCH_HOLD_MS, challengeDetector,
+} = AtlasGestures;
+const {
+    ENROLLMENT_POSES, ENROLLMENT_HOLD_FRAMES, ENROLLMENT_FRONT_FRAMES,
+    sleep, faceResultIsRecent, showEnrollmentStep, enrollmentPoseFeedback,
+} = AtlasEnrollment;
+const enrollment = AtlasEnrollment.bind({
+    faceStatus: (result, options) => faceStatus(result, options),
+    center: { get: () => state.faceCenter, set: value => { state.faceCenter = value; } },
+});
 const INTERACTIVE = 'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), '
     + 'select:not(:disabled), .clickable, .day, .item';
 // ponytail: pinned CDN keeps face recognition out of the Agenda build; self-host it if offline use is required.
@@ -444,80 +443,6 @@ function recognizedHandGesture(result) {
         handIndex: 0,
         confidence: Number((gesture?.score || HAND_CONFIDENCE).toFixed(3)),
     } : null;
-}
-
-function isDirectionalPose(points) {
-    const palmWidth = pointDistance(points[5], points[17]);
-    return fingerIsExtended(points, 5) && fingerIsExtended(points, 9)
-        && !fingerIsExtended(points, 13) && !fingerIsExtended(points, 17)
-        && palmWidth > 0 && pointDistance(points[8], points[12]) <= palmWidth * 0.55;
-}
-
-function isPointingPose(points) {
-    return fingerIsExtended(points, 5)
-        && !fingerIsExtended(points, 9)
-        && !fingerIsExtended(points, 13)
-        && !fingerIsExtended(points, 17);
-}
-
-function isOpenPalmPose(points) {
-    return [5, 9, 13, 17].every(base => fingerIsExtended(points, base));
-}
-
-function isPinch(points) {
-    const palmWidth = pointDistance(points[5], points[17]);
-    return palmWidth > 0 && pointDistance(points[4], points[8]) <= palmWidth * PINCH_DISTANCE_RATIO;
-}
-
-function fingerIsExtended(points, base) {
-    return jointAngle(points[base], points[base + 1], points[base + 3]) > 155
-        && jointAngle(points[base + 1], points[base + 2], points[base + 3]) > 145
-        && pointDistance(points[0], points[base + 3]) > pointDistance(points[0], points[base + 1]) * 1.12;
-}
-
-function jointAngle(first, middle, last) {
-    const a = pointCoordinates(first);
-    const b = pointCoordinates(middle);
-    const c = pointCoordinates(last);
-    const ab = Math.hypot(a.x - b.x, a.y - b.y, (a.z || 0) - (b.z || 0));
-    const cb = Math.hypot(c.x - b.x, c.y - b.y, (c.z || 0) - (b.z || 0));
-    if (!ab || !cb) {
-        return 0;
-    }
-    const cosine = ((a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y)
-        + ((a.z || 0) - (b.z || 0)) * ((c.z || 0) - (b.z || 0))) / (ab * cb);
-    return Math.acos(Math.max(-1, Math.min(1, cosine))) * 180 / Math.PI;
-}
-
-function pointDistance(first, second) {
-    const a = pointCoordinates(first);
-    const b = pointCoordinates(second);
-    return Math.hypot(a.x - b.x, a.y - b.y, (a.z || 0) - (b.z || 0));
-}
-
-function pointCoordinates(point) {
-    return Array.isArray(point) ? { x: point[0], y: point[1], z: point[2] || 0 } : point;
-}
-
-function staticDirection(points) {
-    // dx va del dedo hacia la palma a proposito: el video se muestra en espejo (scaleX(-1)),
-    // asi que la izquierda del usuario es la derecha de la imagen cruda.
-    const indexBase = pointCoordinates(points[5]);
-    const middleBase = pointCoordinates(points[9]);
-    const indexTip = pointCoordinates(points[8]);
-    const middleTip = pointCoordinates(points[12]);
-    const dx = (indexBase.x + middleBase.x - indexTip.x - middleTip.x) / 2;
-    const dy = (indexTip.y + middleTip.y - indexBase.y - middleBase.y) / 2;
-    if (Math.hypot(dx, dy) < pointDistance(points[5], points[17]) * 0.65) {
-        return null;
-    }
-    if (Math.abs(dx) > Math.abs(dy) * 1.2) {
-        return dx > 0 ? 'PALM_RIGHT' : 'PALM_LEFT';
-    }
-    if (Math.abs(dy) > Math.abs(dx) * 1.2) {
-        return dy > 0 ? 'PALM_DOWN' : 'PALM_UP';
-    }
-    return null;
 }
 
 function applyGesture(type) {
@@ -1697,7 +1622,7 @@ async function enrollProfile() {
         setAuthFeedback('Buscando la ubicación…');
         const location = await resolveOnboardingLocation();
         const newsCategories = selectedNewsCategories();
-        const descriptors = await captureEnrollmentDescriptors(
+        const descriptors = await enrollment.capture(
             () => state.recognition,
             () => state.recognitionVersion,
             (index, pose, detail) => {
@@ -1783,102 +1708,6 @@ async function deleteProfile(id) {
     } else {
         setAuthFeedback(presenceError(response), true);
     }
-}
-
-function challengeDetector(type) {
-    return result => type === 'FIST'
-        && result?.gestures?.[0]?.some(value => value.categoryName === 'Closed_Fist'
-            && value.score >= HAND_CONFIDENCE);
-}
-
-function faceResultIsRecent(result) {
-    const age = Date.now() - Number(result?.timestamp);
-    return Number.isFinite(age) && age >= 0 && age <= FACE_RESULT_MAX_AGE_MS;
-}
-
-function sleep(milliseconds) {
-    return new Promise(resolve => setTimeout(resolve, milliseconds));
-}
-
-function showEnrollmentStep(active) {
-    document.querySelectorAll('.enrollment-steps li').forEach((node, index) => {
-        node.classList.toggle('active', index === active);
-        node.classList.toggle('complete', index < active);
-        if (index === active) {
-            node.setAttribute('aria-current', 'step');
-        } else {
-            node.removeAttribute('aria-current');
-        }
-    });
-}
-
-async function captureEnrollmentDescriptors(currentResult, currentVersion, onStep) {
-    const descriptors = [];
-    let firstSide = 0;
-    state.faceCenter = null;
-    for (const [index, pose] of ENROLLMENT_POSES.entries()) {
-        onStep(index, pose);
-        let lastVersion = -1;
-        let stableFaces = [];
-        let missedFrames = 0;
-        const requiredFrames = pose.id === 'front' ? ENROLLMENT_FRONT_FRAMES : ENROLLMENT_HOLD_FRAMES;
-        const expiresAt = Date.now() + 20000;
-        while (Date.now() < expiresAt) {
-            const version = currentVersion();
-            if (version !== lastVersion) {
-                lastVersion = version;
-                const result = currentResult();
-                const status = faceStatus(result, {
-                    neutral: false, minSize: AtlasFaceQuality.ENROLLMENT_MIN_FACE_SIZE,
-                });
-                const poseState = status.ready ? AtlasFaceQuality.poseState(
-                    status.face, pose.id, state.faceCenter, stableFaces.length > 0, firstSide) : null;
-                if (poseState?.matches) {
-                    stableFaces.push(status.face);
-                    missedFrames = 0;
-                } else if (++missedFrames >= 3) {
-                    stableFaces = [];
-                    missedFrames = 0;
-                }
-                onStep(index, pose, enrollmentPoseFeedback(
-                    status, pose, poseState, stableFaces.length, requiredFrames));
-                if (stableFaces.length >= requiredFrames) {
-                    if (pose.id === 'front') {
-                        state.faceCenter = AtlasFaceQuality.calibration(stableFaces);
-                    } else if (pose.id === 'side') {
-                        firstSide = Math.sign(AtlasFaceQuality.offsets(status.face, state.faceCenter).yaw) || 1;
-                    }
-                    descriptors.push(AtlasFaceQuality.averageDescriptors(stableFaces, state.faceCenter));
-                    break;
-                }
-            }
-            await sleep(60);
-        }
-        if (descriptors.length !== index + 1) {
-            throw new Error(`No se pudo capturar: ${pose.instruction.toLowerCase()}.`);
-        }
-    }
-    return descriptors;
-}
-
-function enrollmentPoseFeedback(status, pose, poseState, stableFrames, requiredFrames) {
-    if (!status.ready) {
-        return status.reason;
-    }
-    if (stableFrames > 0) {
-        return `Mantén la posición · confirmando ${stableFrames}/${requiredFrames}`;
-    }
-    if (pose.id === 'front') {
-        return 'Mantén el rostro centrado un instante';
-    }
-    if (!poseState.aligned) {
-        return pose.id === 'side' || pose.id === 'opposite'
-            ? `${pose.instruction} · mantén la cabeza nivelada`
-            : `${pose.instruction} · evita girar hacia un lado`;
-    }
-    const progress = Math.floor(poseState.progress * 1800 / Math.PI) / 10;
-    const target = Math.round(poseState.target * 180 / Math.PI);
-    return `${pose.instruction} · ${progress.toFixed(1)}° / ${target}°`;
 }
 
 async function captureNeutralFaces(count, expiresAt, onProgress) {

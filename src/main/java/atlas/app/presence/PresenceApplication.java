@@ -213,6 +213,8 @@ public final class PresenceApplication {
                 .post("/gestures", interactions::gesture))
             .mount(Routes.at("/presence")
                 .get("/face-quality.js", UiHandlers::faceQualityScript)
+                .get("/gestures.js", UiHandlers::gesturesScript)
+                .get("/enrollment.js", UiHandlers::enrollmentScript)
                 .get("/sandbox", UiHandlers::sandbox)
                 .get("/sandbox.css", UiHandlers::sandboxStyles)
                 .get("/sandbox.js", UiHandlers::sandboxScript))
