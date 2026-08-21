@@ -215,6 +215,21 @@
             <p class="label">En qu&eacute; se va</p>
             <ul id="economy-breakdown" class="economy-categories"></ul>
             <p id="economy-breakdown-empty" class="economy-empty">Nada apuntado este mes.</p>
+            <form id="economy-budget-form" class="economy-form">
+                <select name="category" aria-label="Categor&iacute;a del presupuesto">
+                    <option value="FOOD">&#127860; Comida</option>
+                    <option value="TRANSPORT">&#128650; Transporte</option>
+                    <option value="HOME">&#127968; Hogar</option>
+                    <option value="LEISURE">&#127916; Ocio</option>
+                    <option value="HEALTH">&#128138; Salud</option>
+                    <option value="SHOPPING">&#128717; Compras</option>
+                    <option value="OTHER">&bull; Otros</option>
+                </select>
+                <input name="limit" type="text" inputmode="decimal" maxlength="10"
+                       placeholder="L&iacute;mite &euro;" aria-label="L&iacute;mite mensual" required>
+                <button type="submit">Fijar presupuesto</button>
+                <p class="economy-form-error" aria-live="polite"></p>
+            </form>
         </section>
 
         <section class="economy-section">
@@ -223,9 +238,19 @@
             <p id="economy-movements-empty" class="economy-empty">Nada apuntado todav&iacute;a.</p>
         </section>
 
-        <section id="economy-goals-section" class="economy-section economy-goals-section" hidden>
+        <section id="economy-goals-section" class="economy-section economy-goals-section">
             <p class="label">Objetivos</p>
             <ul id="economy-goals" class="economy-goals"></ul>
+            <p id="economy-goals-empty" class="economy-empty">Sin objetivos de ahorro.</p>
+            <form id="economy-goal-form" class="economy-form">
+                <input name="name" type="text" maxlength="60" placeholder="Objetivo"
+                       aria-label="Nombre del objetivo" required>
+                <input name="target" type="text" inputmode="decimal" maxlength="10"
+                       placeholder="Importe &euro;" aria-label="Importe objetivo" required>
+                <input name="deadline" type="date" aria-label="Fecha l&iacute;mite" required>
+                <button type="submit">Fijar objetivo</button>
+                <p class="economy-form-error" aria-live="polite"></p>
+            </form>
         </section>
     </div>
 </main>

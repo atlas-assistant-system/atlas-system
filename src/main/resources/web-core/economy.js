@@ -7,9 +7,13 @@
     const breakdownEmpty = document.getElementById('economy-breakdown-empty');
     const movementList = document.getElementById('economy-movements');
     const movementsEmpty = document.getElementById('economy-movements-empty');
-    const goalsSection = document.getElementById('economy-goals-section');
     const goalList = document.getElementById('economy-goals');
+    const goalsEmpty = document.getElementById('economy-goals-empty');
+    const budgetForm = document.getElementById('economy-budget-form');
+    const goalForm = document.getElementById('economy-goal-form');
     const summarySpent = document.getElementById('today-spent');
+    const summaryIncome = document.getElementById('today-income');
+    const summaryPeriod = document.getElementById('today-period');
     const summaryNet = document.getElementById('today-balance');
     let started = false;
 
@@ -22,6 +26,24 @@
         const response = await fetch(path);
         if (!response.ok) throw new Error('No se pudo leer ' + path);
         return response.json();
+    }
+
+    async function write(method, path, body) {
+        const response = await fetch(path, {
+            method,
+            headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+            body: body === undefined ? undefined : JSON.stringify(body),
+        });
+        if (!response.ok) {
+            const payload = await response.json().catch(() => null);
+            throw new Error(payload?.message || 'No se pudo guardar.');
+        }
+        await refresh();
+    }
+
+    /** El importe se teclea en euros y viaja como cadena: "12,50" y "12.50" valen igual. */
+    function amount(value) {
+        return value.trim().replace(',', '.');
     }
 
     function euros(amount) {
@@ -52,6 +74,18 @@
         balancePeriod.textContent = periodText(balance);
     }
 
+    function removeButton(label, onClick) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'economy-remove';
+        button.title = label;
+        button.setAttribute('aria-label', label);
+        button.textContent = '×';
+        button.addEventListener('click', () => guard(onClick));
+
+        return button;
+    }
+
     function breakdownRow(spend, budget) {
         const item = document.createElement('li');
         item.className = 'economy-category';
@@ -70,6 +104,10 @@
             : euros(spend.total);
 
         head.append(name, total);
+        if (budget) {
+            head.append(removeButton('Quitar el presupuesto de ' + spend.label,
+                () => write('DELETE', '/economy/budgets/' + budget.id)));
+        }
 
         const bar = document.createElement('div');
         bar.className = 'economy-bar';
@@ -137,8 +175,18 @@
         ]);
         const byCategory = new Map(budgets.map(budget => [budget.category, budget]));
 
-        replace(breakdownList, spending.map(spend => breakdownRow(spend, byCategory.get(spend.category))));
-        breakdownEmpty.hidden = spending.length > 0;
+        // Un presupuesto recien fijado no aparece en el desglose hasta que haya gasto: sin esta
+        // fila a cero, fijarlo no tendria efecto visible y parecería que no se ha guardado.
+        const spent = new Set(spending.map(spend => spend.category));
+        const rows = spending.concat(budgets
+            .filter(budget => !spent.has(budget.category))
+            .map(budget => ({
+                category: budget.category, label: budget.label, icon: budget.icon,
+                total: '0.00', percentage: 0,
+            })));
+
+        replace(breakdownList, rows.map(spend => breakdownRow(spend, byCategory.get(spend.category))));
+        breakdownEmpty.hidden = rows.length > 0;
     }
 
     function goalRow(goal) {
@@ -156,7 +204,8 @@
         target.className = 'economy-goal-target';
         target.textContent = euros(goal.target) + ' · ' + monthText(goal.deadline);
 
-        head.append(name, target);
+        head.append(name, target, removeButton('Abandonar ' + goal.name,
+            () => write('DELETE', '/economy/goals/' + goal.id)));
 
         const forecast = document.createElement('p');
         forecast.className = 'economy-goal-forecast';
@@ -176,7 +225,7 @@
     async function refreshGoals() {
         const goals = await read('/economy/goals');
         replace(goalList, goals.map(goalRow));
-        goalsSection.hidden = goals.length === 0;
+        goalsEmpty.hidden = goals.length > 0;
     }
 
     async function refreshMovements() {
@@ -192,6 +241,10 @@
     async function refreshSummary() {
         const balance = await read('/economy/balance');
         if (summarySpent) summarySpent.textContent = euros(balance.expense);
+        if (summaryIncome) summaryIncome.textContent = euros(balance.income);
+        if (summaryPeriod) {
+            summaryPeriod.textContent = periodText(balance).replace(/^./, letter => letter.toUpperCase());
+        }
         if (summaryNet) {
             summaryNet.textContent = euros(balance.net);
             summaryNet.classList.toggle('negative', Number(balance.net) < 0);
@@ -201,6 +254,37 @@
     function guard(work) {
         return work().catch(() => {});
     }
+
+    function onSubmit(form, save) {
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const error = form.querySelector('.economy-form-error');
+            error.textContent = '';
+            try {
+                await save(form.elements);
+                form.reset();
+            } catch (failure) {
+                error.textContent = failure.message;
+            }
+        });
+    }
+
+    onSubmit(budgetForm, async fields => {
+        // Fijar dos veces la misma categoria es cambiarle el limite, no definir otro presupuesto.
+        const budgets = await read('/economy/budgets');
+        const existing = budgets.find(budget => budget.category === fields.category.value);
+        const limit = amount(fields.limit.value);
+
+        await (existing
+            ? write('PUT', '/economy/budgets/' + existing.id, { limit })
+            : write('POST', '/economy/budgets', { category: fields.category.value, limit }));
+    });
+
+    onSubmit(goalForm, fields => write('POST', '/economy/goals', {
+        name: fields.name.value.trim(),
+        target: amount(fields.target.value),
+        deadline: fields.deadline.value,
+    }));
 
     function listen() {
         if (started) return;

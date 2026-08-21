@@ -190,6 +190,66 @@
     opacity: 0.4;
 }
 
+.economy-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.6rem;
+}
+
+.economy-form input,
+.economy-form select {
+    background: rgba(0, 0, 0, 0.35);
+    border: none;
+    border-radius: 0.4rem;
+    color: inherit;
+    flex: 1 1 7rem;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.45rem 0.55rem;
+}
+
+.economy-form button {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    border-radius: 0.4rem;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.45rem 1rem;
+}
+
+.economy-form button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.economy-form-error {
+    color: var(--danger, #ff8080);
+    flex-basis: 100%;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.economy-form-error:empty {
+    display: none;
+}
+
+.economy-remove {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    opacity: 0.35;
+    padding: 0 0.2rem;
+}
+
+.economy-remove:hover {
+    opacity: 1;
+}
+
 @media (max-width: 60rem) {
     .economy-layout {
         grid-template-columns: minmax(0, 1fr);
