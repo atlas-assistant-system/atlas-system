@@ -75,3 +75,13 @@ pitest {
 tasks.named<JavaExec>("run") {
     systemProperty("log.format", "console")
 }
+
+tasks.register<JavaExec>("seedEconomy") {
+    group = "application"
+    description = "Llena data/economy.db con datos de ejemplo. No hace nada si ya tiene movimientos."
+    mainModule = "atlas"
+    mainClass = "atlas.app.economy.EconomySeeder"
+    classpath = files(tasks.named("jar")) + configurations.runtimeClasspath.get()
+    systemProperty("log.format", "console")
+    jvmArgs("--enable-native-access=org.xerial.sqlitejdbc")
+}
