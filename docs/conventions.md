@@ -110,6 +110,40 @@ También aplica al Given/When/Then de los tests (ver `testing-conventions.md`).
 > `keep_if_then_body_block_on_one_line` esperan `one_line_never`, no `never` — un valor
 > inválido rompe el formatter en *todos* los ficheros con el mismo error opaco.
 
+## Nada de tipos anidados
+
+**Un tipo, un fichero.** No se declaran `record`, `class`, `enum` ni `interface` dentro
+de otro tipo, ni como miembro privado ni estático.
+
+```java
+public final class NewsHandlers {
+
+    private record Source(NewsCategory category) { }
+
+    private record NewsItem(NewsCategory category, String title, String url) { }
+}
+```
+
+Eso mismo son dos ficheros al lado del handler: `Source.java` y `NewsItem.java`. Si el
+tipo solo tiene sentido dentro del paquete, se deja *package-private* — la visibilidad
+la da el paquete, no el anidamiento.
+
+El motivo es que un tipo anidado esconde un concepto del dominio dentro de otro:
+`NewsItem` no se encuentra buscando `NewsItem.java`, no se puede testear ni reutilizar
+sin arrastrar la clase contenedora, y el fichero crece hasta que nadie sabe qué hay
+dentro. Anidar tampoco ahorra nada: el fichero extra es gratis y el nombre queda a la
+vista en el árbol de paquetes.
+
+Vale para todas las capas y también para los tests: los builders, fixtures y datos de
+prueba van en su propio fichero, no en una clase interna del test.
+
+Excepción única: los tipos *sellados* cuyas variantes son la definición del propio tipo
+y no existen fuera de él (`Result` en el kernel es el caso). Ahí el anidamiento es la
+forma de decir "estas son todas las variantes que hay".
+
+> Hoy quedan ~20 tipos anidados de antes de fijar esta regla. Se van sacando a su
+> fichero cuando se toque el código que los contiene; no hay migración en bloque.
+
 ## Mensajes de commit
 
 **Conventional Commits, una sola línea, sin cuerpo, y en inglés.**

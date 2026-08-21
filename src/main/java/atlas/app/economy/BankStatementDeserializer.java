@@ -42,7 +42,6 @@ public final class BankStatementDeserializer {
     private static final String EXPENSE_COLUMN = "gasto (-)";
     private static final String CONCEPT_COLUMN = "concepto complementario ";
 
-    // El orden manda: la primera palabra que aparece en el comercio decide la categoria.
     private static final Map<Category, List<String>> KEYWORDS = Map.of(
         Category.TRANSPORT, List.of(
             "ESTACION BP", "REPSOL", "CEPSA", "DISA", "RYANAIR", "IBERIA", "RENFE", "OASA", "ATAC",
@@ -138,7 +137,6 @@ public final class BankStatementDeserializer {
         return note.length() > MovementNote.MAX_LENGTH ? note.substring(0, MovementNote.MAX_LENGTH).trim() : note;
     }
 
-    /** El importe llega como lo escribe Excel en espanol: 1.234,56 o, si el sistema es ingles, 1234.56. */
     static BigDecimal amountOf(String value) {
         var cleaned = WHITESPACE.matcher(value).replaceAll("").replace(" ", "");
 
@@ -204,7 +202,6 @@ public final class BankStatementDeserializer {
             .toLowerCase(Locale.ROOT);
     }
 
-    /** Excel exporta en la pagina de codigos de Windows; si no es UTF-8 valido, se lee como latin-1. */
     private static Charset charsetOf(Path csv) throws IOException {
         try {
             Files.readString(csv, StandardCharsets.UTF_8);

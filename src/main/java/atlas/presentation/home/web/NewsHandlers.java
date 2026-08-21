@@ -20,7 +20,7 @@ public final class NewsHandlers {
 
     private static final Duration CACHE_TIME = Duration.ofMinutes(30);
     private static final Pattern TITLE = Pattern.compile("<meta property=\"og:title\" content=\"([^\"]+)\"");
-    private static final List<Source> SOURCES = List.of(NewsCategory.values()).stream().map(Source::new).toList();
+    private static final List<NewsCategory> SOURCES = List.of(NewsCategory.values());
 
     private static List<NewsItem> cached = List.of();
     private static Instant expiresAt = Instant.EPOCH;
@@ -30,8 +30,8 @@ public final class NewsHandlers {
     public static synchronized HttpResponse latest(HttpRequest request) {
         if (Instant.now().isAfter(expiresAt)) {
             var items = new ArrayList<NewsItem>();
-            for (var source : SOURCES) {
-                fetch(source).ifPresent(items::add);
+            for (var category : SOURCES) {
+                fetch(category).ifPresent(items::add);
             }
             if (!items.isEmpty()) {
                 cached = List.copyOf(items);
@@ -70,9 +70,9 @@ public final class NewsHandlers {
             .replace("&#39;", "'");
     }
 
-    private static Optional<NewsItem> fetch(Source source) {
+    private static Optional<NewsItem> fetch(NewsCategory category) {
         try {
-            var connection = open("https://tldr.tech/api/latest/" + source.slug());
+            var connection = open("https://tldr.tech/api/latest/" + category.slug());
             try (var input = connection.getInputStream()) {
                 var title = extractTitle(new String(input.readAllBytes(), StandardCharsets.UTF_8));
                 if (title.isBlank()) {
@@ -81,23 +81,23 @@ public final class NewsHandlers {
                 var url = connection.getURL().toString();
 
                 return Optional.of(new NewsItem(
-                    source.category(), title, url, url.substring(url.lastIndexOf('/') + 1)));
+                    category, title, url, url.substring(url.lastIndexOf('/') + 1)));
             } finally {
                 connection.disconnect();
             }
         } catch (IOException exception) {
-            return fetchArchive(source);
+            return fetchArchive(category);
         }
     }
 
-    private static Optional<NewsItem> fetchArchive(Source source) {
+    private static Optional<NewsItem> fetchArchive(NewsCategory category) {
         try {
-            var connection = open("https://tldr.tech/" + source.slug() + "/archives");
+            var connection = open("https://tldr.tech/" + category.slug() + "/archives");
             try (var input = connection.getInputStream()) {
                 var html = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-                var title = extractArchiveTitle(source.slug(), html);
+                var title = extractArchiveTitle(category.slug(), html);
                 var pattern = Pattern.compile(
-                    "href=\"/" + Pattern.quote(source.slug()) + "/(\\d{4}-\\d{2}-\\d{2})\"");
+                    "href=\"/" + Pattern.quote(category.slug()) + "/(\\d{4}-\\d{2}-\\d{2})\"");
                 var date = pattern.matcher(html);
                 if (title.isBlank() || !date.find()) {
                     return Optional.empty();
@@ -105,8 +105,8 @@ public final class NewsHandlers {
                 var publishedAt = date.group(1);
 
                 return Optional.of(new NewsItem(
-                    source.category(), title,
-                    "https://tldr.tech/" + source.slug() + "/" + publishedAt,
+                    category, title,
+                    "https://tldr.tech/" + category.slug() + "/" + publishedAt,
                     publishedAt));
             } finally {
                 connection.disconnect();
@@ -132,13 +132,4 @@ public final class NewsHandlers {
 
         return connection;
     }
-
-    private record Source(NewsCategory category) {
-
-        String slug() {
-            return category.slug();
-        }
-    }
-
-    private record NewsItem(NewsCategory category, String title, String url, String publishedAt) {}
 }
