@@ -8,6 +8,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/dist/human.js"
             integrity="sha384-vASLsXJSh9FIgw41jM2fwBSF2MoEPlegwV4SO9G3NeyRMcWf7XjSdYvU6MlwOfQl"
             crossorigin="anonymous"></script>
+    <script defer src="/presence/face-quality.js"></script>
     <script defer src="/app.js"></script>
 </head>
 <body>
@@ -49,11 +50,18 @@
         </article>
 
         <article id="enrollment-card" hidden>
-            <h2>Modo mantenimiento</h2>
-            <p class="status">Registra el rostro que podr&aacute; abrir la sesi&oacute;n.</p>
+            <h2>Onboarding biom&eacute;trico</h2>
+            <p class="status">Presence guardar&aacute; cinco &aacute;ngulos distintos para reconocerte mejor.</p>
             <label for="display-name">Nombre</label>
             <input id="display-name" maxlength="60" autocomplete="name" placeholder="Tu nombre">
-            <button id="enroll" type="button" disabled>Registrar rostro actual</button>
+            <button id="enroll" type="button" disabled>Comenzar onboarding</button>
+            <ol class="enrollment-steps" aria-label="Progreso del onboarding biom&eacute;trico">
+                <li>Frente</li>
+                <li>Primer perfil</li>
+                <li>Perfil contrario</li>
+                <li>Arriba</li>
+                <li>Abajo</li>
+            </ol>
             <ul id="profiles" class="profiles"></ul>
         </article>
 
@@ -62,7 +70,7 @@
             <ol>
                 <li>Activa la c&aacute;mara y mira de frente.</li>
                 <li>Si es el primer uso, registra tu rostro en modo mantenimiento.</li>
-                <li>Pulsa <em>Autenticarme</em> e introduce el c&oacute;digo gestual.</li>
+                <li>Pulsa <em>Autenticarme</em> y mant&eacute;n el pu&ntilde;o cerrado.</li>
                 <li>Abre Agenda cuando la sesi&oacute;n est&eacute; activa.</li>
             </ol>
         </article>

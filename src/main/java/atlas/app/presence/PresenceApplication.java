@@ -65,6 +65,7 @@ import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
+import java.util.Optional;
 
 public final class PresenceApplication {
 
@@ -151,6 +152,10 @@ public final class PresenceApplication {
         return queries.dispatch(new GetActiveSessionQuery()).value().isPresent();
     }
 
+    public Optional<String> activeProfileId() {
+        return queries.dispatch(new GetActiveSessionQuery()).value().map(session -> session.profileId());
+    }
+
     public void stop() {
         poller.close();
         hub.closeAll();
@@ -205,6 +210,11 @@ public final class PresenceApplication {
                 .delete("/{id}", handlers::closeSession))
             .mount(Routes.at("/interactions")
                 .post("/gestures", interactions::gesture))
+            .mount(Routes.at("/presence")
+                .get("/face-quality.js", UiHandlers::faceQualityScript)
+                .get("/sandbox", UiHandlers::sandbox)
+                .get("/sandbox.css", UiHandlers::sandboxStyles)
+                .get("/sandbox.js", UiHandlers::sandboxScript))
             .mount(Routes.at("/")
                 .get("/", UiHandlers::index)
                 .get("/app.css", UiHandlers::styles)

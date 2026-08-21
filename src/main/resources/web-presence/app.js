@@ -1,8 +1,15 @@
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
-const MIN_FACE_SIZE = 224;
-const MAX_FACE_ANGLE = 0.45;
-const ENROLLMENT_SAMPLES = 3;
+const FACE_RESULT_MAX_AGE_MS = 750;
+const ENROLLMENT_HOLD_FRAMES = 2;
+const ENROLLMENT_FRONT_FRAMES = 4;
+const ENROLLMENT_POSES = [
+    { id: 'front', instruction: 'Mira de frente' },
+    { id: 'side', instruction: 'Gira ligeramente hacia el lado que prefieras' },
+    { id: 'opposite', instruction: 'Ahora gira ligeramente hacia el otro lado' },
+    { id: 'up', instruction: 'Mira ligeramente hacia arriba' },
+    { id: 'down', instruction: 'Mira ligeramente hacia abajo' },
+];
 const HAND_CONFIDENCE = 0.65;
 // ponytail: pinned CDN keeps this UI adapter small; serve the same assets locally for offline deployment.
 const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
@@ -11,6 +18,47 @@ const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0
 const GESTURE_MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/'
     + 'gesture_recognizer/float16/1/gesture_recognizer.task';
 
+const ERROR_MESSAGES = {
+    MALFORMED_INPUT: 'Los datos enviados no son válidos.',
+    UNEXPECTED: 'Se ha producido un error inesperado.',
+    'General.ValueIsRequired': 'Falta un dato obligatorio.',
+    'General.InvalidValue': 'Uno de los datos no es válido.',
+    'Profile.NameRequired': 'Introduce un nombre para el perfil.',
+    'Profile.NameTooLong': 'El nombre del perfil es demasiado largo.',
+    'Profile.DescriptorRequired': 'No se ha podido obtener la firma facial.',
+    'Profile.ModelVersionRequired': 'Falta la versión del modelo facial.',
+    'Profile.DescriptorDimensionMismatch': 'La captura facial no es compatible con el modelo actual.',
+    'Profile.TooManyTemplates': 'El perfil ya tiene el máximo de capturas faciales.',
+    'Profile.LastTemplateCannotBeRemoved': 'No se puede eliminar la última captura del perfil.',
+    'Profile.ModelVersionMismatch': 'Las capturas pertenecen a versiones distintas del modelo facial.',
+    'Profile.NotFound': 'Ese perfil biométrico ya no existe.',
+    'Profile.TemplateNotFound': 'Esa captura facial ya no existe.',
+    'Authentication.NoProfilesEnrolled': 'No hay perfiles biométricos registrados.',
+    'Verification.InvalidSimilarityScore': 'La puntuación de similitud no es válida.',
+    'Verification.InvalidMatchThreshold': 'El umbral de reconocimiento no es válido.',
+    'Verification.NoMatch': 'El rostro no coincide con ningún perfil registrado.',
+    'Liveness.ChallengeExpired': 'La prueba de vida ha caducado. Inténtalo de nuevo.',
+    'Liveness.ChallengeAlreadyUsed': 'Esa prueba de vida ya se ha utilizado.',
+    'Liveness.ChallengeNotFound': 'La prueba de vida ya no está disponible.',
+    'Liveness.Failed': 'No se ha superado la prueba de vida.',
+    'Session.InvalidDuration': 'La duración de la sesión no es válida.',
+    'Session.Expired': 'La sesión ha caducado.',
+    'Session.Closed': 'La sesión ya está cerrada.',
+    'Session.NotFound': 'La sesión ya no existe.',
+    'Interaction.RequiresSession': 'Necesitas una sesión activa para usar los gestos.',
+    'Presence.MaintenanceModeRequired': 'Esta operación requiere iniciar Presence en modo mantenimiento.',
+};
+
+const STATUS_MESSAGES = {
+    400: 'Los datos enviados no son válidos.',
+    401: 'Necesitas autenticarte de nuevo.',
+    403: 'No tienes permiso para realizar esta operación.',
+    404: 'El recurso solicitado ya no existe.',
+    409: 'La operación entra en conflicto con el estado actual.',
+    500: 'Se ha producido un error inesperado.',
+    503: 'El servicio no está disponible en este momento.',
+};
+
 const state = {
     authentication: null,
     busy: false,
@@ -18,8 +66,10 @@ const state = {
     human: null,
     result: null,
     resultVersion: 0,
+    faceCenter: null,
     handRecognizer: null,
     handResult: null,
+    handResultVersion: 0,
     handVideoTime: -1,
 };
 
@@ -46,7 +96,7 @@ async function load(path, options) {
     const response = await fetch(path, options);
     const body = response.status === 204 ? null : await response.json().catch(() => null);
     if (!response.ok) {
-        throw body || { message: 'No se pudo completar la operación.' };
+        throw { ...(body || {}), status: response.status };
     }
     return body;
 }
@@ -60,7 +110,21 @@ function send(path, value) {
 }
 
 function message(error) {
-    return error && error.message ? error.message : 'No se pudo completar la operación.';
+    if (error instanceof TypeError) {
+        return 'No se pudo conectar con el servicio.';
+    }
+    return ERROR_MESSAGES[error?.code] || STATUS_MESSAGES[error?.status]
+        || (error?.name === 'Error' ? error.message : null) || 'No se pudo completar la operación.';
+}
+
+function cameraErrorMessage(error) {
+    return ({
+        NotAllowedError: 'No se ha concedido permiso para usar la cámara.',
+        NotFoundError: 'No se encuentra ninguna cámara disponible.',
+        NotReadableError: 'La cámara está siendo utilizada por otra aplicación.',
+        OverconstrainedError: 'La cámara no admite la configuración solicitada.',
+        SecurityError: 'El navegador ha bloqueado el acceso a la cámara.',
+    })[error?.name] || 'No se pudo iniciar la cámara.';
 }
 
 function setFeedback(text, error = false) {
@@ -72,34 +136,17 @@ function updateActions() {
     const active = state.authentication && state.authentication.activeSession;
     const enrolled = state.authentication && state.authentication.enrolledProfiles > 0;
     dom.authenticate.disabled = state.busy || !state.cameraReady || !enrolled || Boolean(active);
-    dom.enroll.disabled = state.busy || !state.cameraReady || !dom.displayName.value.trim();
+    dom.enroll.disabled = state.busy || !state.cameraReady || Boolean(active) || !dom.displayName.value.trim();
     dom.closeSession.hidden = !active;
     dom.openAgenda.hidden = !active;
 }
 
-function faceStatus(result) {
-    if (!result || result.face.length !== 1) {
-        return { ready: false, reason: result && result.face.length > 1
-            ? 'Debe aparecer una sola persona.' : 'Coloca tu rostro dentro de la guía.' };
-    }
-
-    const face = result.face[0];
-    const confidence = face.faceScore || face.boxScore || 0;
-    if (confidence < MIN_CONFIDENCE || Math.min(face.box[2], face.box[3]) < MIN_FACE_SIZE) {
-        return { ready: false, reason: 'Acércate un poco y mira hacia la cámara.' };
-    }
-    const angle = face.rotation?.angle;
-    if (angle && Math.max(Math.abs(angle.yaw), Math.abs(angle.pitch), Math.abs(angle.roll)) > MAX_FACE_ANGLE) {
-        return { ready: false, reason: 'Mira de frente a la cámara.' };
-    }
-    if (!face.embedding || face.embedding.length === 0) {
-        return { ready: false, reason: 'Calculando la firma facial…' };
-    }
-    if ((face.real || 0) < MIN_CONFIDENCE || (face.live || 0) < MIN_CONFIDENCE) {
-        return { ready: false, reason: 'No se ha podido confirmar que sea un rostro real.' };
-    }
-
-    return { ready: true, face, reason: 'Rostro preparado.' };
+function faceStatus(result, options = {}) {
+    return AtlasFaceQuality.evaluate(result, {
+        handResult: state.handResult,
+        center: state.faceCenter,
+        ...options,
+    });
 }
 
 async function startCamera() {
@@ -130,7 +177,7 @@ async function startCamera() {
                 enabled: true,
                 detector: {
                     rotation: true, return: false, maxDetected: 2,
-                    minConfidence: MIN_CONFIDENCE, minSize: MIN_FACE_SIZE,
+                    minConfidence: MIN_CONFIDENCE, minSize: AtlasFaceQuality.DETECTOR_MIN_FACE_SIZE,
                 },
                 mesh: { enabled: true },
                 iris: { enabled: false },
@@ -143,7 +190,7 @@ async function startCamera() {
             hand: { enabled: false },
             object: { enabled: false },
             segmentation: { enabled: false },
-            gesture: { enabled: false },
+            gesture: { enabled: true },
         });
         await state.human.load();
         await state.human.warmup();
@@ -162,9 +209,10 @@ async function startCamera() {
         state.cameraReady = true;
         dom.startCamera.hidden = true;
         detectLoop();
+        detectHands();
     } catch (error) {
         dom.cameraState.textContent = 'No se pudo iniciar la cámara.';
-        setFeedback(error.message || 'Autoriza el uso de la cámara para continuar.', true);
+        setFeedback(cameraErrorMessage(error), true);
     } finally {
         state.busy = false;
         updateActions();
@@ -179,10 +227,6 @@ async function detectLoop() {
         const sessionActive = Boolean(state.authentication?.activeSession);
         if (!sessionActive) {
             state.result = await state.human.detect(dom.camera);
-            if (dom.camera.currentTime !== state.handVideoTime) {
-                state.handVideoTime = dom.camera.currentTime;
-                state.handResult = state.handRecognizer.recognizeForVideo(dom.camera, performance.now());
-            }
             state.resultVersion++;
         }
         dom.cameraState.textContent = sessionActive
@@ -194,10 +238,29 @@ async function detectLoop() {
     requestAnimationFrame(detectLoop);
 }
 
+function detectHands() {
+    if (!state.cameraReady) {
+        return;
+    }
+    try {
+        if (dom.camera.currentTime !== state.handVideoTime) {
+            state.handVideoTime = dom.camera.currentTime;
+            state.handResult = state.handRecognizer.recognizeForVideo(dom.camera, performance.now());
+            state.handResultVersion++;
+        }
+    } catch (_) {
+        state.handResult = null;
+    }
+    requestAnimationFrame(detectHands);
+}
+
 async function refresh() {
     try {
         state.authentication = await load('/authentication');
         const active = state.authentication.activeSession;
+        if (!active && !state.busy) {
+            state.faceCenter = null;
+        }
         dom.enrollmentCard.hidden = !state.authentication.maintenanceMode;
         dom.sessionState.textContent = active
             ? `Sesión activa para ${active.profileId}.`
@@ -222,6 +285,12 @@ async function refreshProfiles() {
         name.textContent = `${profile.displayName} · ${profile.templateCount} captura(s)`;
         item.appendChild(name);
         if (state.authentication.maintenanceMode) {
+            const variant = document.createElement('button');
+            variant.type = 'button';
+            variant.className = 'quiet';
+            variant.textContent = 'Añadir variante';
+            variant.addEventListener('click', () => addProfileVariant(profile));
+            item.appendChild(variant);
             const remove = document.createElement('button');
             remove.type = 'button';
             remove.className = 'quiet';
@@ -237,21 +306,30 @@ async function enroll() {
     state.busy = true;
     updateActions();
     try {
-        const descriptors = await captureFaceDescriptors(ENROLLMENT_SAMPLES,
-            count => setFeedback(`Capturando rostro ${count}/${ENROLLMENT_SAMPLES}…`));
+        const descriptors = await captureEnrollmentDescriptors(
+            () => state.result,
+            () => state.resultVersion,
+            (index, pose, detail) => {
+                showEnrollmentStep(index);
+                setFeedback(`${index + 1}/${ENROLLMENT_POSES.length} · ${detail || pose.instruction}`);
+            });
         const profile = await send('/profiles', {
             displayName: dom.displayName.value.trim(),
             modelVersion: MODEL_VERSION,
             descriptor: descriptors[0],
         });
         let captures = 1;
-        for (const descriptor of descriptors.slice(1)) {
-            try {
+        try {
+            for (const descriptor of descriptors.slice(1)) {
                 await send(`/profiles/${profile.id}/templates`, { modelVersion: MODEL_VERSION, descriptor });
                 captures++;
-            } catch (_) {}
+            }
+        } catch (error) {
+            await load(`/profiles/${profile.id}`, { method: 'DELETE' }).catch(() => {});
+            throw error;
         }
         dom.displayName.value = '';
+        showEnrollmentStep(ENROLLMENT_POSES.length);
         setFeedback(`Rostro registrado con ${captures} capturas. Reinicia Presence sin --maintenance.`);
         await refresh();
     } catch (error) {
@@ -280,45 +358,169 @@ function challengeDetector(type) {
             && value.score >= HAND_CONFIDENCE);
 }
 
+function faceResultIsRecent(result) {
+    const age = Date.now() - Number(result?.timestamp);
+    return Number.isFinite(age) && age >= 0 && age <= FACE_RESULT_MAX_AGE_MS;
+}
+
 function sleep(milliseconds) {
     return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
-async function captureFaceDescriptors(count, onCapture) {
-    const descriptors = [];
-    let lastVersion = -1;
-    const expiresAt = Date.now() + 10000;
-    while (descriptors.length < count && Date.now() < expiresAt) {
-        if (state.resultVersion !== lastVersion) {
-            lastVersion = state.resultVersion;
-            const status = faceStatus(state.result);
-            if (status.ready) {
-                descriptors.push(Array.from(status.face.embedding));
-                onCapture(descriptors.length);
-            }
+function showEnrollmentStep(active) {
+    document.querySelectorAll('.enrollment-steps li').forEach((node, index) => {
+        node.classList.toggle('active', index === active);
+        node.classList.toggle('complete', index < active);
+        if (index === active) {
+            node.setAttribute('aria-current', 'step');
+        } else {
+            node.removeAttribute('aria-current');
         }
-        await sleep(60);
-    }
-    if (descriptors.length < count) {
-        throw new Error('Mantén el rostro centrado y bien iluminado durante unos segundos.');
+    });
+}
+
+async function captureEnrollmentDescriptors(currentResult, currentVersion, onStep) {
+    const descriptors = [];
+    let firstSide = 0;
+    state.faceCenter = null;
+    for (const [index, pose] of ENROLLMENT_POSES.entries()) {
+        onStep(index, pose);
+        let lastVersion = -1;
+        let stableFaces = [];
+        let missedFrames = 0;
+        const requiredFrames = pose.id === 'front' ? ENROLLMENT_FRONT_FRAMES : ENROLLMENT_HOLD_FRAMES;
+        const expiresAt = Date.now() + 20000;
+        while (Date.now() < expiresAt) {
+            const version = currentVersion();
+            if (version !== lastVersion) {
+                lastVersion = version;
+                const result = currentResult();
+                const status = faceStatus(result, {
+                    neutral: false, minSize: AtlasFaceQuality.ENROLLMENT_MIN_FACE_SIZE,
+                });
+                const poseState = status.ready ? AtlasFaceQuality.poseState(
+                    status.face, pose.id, state.faceCenter, stableFaces.length > 0, firstSide) : null;
+                if (poseState?.matches) {
+                    stableFaces.push(status.face);
+                    missedFrames = 0;
+                } else if (++missedFrames >= 3) {
+                    stableFaces = [];
+                    missedFrames = 0;
+                }
+                onStep(index, pose, enrollmentPoseFeedback(
+                    status, pose, poseState, stableFaces.length, requiredFrames));
+                if (stableFaces.length >= requiredFrames) {
+                    if (pose.id === 'front') {
+                        state.faceCenter = AtlasFaceQuality.calibration(stableFaces);
+                    } else if (pose.id === 'side') {
+                        firstSide = Math.sign(AtlasFaceQuality.offsets(status.face, state.faceCenter).yaw) || 1;
+                    }
+                    descriptors.push(AtlasFaceQuality.averageDescriptors(stableFaces, state.faceCenter));
+                    break;
+                }
+            }
+            await sleep(60);
+        }
+        if (descriptors.length !== index + 1) {
+            throw new Error(`No se pudo capturar: ${pose.instruction.toLowerCase()}.`);
+        }
     }
     return descriptors;
+}
+
+function enrollmentPoseFeedback(status, pose, poseState, stableFrames, requiredFrames) {
+    if (!status.ready) {
+        return status.reason;
+    }
+    if (stableFrames > 0) {
+        return `Mantén la posición · confirmando ${stableFrames}/${requiredFrames}`;
+    }
+    if (pose.id === 'front') {
+        return 'Mantén el rostro centrado un instante';
+    }
+    if (!poseState.aligned) {
+        return pose.id === 'side' || pose.id === 'opposite'
+            ? `${pose.instruction} · mantén la cabeza nivelada`
+            : `${pose.instruction} · evita girar hacia un lado`;
+    }
+    const progress = Math.floor(poseState.progress * 1800 / Math.PI) / 10;
+    const target = Math.round(poseState.target * 180 / Math.PI);
+    return `${pose.instruction} · ${progress.toFixed(1)}° / ${target}°`;
+}
+
+async function captureNeutralFaces(count, expiresAt, onProgress) {
+    const faces = [];
+    let lastVersion = -1;
+    while (Date.now() < expiresAt) {
+        if (state.resultVersion !== lastVersion) {
+            lastVersion = state.resultVersion;
+            const status = faceStatus(state.result, { center: state.faceCenter });
+            if (status.ready) {
+                faces.push(status.face);
+                onProgress?.(faces.length, count);
+                if (faces.length >= count) {
+                    return faces;
+                }
+            } else {
+                faces.length = 0;
+                onProgress?.(0, count, status.reason);
+            }
+        }
+        await sleep(40);
+    }
+    throw new Error('No se han podido obtener capturas frontales estables.');
+}
+
+async function calibrateFaceCenter() {
+    state.faceCenter = null;
+    setFeedback('Mira de frente: calibrando tu posición neutral…');
+    const faces = await captureNeutralFaces(5, Date.now() + 5000,
+        (current, total, reason) => setFeedback(reason || `Calibrando posición ${current}/${total}…`));
+    state.faceCenter = AtlasFaceQuality.calibration(faces);
+}
+
+async function addProfileVariant(profile) {
+    state.busy = true;
+    updateActions();
+    try {
+        setFeedback(`Cambia tu aspecto si lo necesitas y mira de frente para añadirlo a ${profile.displayName}.`);
+        await calibrateFaceCenter();
+        const faces = await captureNeutralFaces(3, Date.now() + 5000,
+            (current, total, reason) => setFeedback(reason || `Capturando variante ${current}/${total}…`));
+        await send(`/profiles/${profile.id}/templates`, {
+            modelVersion: MODEL_VERSION,
+            descriptor: AtlasFaceQuality.averageDescriptors(faces, state.faceCenter),
+        });
+        setFeedback(`Variante añadida al perfil de ${profile.displayName}.`);
+        await refreshProfiles();
+    } catch (error) {
+        setFeedback(message(error), true);
+    } finally {
+        state.busy = false;
+        updateActions();
+    }
 }
 
 async function waitForChallenge(challenge) {
     const detected = challengeDetector(challenge.type);
     const expiresAt = Date.parse(challenge.expiresAt);
     let consecutiveFrames = 0;
-    let lastVersion = -1;
+    let lastHandVersion = -1;
     while (Date.now() < expiresAt) {
         const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
         dom.challengeTime.textContent = `${remaining} s`;
-        if (state.resultVersion !== lastVersion) {
-            lastVersion = state.resultVersion;
-            const status = faceStatus(state.result);
-            consecutiveFrames = status.ready && detected(state.handResult) ? consecutiveFrames + 1 : 0;
+        if (state.handResultVersion !== lastHandVersion) {
+            lastHandVersion = state.handResultVersion;
+            const status = faceStatus(state.result, { neutral: false });
+            const recentFace = faceResultIsRecent(state.result);
+            const closedFist = detected(state.handResult);
+            consecutiveFrames = recentFace && status.ready && closedFist ? consecutiveFrames + 1 : 0;
+            setFeedback(!recentFace ? 'Actualizando la captura facial…'
+                : !status.ready ? status.reason
+                    : !closedFist ? 'Mantén el puño cerrado dentro de la imagen.'
+                        : `Confirmando el puño ${consecutiveFrames}/3…`);
             if (consecutiveFrames >= 3) {
-                return status.face;
+                return;
             }
         }
         await sleep(60);
@@ -331,14 +533,18 @@ async function authenticate() {
     updateActions();
     setFeedback('Preparando desafío…');
     try {
+        await calibrateFaceCenter();
         const challenge = await send('/authentication/challenges', {});
         dom.challenge.hidden = false;
         dom.challengeInstruction.textContent = 'Mantén el puño cerrado';
         setFeedback('Verificando puño y rostro…');
-        const face = await waitForChallenge(challenge);
+        await waitForChallenge(challenge);
+        dom.challengeInstruction.textContent = 'Suelta el puño y mira de frente';
+        const faces = await captureNeutralFaces(3, Date.parse(challenge.expiresAt),
+            (current, total, reason) => setFeedback(reason || `Seleccionando captura frontal ${current}/${total}…`));
         const session = await send(`/authentication/challenges/${challenge.challengeId}/complete`, {
             modelVersion: MODEL_VERSION,
-            descriptor: Array.from(face.embedding),
+            descriptor: AtlasFaceQuality.averageDescriptors(faces, state.faceCenter),
             observedType: challenge.type,
             nonce: challenge.nonce,
             capturedAt: new Date().toISOString(),

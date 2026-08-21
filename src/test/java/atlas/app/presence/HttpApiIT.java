@@ -185,6 +185,17 @@ class HttpApiIT {
             .contains("/app.js");
         assertThat(get("/app.css").statusCode()).isEqualTo(200);
         assertThat(get("/app.js").statusCode()).isEqualTo(200);
+        assertThat(get("/presence/sandbox").body())
+            .contains("Presence Sandbox", "id=\"overlay\"", "id=\"face-metrics\"", "id=\"hand-metrics\"",
+                "id=\"face-enabled\"", "id=\"hand-enabled\"", "id=\"start-face-tests\"",
+                "id=\"face-test-results\"");
+        assertThat(get("/presence/sandbox.css").statusCode()).isEqualTo(200);
+        assertThat(get("/presence/face-quality.js").body())
+            .contains("CAPTURE_MIN_FACE_SIZE", "handOccludesFace", "averageDescriptors", "selfCheck");
+        assertThat(get("/presence/sandbox.js").body())
+            .contains("GestureRecognizer", "renderFace", "renderHand", "updateGestureStability",
+                "!state.faceEnabled || !state.faceModelReady", "!state.handEnabled || !state.handModelReady",
+                "recordFaceTestSample", "evaluateFaceTest", "faceTestPayload", "readyWhenPresentRate");
         assertThat(get("/docs").body()).contains("SwaggerUIBundle").contains("/openapi.json");
 
         var specification = json(get("/openapi.json"));

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Presence Sandbox · Atlas</title>
+    <link rel="stylesheet" href="/presence/sandbox.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/dist/human.js"
+            integrity="sha384-vASLsXJSh9FIgw41jM2fwBSF2MoEPlegwV4SO9G3NeyRMcWf7XjSdYvU6MlwOfQl"
+            crossorigin="anonymous"></script>
+    <script defer src="/presence/face-quality.js"></script>
+    <script defer src="/presence/sandbox.js"></script>
+</head>
+<body>
+<header>
+    <div>
+        <p class="eyebrow">ATLAS / PRESENCE</p>
+        <h1>Vision sandbox</h1>
+        <p class="subtitle">Telemetría local en tiempo real. Nada se envía a la API.</p>
+    </div>
+    <div class="toolbar">
+        <fieldset class="pipeline-toggles" aria-label="Pipelines de visión activos">
+            <label><input id="face-enabled" type="checkbox" checked><span>Face</span></label>
+            <label><input id="hand-enabled" type="checkbox" checked><span>Hand</span></label>
+        </fieldset>
+        <select id="camera-select" aria-label="Cámara" disabled>
+            <option value="">Cámara predeterminada</option>
+        </select>
+        <button id="start" type="button">Iniciar cámara</button>
+        <button id="stop" type="button" class="secondary" disabled>Detener</button>
+        <button id="clear-log" type="button" class="secondary">Limpiar eventos</button>
+    </div>
+</header>
+
+<main>
+    <section class="stage-panel">
+        <div id="stage" class="stage">
+            <video id="camera" autoplay playsinline muted></video>
+            <canvas id="overlay" aria-label="Overlay de detección"></canvas>
+            <div id="stage-empty">
+                <strong>La cámara está detenida</strong>
+                <span>Pulsa “Iniciar cámara” para cargar los modelos.</span>
+            </div>
+            <div class="stage-badges">
+                <span id="face-badge" class="badge idle">FACE —</span>
+                <span id="hand-badge" class="badge idle">HAND —</span>
+                <span id="gesture-badge" class="badge idle">GESTURE —</span>
+            </div>
+        </div>
+        <div id="pipeline-message" class="pipeline-message" role="status">Preparado para iniciar.</div>
+    </section>
+
+    <section class="metrics" aria-label="Telemetría general">
+        <article><span>Resolución</span><strong id="resolution">—</strong></article>
+        <article><span>Face FPS</span><strong id="face-fps">—</strong></article>
+        <article><span>Hand FPS</span><strong id="hand-fps">—</strong></article>
+        <article><span>Latencia facial</span><strong id="face-latency">—</strong></article>
+        <article><span>Latencia mano</span><strong id="hand-latency">—</strong></article>
+        <article><span>Frame de vídeo</span><strong id="video-time">—</strong></article>
+    </section>
+
+    <section id="face-test-suite" class="test-suite">
+        <div class="test-suite-heading">
+            <div>
+                <p class="eyebrow">PRUEBAS GUIADAS / FACE</p>
+                <h2>Captura y evaluación automática</h2>
+                <p>Los resultados viven solo en esta sesión. No se registran embeddings.</p>
+            </div>
+            <div class="test-suite-actions">
+                <span id="face-test-progress" class="state idle">0 / 12</span>
+                <button id="start-face-tests" type="button" disabled>Iniciar batería Face</button>
+                <button id="cancel-face-tests" type="button" class="secondary" hidden>Cancelar</button>
+            </div>
+        </div>
+
+        <div id="face-test-step" class="test-step" hidden>
+            <div class="test-step-index"><span id="face-test-id">F01</span></div>
+            <div class="test-step-copy">
+                <p id="face-test-kind" class="eyebrow">BASELINE</p>
+                <h3 id="face-test-title">Rostro frontal</h3>
+                <p id="face-test-instruction">Mira directamente a la cámara.</p>
+                <p id="face-test-note" class="test-note"></p>
+            </div>
+            <div class="test-step-controls">
+                <span id="face-test-phase" class="state idle">PREPARACIÓN</span>
+                <button id="capture-face-test" type="button">Registrar 5 segundos</button>
+                <button id="next-face-test" type="button" hidden>Siguiente prueba</button>
+                <button id="repeat-face-test" type="button" class="secondary" hidden>Repetir</button>
+                <button id="skip-face-test" type="button" class="secondary">Saltar</button>
+            </div>
+        </div>
+
+        <div id="face-test-capture" class="test-capture" hidden>
+            <div><span>Capturando muestras</span><strong id="face-test-countdown">5.0 s</strong></div>
+            <progress id="face-test-timer" max="5000" value="0"></progress>
+        </div>
+        <p id="face-test-feedback" class="test-feedback" role="status">Inicia la cámara para comenzar.</p>
+
+        <div class="test-results">
+            <table>
+                <thead><tr>
+                    <th>Prueba</th><th>Resultado</th><th>Ready</th><th>Calidad con rostro</th><th>Passive con rostro</th>
+                    <th>Conf.</th><th>Real</th><th>Live</th><th>Oclusión</th><th>Pose máx.</th>
+                    <th>Tamaño mín.</th><th>Latencia</th><th>Muestras</th>
+                </tr></thead>
+                <tbody id="face-test-results"><tr class="empty"><td colspan="13">Todavía no hay resultados.</td></tr></tbody>
+            </table>
+        </div>
+        <div id="face-test-export" class="test-export" hidden>
+            <strong>Batería completada</strong>
+            <span id="face-test-summary"></span>
+            <button id="copy-face-results" type="button">Copiar JSON</button>
+            <button id="download-face-results" type="button" class="secondary">Descargar JSON</button>
+        </div>
+    </section>
+
+    <section id="hand-test-suite" class="test-suite">
+        <div class="test-suite-heading">
+            <div>
+                <p class="eyebrow">PRUEBAS GUIADAS / HAND</p>
+                <h2>Tracking y clasificación de gestos</h2>
+                <p>La batería registra landmarks, estabilidad, falsos gestos y latencia. No publica acciones.</p>
+            </div>
+            <div class="test-suite-actions">
+                <span id="hand-test-progress" class="state idle">0 / 12</span>
+                <button id="start-hand-tests" type="button" disabled>Iniciar batería Hand</button>
+                <button id="cancel-hand-tests" type="button" class="secondary" hidden>Cancelar</button>
+            </div>
+        </div>
+
+        <div id="hand-test-step" class="test-step" hidden>
+            <div class="test-step-index"><span id="hand-test-id">H01</span></div>
+            <div class="test-step-copy">
+                <p id="hand-test-kind" class="eyebrow">TRACKING</p>
+                <h3 id="hand-test-title">Mano relajada</h3>
+                <p id="hand-test-instruction">Muestra una mano completa frente a la cámara.</p>
+                <p id="hand-test-note" class="test-note"></p>
+            </div>
+            <div class="test-step-controls">
+                <span id="hand-test-phase" class="state idle">PREPARACIÓN</span>
+                <button id="capture-hand-test" type="button">Registrar 4 segundos</button>
+                <button id="next-hand-test" type="button" hidden>Siguiente prueba</button>
+                <button id="repeat-hand-test" type="button" class="secondary" hidden>Repetir</button>
+                <button id="skip-hand-test" type="button" class="secondary">Saltar</button>
+            </div>
+        </div>
+
+        <div id="hand-test-capture" class="test-capture" hidden>
+            <div><span>Capturando muestras</span><strong id="hand-test-countdown">4.0 s</strong></div>
+            <progress id="hand-test-timer" max="4000" value="0"></progress>
+        </div>
+        <p id="hand-test-feedback" class="test-feedback" role="status">Inicia la cámara para comenzar.</p>
+
+        <div class="test-results">
+            <table>
+                <thead><tr>
+                    <th>Prueba</th><th>Resultado</th><th>Detección</th><th>21 pts</th><th>Esperado</th>
+                    <th>Otros</th><th>Estable</th><th>Conf.</th><th>Lateralidad</th><th>Pinch mín.</th>
+                    <th>Tamaño</th><th>Latencia</th><th>Muestras</th>
+                </tr></thead>
+                <tbody id="hand-test-results"><tr class="empty"><td colspan="13">Todavía no hay resultados.</td></tr></tbody>
+            </table>
+        </div>
+        <div id="hand-test-export" class="test-export" hidden>
+            <strong>Batería completada</strong>
+            <span id="hand-test-summary"></span>
+            <button id="copy-hand-results" type="button">Copiar JSON</button>
+            <button id="download-hand-results" type="button" class="secondary">Descargar JSON</button>
+        </div>
+    </section>
+
+    <section class="diagnostics">
+        <article id="face-panel" class="panel face-panel">
+            <div class="panel-heading">
+                <div><p class="eyebrow">CAPTURA FACIAL</p><h2>Rostro</h2></div>
+                <span id="face-state" class="state idle">SIN DATOS</span>
+            </div>
+            <canvas id="face-crop" class="crop" width="320" height="180"></canvas>
+            <p id="face-reason" class="reason">Esperando una captura.</p>
+            <dl id="face-metrics" class="data-grid"></dl>
+            <details open>
+                <summary>Gestos y pose facial</summary>
+                <pre id="face-gestures">—</pre>
+            </details>
+            <details>
+                <summary>Resultado facial crudo</summary>
+                <pre id="face-raw">—</pre>
+            </details>
+        </article>
+
+        <article id="hand-panel" class="panel hand-panel">
+            <div class="panel-heading">
+                <div><p class="eyebrow">CAPTURA DE MANO</p><h2>Hand tracking</h2></div>
+                <span id="hand-state" class="state idle">SIN DATOS</span>
+            </div>
+            <canvas id="hand-crop" class="crop" width="320" height="180"></canvas>
+            <p id="hand-reason" class="reason">Esperando una captura.</p>
+            <dl id="hand-metrics" class="data-grid"></dl>
+            <details open>
+                <summary>Dedos, ángulos y distancias</summary>
+                <pre id="hand-analysis">—</pre>
+            </details>
+            <details>
+                <summary>21 landmarks normalizados</summary>
+                <pre id="hand-landmarks">—</pre>
+            </details>
+            <details>
+                <summary>21 world landmarks</summary>
+                <pre id="hand-world-landmarks">—</pre>
+            </details>
+            <details>
+                <summary>Resultado MediaPipe crudo</summary>
+                <pre id="hand-raw">—</pre>
+            </details>
+        </article>
+
+        <article id="gesture-panel" class="panel gesture-panel">
+            <div class="panel-heading">
+                <div><p class="eyebrow">CLASIFICACIÓN ATLAS</p><h2>Gesto</h2></div>
+                <span id="atlas-gesture" class="gesture-value">—</span>
+            </div>
+            <div class="hold">
+                <div><span>Estabilidad</span><strong id="hold-label">0 / 180 ms</strong></div>
+                <progress id="hold-progress" max="180" value="0"></progress>
+            </div>
+            <dl id="gesture-metrics" class="data-grid"></dl>
+            <details open>
+                <summary>Por qué se reconoce</summary>
+                <pre id="gesture-reason">Sin una mano detectada.</pre>
+            </details>
+            <details open>
+                <summary>Umbrales activos</summary>
+                <dl id="thresholds" class="threshold-list"></dl>
+            </details>
+        </article>
+
+        <article class="panel system-panel">
+            <div class="panel-heading">
+                <div><p class="eyebrow">PIPELINE</p><h2>Sistema</h2></div>
+                <span id="model-state" class="state idle">NO CARGADO</span>
+            </div>
+            <dl id="system-metrics" class="data-grid"></dl>
+            <details open>
+                <summary>Eventos recientes</summary>
+                <ol id="event-log" class="event-log"></ol>
+            </details>
+            <details>
+                <summary>Configuración de modelos</summary>
+                <pre id="model-config"></pre>
+            </details>
+        </article>
+    </section>
+</main>
+</body>
+</html>

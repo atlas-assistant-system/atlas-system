@@ -194,6 +194,41 @@ input {
     font: inherit;
 }
 
+.enrollment-steps {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    list-style: none;
+    margin: 22px 0 0;
+    padding: 0;
+}
+
+.enrollment-steps li {
+    color: #667d96;
+    font-size: .7rem;
+    text-align: center;
+}
+
+.enrollment-steps li::before {
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    content: '';
+    display: block;
+    height: 9px;
+    margin: 0 auto 6px;
+    width: 9px;
+}
+
+.enrollment-steps li.active,
+.enrollment-steps li.complete {
+    color: #60d9c8;
+}
+
+.enrollment-steps li.active::before,
+.enrollment-steps li.complete::before {
+    background: currentColor;
+}
+
 .profiles {
     margin: 20px 0 0;
     padding: 0;
