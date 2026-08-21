@@ -820,6 +820,7 @@ function tickClock() {
 async function refreshInicio() {
     window.AtlasRoutines?.summary();
     window.AtlasEconomy?.summary();
+    window.AtlasNutrition?.summary();
 
     const upcoming = await api('/appointments/upcoming?limit=1');
     state.next = upcoming.status === 200 && upcoming.body.length > 0 ? upcoming.body[0] : null;
@@ -1429,6 +1430,9 @@ function refreshAll() {
     if (state.view === 'economia') {
         window.AtlasEconomy?.activate();
     }
+    if (state.view === 'nutricion') {
+        window.AtlasNutrition?.activate();
+    }
     if (state.openId) {
         openPanel(state.openId);
     }
@@ -1494,6 +1498,7 @@ function setAuthenticated(authenticated) {
         document.getElementById('view-agenda').hidden = true;
         document.getElementById('view-rutinas').hidden = true;
         document.getElementById('view-economia').hidden = true;
+        document.getElementById('view-nutricion').hidden = true;
         renderNextCountdown();
         return;
     }
@@ -1849,6 +1854,7 @@ function switchView(view) {
     document.getElementById('view-agenda').hidden = view !== 'agenda';
     document.getElementById('view-rutinas').hidden = view !== 'rutinas';
     document.getElementById('view-economia').hidden = view !== 'economia';
+    document.getElementById('view-nutricion').hidden = view !== 'nutricion';
 
     for (const link of document.querySelectorAll('.nav-link[data-view]')) {
         link.classList.toggle('active', link.dataset.view === view);
@@ -1862,6 +1868,9 @@ function switchView(view) {
     }
     if (view === 'economia') {
         window.AtlasEconomy?.activate();
+    }
+    if (view === 'nutricion') {
+        window.AtlasNutrition?.activate();
     }
 }
 

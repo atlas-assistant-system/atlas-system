@@ -66,14 +66,19 @@ class ApplicationIT {
             assertThat(get(client, base, "/assets/economy.css").statusCode()).isEqualTo(200);
             assertThat(get(client, base, "/assets/economy.js").body())
                 .contains("'/events/economy'");
+            assertThat(get(client, base, "/assets/nutrition.css").statusCode()).isEqualTo(200);
+            assertThat(get(client, base, "/assets/nutrition.js").body())
+                .contains("'/events/nutrition'");
             assertThat(get(client, base, "/assets/config.js").statusCode()).isEqualTo(404);
 
             assertThat(get(client, base, "/appointments/upcoming?limit=1").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/economy/balance").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/routines/today").statusCode()).isEqualTo(401);
+            assertThat(get(client, base, "/nutrition/today").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/events").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/events/routines").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/events/economy").statusCode()).isEqualTo(401);
+            assertThat(get(client, base, "/events/nutrition").statusCode()).isEqualTo(401);
             assertThat(get(client, base, "/authentication").statusCode()).isEqualTo(200);
             assertThat(get(client, base, "/presence/authentication").statusCode()).isEqualTo(404);
             assertThat(get(client, base, "/presence/sandbox").body())
@@ -108,6 +113,7 @@ class ApplicationIT {
             assertThat(authenticated.isSuccess()).isTrue();
             assertThat(get(client, base, "/appointments/upcoming?limit=1").statusCode()).isEqualTo(200);
             assertThat(get(client, base, "/economy/balance").statusCode()).isEqualTo(200);
+            assertThat(get(client, base, "/nutrition/today").statusCode()).isEqualTo(200);
 
             var stream = client.sendAsync(
                 HttpRequest.newBuilder(URI.create(base + "/events/economy")).GET().build(),
@@ -115,13 +121,23 @@ class ApplicationIT {
             waitUntil(() -> application.economy().hub().connectedCount() == 1);
             assertThat(application.economy().hub().connectedCount()).isOne();
 
+            var nutritionStream = client.sendAsync(
+                HttpRequest.newBuilder(URI.create(base + "/events/nutrition")).GET().build(),
+                HttpResponse.BodyHandlers.ofInputStream());
+            waitUntil(() -> application.nutrition().hub().connectedCount() == 1);
+
             commands.dispatch(new CloseSessionCommand(SessionId.parse(authenticated.value().id())));
 
             waitUntil(() -> application.economy().hub().connectedCount() == 0);
             assertThat(application.economy().hub().connectedCount()).isZero();
             assertThat(get(client, base, "/economy/balance").statusCode()).isEqualTo(401);
 
+            waitUntil(() -> application.nutrition().hub().connectedCount() == 0);
+            assertThat(application.nutrition().hub().connectedCount()).isZero();
+            assertThat(get(client, base, "/nutrition/today").statusCode()).isEqualTo(401);
+
             stream.cancel(true);
+            nutritionStream.cancel(true);
         } finally {
             application.stop();
         }

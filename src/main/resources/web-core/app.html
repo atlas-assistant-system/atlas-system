@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/assets/app.css">
     <link rel="stylesheet" href="/assets/routines.css">
     <link rel="stylesheet" href="/assets/economy.css">
+    <link rel="stylesheet" href="/assets/nutrition.css">
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/dist/human.js"
             integrity="sha384-vASLsXJSh9FIgw41jM2fwBSF2MoEPlegwV4SO9G3NeyRMcWf7XjSdYvU6MlwOfQl"
             crossorigin="anonymous"></script>
@@ -17,6 +18,7 @@
     <script defer src="/assets/app.js"></script>
     <script defer src="/assets/routines.js"></script>
     <script defer src="/assets/economy.js"></script>
+    <script defer src="/assets/nutrition.js"></script>
 </head>
 <body class="locked">
 <video id="mirror" autoplay playsinline muted></video>
@@ -30,6 +32,7 @@
     <button class="nav-link" data-view="agenda">Agenda</button>
     <button class="nav-link" data-view="rutinas">Rutinas</button>
     <button class="nav-link" data-view="economia">Econom&iacute;a</button>
+    <button class="nav-link" data-view="nutricion">Nutrici&oacute;n</button>
 </nav>
 
 <main id="view-inicio" class="view">
@@ -103,6 +106,17 @@
             <p id="routines-progress" class="home-headline">&mdash;</p>
             <p id="routines-detail" class="home-detail"></p>
             <ul id="today-routines" class="plain-list"></ul>
+        </section>
+
+        <section class="home-block">
+            <p class="label">Nutrici&oacute;n</p>
+            <p id="nutrition-remaining" class="home-headline">&mdash;</p>
+            <p id="nutrition-goal" class="home-detail"></p>
+            <p id="nutrition-home-weight" class="home-detail"></p>
+            <ul class="plain-list">
+                <li>Consumido <span id="nutrition-eaten">&mdash;</span></li>
+                <li>Cuota <span id="nutrition-quota">&mdash;</span></li>
+            </ul>
         </section>
 
         <section class="home-block">
@@ -278,6 +292,111 @@
                 <button type="submit">Fijar objetivo</button>
                 <p class="economy-form-error" aria-live="polite"></p>
             </form>
+        </section>
+    </div>
+</main>
+
+<main id="view-nutricion" class="view nutrition-view" hidden>
+    <div class="nutrition-layout">
+        <section class="nutrition-section nutrition-today">
+            <p id="nutrition-date" class="nutrition-date"></p>
+            <p id="nutrition-headline" class="nutrition-headline">&mdash;</p>
+            <p class="nutrition-headline-detail">
+                <span>Consumidas <b id="nutrition-consumed">&mdash;</b></span>
+                <span>Cuota <b id="nutrition-target">&mdash;</b></span>
+            </p>
+            <ul id="nutrition-macros" class="nutrition-macros"></ul>
+            <p id="nutrition-no-plan" class="nutrition-empty" hidden>
+                Todav&iacute;a no has definido un plan.
+            </p>
+        </section>
+
+        <section class="nutrition-section">
+            <p class="label">A&ntilde;adir consumo</p>
+            <form id="nutrition-intake-form" class="nutrition-form" autocomplete="off">
+                <div class="nutrition-form-row">
+                    <label>Prote&iacute;na
+                        <input name="protein" type="number" min="0" max="2000" step="1" value="0">
+                    </label>
+                    <label>Carbos
+                        <input name="carbs" type="number" min="0" max="2000" step="1" value="0">
+                    </label>
+                    <label>Grasa
+                        <input name="fat" type="number" min="0" max="2000" step="1" value="0">
+                    </label>
+                </div>
+                <p class="nutrition-live">
+                    <b id="nutrition-live-calories">0</b> kcal
+                </p>
+                <input name="note" type="text" maxlength="140" placeholder="Qu&eacute; era (opcional)"
+                       aria-label="Nota del consumo">
+                <button type="submit">Apuntar</button>
+                <p class="nutrition-form-error" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <section class="nutrition-section">
+            <p class="label">Hoy</p>
+            <ul id="nutrition-intakes" class="nutrition-intakes"></ul>
+            <p id="nutrition-intakes-empty" class="nutrition-empty">Nada apuntado todav&iacute;a.</p>
+        </section>
+
+        <section class="nutrition-section">
+            <p class="label">Plan</p>
+            <p id="nutrition-plan-summary" class="nutrition-plan-summary">&mdash;</p>
+            <form id="nutrition-plan-form" class="nutrition-form" autocomplete="off">
+                <div class="nutrition-form-row">
+                    <label>Peso actual
+                        <input name="startWeight" type="text" inputmode="decimal" maxlength="6"
+                               placeholder="84.0" required>
+                    </label>
+                    <label>Peso objetivo
+                        <input name="targetWeight" type="text" inputmode="decimal" maxlength="6"
+                               placeholder="78.0" required>
+                    </label>
+                </div>
+                <div class="nutrition-form-row">
+                    <label>Prote&iacute;na
+                        <input name="protein" type="number" min="0" max="2000" step="1" value="0">
+                    </label>
+                    <label>Carbos
+                        <input name="carbs" type="number" min="0" max="2000" step="1" value="0">
+                    </label>
+                    <label>Grasa
+                        <input name="fat" type="number" min="0" max="2000" step="1" value="0">
+                    </label>
+                </div>
+                <button type="submit">Fijar plan</button>
+                <p class="nutrition-form-error" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <section class="nutrition-section nutrition-weight">
+            <p class="label">Peso</p>
+            <p id="nutrition-weight-headline" class="nutrition-weight-headline">&mdash;</p>
+            <p class="nutrition-weight-detail">
+                <span>Ahora <b id="nutrition-weight-now">&mdash;</b></span>
+                <span>Objetivo <b id="nutrition-weight-target">&mdash;</b></span>
+                <span id="nutrition-weight-trend"></span>
+            </p>
+            <div id="nutrition-chart" class="nutrition-chart"></div>
+            <p id="nutrition-weight-empty" class="nutrition-empty" hidden>
+                Define un plan para seguir tu peso.
+            </p>
+            <form id="nutrition-weighin-form" class="nutrition-form" autocomplete="off">
+                <label>Peso de hoy
+                    <input name="weight" type="text" inputmode="decimal" maxlength="6"
+                           placeholder="82.4" required>
+                </label>
+                <button type="submit">Apuntar pesada</button>
+                <p class="nutrition-form-error" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <section class="nutrition-section">
+            <p class="label">&Uacute;ltimos d&iacute;as</p>
+            <ul id="nutrition-days" class="nutrition-days"></ul>
+            <p id="nutrition-days-empty" class="nutrition-empty">Sin histórico todav&iacute;a.</p>
         </section>
     </div>
 </main>

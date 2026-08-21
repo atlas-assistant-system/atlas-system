@@ -23,7 +23,9 @@ public final class CoreApplication {
                 .get("/assets/routines.css", UiHandlers::routinesStyles)
                 .get("/assets/routines.js", UiHandlers::routinesScript)
                 .get("/assets/economy.css", UiHandlers::economyStyles)
-                .get("/assets/economy.js", UiHandlers::economyScript))
+                .get("/assets/economy.js", UiHandlers::economyScript)
+                .get("/assets/nutrition.css", UiHandlers::nutritionStyles)
+                .get("/assets/nutrition.js", UiHandlers::nutritionScript))
             .build());
     }
 

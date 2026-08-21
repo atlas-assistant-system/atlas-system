@@ -1,0 +1,331 @@
+.nutrition-view {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding-top: 2.5rem;
+    overflow-y: auto;
+}
+
+.nutrition-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr);
+    gap: 5.5rem;
+}
+
+.nutrition-section {
+    min-width: 0;
+}
+
+.nutrition-section > .label {
+    margin-bottom: 1.4rem;
+}
+
+.nutrition-today {
+    grid-column: 1 / -1;
+}
+
+.nutrition-date {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    opacity: 0.4;
+}
+
+.nutrition-headline {
+    margin: 0;
+    font-size: 5.5rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.nutrition-headline.negative {
+    opacity: 0.75;
+}
+
+.nutrition-headline-detail {
+    margin: 0.9rem 0 0;
+    font-size: 1.05rem;
+    opacity: 0.55;
+}
+
+.nutrition-headline-detail span + span {
+    margin-left: 1.8rem;
+}
+
+.nutrition-macros,
+.nutrition-intakes,
+.nutrition-days {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.nutrition-macros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 2.5rem;
+    margin-top: 2rem;
+}
+
+.nutrition-macro-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    font-size: 1.15rem;
+}
+
+.nutrition-macro-name {
+    opacity: 0.85;
+}
+
+.nutrition-macro-amount {
+    opacity: 0.55;
+    font-variant-numeric: tabular-nums;
+}
+
+.nutrition-bar {
+    margin-top: 0.55rem;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.nutrition-bar > span {
+    display: block;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.nutrition-bar[data-status="EXCEEDED"] {
+    height: 4px;
+}
+
+.nutrition-bar[data-status="EXCEEDED"] > span {
+    background: repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.95) 0 3px,
+        rgba(255, 255, 255, 0.35) 3px 6px);
+}
+
+.nutrition-intake {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto 1.4rem;
+    align-items: baseline;
+    gap: 0.9rem;
+    padding: 0.75rem 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.nutrition-intake-what {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.85;
+}
+
+.nutrition-intake-detail {
+    font-size: 0.9rem;
+    opacity: 0.4;
+    font-variant-numeric: tabular-nums;
+}
+
+.nutrition-intake-calories {
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+}
+
+.nutrition-day {
+    display: grid;
+    grid-template-columns: 4.5rem auto;
+    align-items: baseline;
+    gap: 0.9rem 1.5rem;
+    padding: 0.75rem 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.nutrition-day-when {
+    opacity: 0.4;
+    font-variant-numeric: tabular-nums;
+}
+
+.nutrition-day-calories {
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+}
+
+.nutrition-day .nutrition-bar {
+    grid-column: 1 / -1;
+    margin-top: 0;
+}
+
+.nutrition-plan-summary {
+    margin: 0;
+    font-size: 1.15rem;
+    opacity: 0.75;
+}
+
+.nutrition-empty {
+    margin: 0;
+    font-size: 1.05rem;
+    opacity: 0.4;
+}
+
+.nutrition-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.6rem;
+}
+
+.nutrition-form-row {
+    display: flex;
+    flex-basis: 100%;
+    gap: 0.6rem;
+}
+
+.nutrition-form label {
+    display: flex;
+    flex: 1 1 6rem;
+    flex-direction: column;
+    font-size: 0.85rem;
+    gap: 0.3rem;
+    opacity: 0.55;
+}
+
+.nutrition-form input {
+    background: rgba(0, 0, 0, 0.35);
+    border: none;
+    border-radius: 0.4rem;
+    color: inherit;
+    flex: 1 1 7rem;
+    font: inherit;
+    font-size: 0.95rem;
+    opacity: 1;
+    padding: 0.45rem 0.55rem;
+}
+
+.nutrition-live {
+    flex-basis: 100%;
+    font-size: 0.95rem;
+    margin: 0;
+    opacity: 0.5;
+}
+
+.nutrition-form button {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    border-radius: 0.4rem;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.45rem 1rem;
+}
+
+.nutrition-form button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nutrition-form-error {
+    color: var(--danger, #ff8080);
+    flex-basis: 100%;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.nutrition-form-error:empty {
+    display: none;
+}
+
+.nutrition-remove {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    opacity: 0.35;
+    padding: 0 0.2rem;
+}
+
+.nutrition-remove:hover {
+    opacity: 1;
+}
+
+.nutrition-weight {
+    grid-column: 1 / -1;
+}
+
+.nutrition-weight-headline {
+    margin: 0;
+    font-size: 3.2rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.nutrition-weight-headline.reached {
+    font-size: 2.2rem;
+    opacity: 0.75;
+}
+
+.nutrition-weight-detail {
+    margin: 0.8rem 0 0;
+    font-size: 1.05rem;
+    opacity: 0.55;
+}
+
+.nutrition-weight-detail span + span {
+    margin-left: 1.8rem;
+}
+
+.nutrition-chart {
+    margin-top: 1.8rem;
+}
+
+.nutrition-chart svg {
+    display: block;
+    height: 11rem;
+    width: 100%;
+}
+
+.nutrition-chart-line {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.75);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+}
+
+.nutrition-chart-start,
+.nutrition-chart-target {
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.nutrition-chart-target {
+    stroke-dasharray: 4 4;
+    stroke: rgba(255, 255, 255, 0.35);
+}
+
+.nutrition-chart-last {
+    fill: rgba(255, 255, 255, 0.95);
+}
+
+@media (max-width: 60rem) {
+    .nutrition-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 3rem;
+    }
+
+    .nutrition-headline {
+        font-size: 4rem;
+    }
+
+    .nutrition-weight-headline {
+        font-size: 2.6rem;
+    }
+}
