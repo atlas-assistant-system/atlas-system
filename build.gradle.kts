@@ -69,9 +69,6 @@ pitest {
     mutationThreshold = 90
 }
 
-// Gradle canaliza la salida del proceso hacia su demonio, asi que System.console() es
-// null y la deteccion automatica elegiria el formato plano. En una ejecucion de
-// desarrollo queremos el formato de consola.
 tasks.named<JavaExec>("run") {
     systemProperty("log.format", "console")
 }
