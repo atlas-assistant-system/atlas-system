@@ -4,7 +4,8 @@ Diseño cerrado del contexto de nutrición. Este documento es la fuente de verda
 modelo, los casos de uso y las decisiones tomadas — el código se escribe a partir de aquí,
 no al revés.
 
-Estado: **los dos ciclos completos y cableados**, con sus cuatro capas y su pestaña en `core`.
+Estado: **el ciclo 1 completo y cableado**, con sus cuatro capas y su pestaña en `core`. El
+ciclo 2 —seguimiento de peso— se implementó y **se retiró**; el porqué está al final.
 
 ## Qué resuelve
 
@@ -12,9 +13,8 @@ Saber si vas donde querías ir, sin abrir una app de dieta. El espejo responde a
 preguntas, en este orden de importancia:
 
 1. ¿Cuánto me queda hoy de calorías y de cada macro?
-2. ¿Cuánto peso me falta para el objetivo y en qué punto del camino estoy?
-3. ¿Cómo ha ido la última semana?
-4. ¿Qué me metí exactamente ayer, o el jueves pasado?
+2. ¿Cómo ha ido la última semana?
+3. ¿Qué me metí exactamente ayer, o el jueves pasado?
 
 Es **Fitia sin alimentos**. No hay base de datos nutricional, ni códigos de barras, ni
 recetas, ni pesar la comida. Se registran los números que ya sabes.
@@ -58,26 +58,23 @@ Un consumo exige **calorías mayores que cero**; los macros pueden ir a cero. As
 cena como entidades. Una entrada de consumo es una nota libre opcional y unos macros. Ese
 es exactamente el recorte que separa esto de Fitia y lo que lo hace sostenible.
 
-**Un plan activo a la vez.** Redefinirlo archiva el anterior; no se borra, porque la
-gráfica de peso de hace tres meses necesita saber contra qué objetivo se estaba midiendo
+**Un plan activo a la vez.** Redefinirlo archiva el anterior; no se borra, porque el
+histórico de un día de hace tres meses necesita saber contra qué cuota se estaba midiendo
 entonces.
 
 **Sin ejercicio, sin agua, sin micronutrientes.** Las calorías quemadas exigirían
 integrarse con un reloj o creerse una estimación; el agua y los micros son tres cuotas más
 que nadie de la lista de arriba necesita para responderse.
 
-## Los dos ciclos
+## Los ciclos
 
-El contexto tiene tres agregados en dos entregas. `Plan` es la base: tanto el consumo
-diario como la evolución de peso se miden **contra el plan**, y ninguno de los dos tiene
-nada contra qué medirse hasta que exista.
+El contexto tiene dos agregados vivos. `Plan` es la base: el consumo diario se mide
+**contra el plan**, y no tiene nada contra qué medirse hasta que exista.
 
 | Ciclo | Agregados | Estado |
 |---|---|---|
 | 1 | `Plan` + `Intake` — plan y consumo diario | diseñado abajo, en detalle |
-| 2 | `WeighIn` — evolución de peso y progreso | implementado |
-
-Cada ciclo es su propio spec → plan → implementación.
+| 2 | `WeighIn` — evolución de peso y progreso | implementado y retirado |
 
 ---
 
@@ -127,7 +124,7 @@ Kernel según [id-conventions.md](id-conventions.md).
 ### `Weight`
 
 Peso en **gramos como `int`**, nunca `double`. El mismo argumento que `Money`: 78,4 kg no
-se representa exacto en binario y el error aparece como una gráfica que tiembla sola.
+se representa exacto en binario y el error se acumula solo.
 
 ```java
 public record Weight(int grams) implements ValueObject {
@@ -142,8 +139,8 @@ Una diferencia de pesos **no es un `Weight`**: puede ser negativa y puede caer f
 válido. `gramsTo` devuelve gramos con signo, y así no existe un `Weight` inválido construible.
 
 Los límites no son decoración: un peso de 4 kg o de 900 kg es un dedo que ha resbalado, y
-la gráfica de un año se destroza con un solo punto absurdo. Rechazarlo en el borde es más
-barato que un caso de uso para corregirlo.
+`Goal` derivaría lo contrario de lo que querías. Rechazarlo en el borde es más barato que un
+caso de uso para corregirlo.
 
 ### `Macros`
 
@@ -212,13 +209,13 @@ public final class Plan extends AggregateRoot<PlanId> {
 
     public static Result<Plan> define(
         PlanId id, Weight startWeight, Weight targetWeight,
-        Macros dailyMacros, LocalDate startedOn, Instant now)
+        Calories dailyCalories, Macros dailyMacros, LocalDate startedOn, Instant now)
 
-    public Result<Void> adjust(Macros dailyMacros, Weight targetWeight, Instant now)
+    public Result<Void> adjust(
+        Calories dailyCalories, Macros dailyMacros, Weight targetWeight, Instant now)
     public Result<Void> archive(Instant now)
 
     public Goal goal()                  // derivado de startWeight y targetWeight
-    public Calories dailyCalories()     // derivado de dailyMacros
 }
 ```
 
@@ -230,9 +227,8 @@ Invariantes que hace cumplir:
 - Un plan archivado no admite ajustes.
 
 **El peso de partida no se ajusta.** Es un hecho: lo que pesabas cuando empezaste. Si te
-equivocaste al teclearlo, defines un plan nuevo — el anterior se archiva y su gráfica
-queda tal cual fue. Permitir moverlo convierte el porcentaje de progreso en un número que
-puedes maquillar hacia atrás.
+equivocaste al teclearlo, defines un plan nuevo — el anterior se archiva y queda tal cual
+fue. Permitir moverlo convierte el objetivo en un número que puedes maquillar hacia atrás.
 
 ### `Intake`
 
@@ -240,19 +236,19 @@ puedes maquillar hacia atrás.
 public final class Intake extends AggregateRoot<IntakeId> {
 
     public static Result<Intake> record(
-        IntakeId id, Macros macros, IntakeNote note,
-        LocalDate consumedOn, Instant now)
+        IntakeId id, Calories calories, Macros macros, Optional<IntakeNote> note,
+        LocalDate consumedOn, LocalDate today, Instant now)
 
-    public Result<Void> correct(Macros macros, IntakeNote note, Instant now)
+    public Result<Void> correct(
+        Calories calories, Macros macros, Optional<IntakeNote> note, Instant now)
     public Result<Void> delete(Instant now)
-
-    public Calories calories()          // derivado de macros
 }
 ```
 
 Invariantes:
 
-- Los macros no son todos cero.
+- Las calorías son mayores que cero. Los macros pueden ser todos cero: apuntar solo las
+  kcal de una cerveza es un registro legítimo.
 - La fecha de consumo no está en el futuro. Se apunta lo que ya has comido; planificar la
   cena de mañana es otro contexto y está fuera de alcance.
 - Un consumo borrado no admite más cambios.
@@ -268,11 +264,15 @@ plan para apuntar una manzana y dejaría los consumos huérfanos al archivar el 
 ### `DayTotals`
 
 ```java
-public record DayTotals(Macros consumed, Macros target) implements ValueObject {
+public record DayTotals(
+    Macros consumedMacros, Calories consumedCalories,
+    Macros targetMacros, Calories targetCalories) implements ValueObject {
+
     public int remainingProtein()       // y remainingCarbs, remainingFat
-    public Calories consumedCalories()  // y targetCalories
     public int remainingCalories()
     public int caloriePercentage()
+    public Calories lowerTarget()       // y upperTarget
+    public boolean isWithinRange()
     public boolean isOverBudget()
 }
 ```
@@ -517,134 +517,26 @@ Según [testing-conventions.md](testing-conventions.md):
 - **API** — un `HttpApiIT` que recorre el ciclo: definir plan, registrar tres consumos,
   consultar el día, corregir uno, borrarlo, listar el rango, redefinir el plan y comprobar
   que el anterior queda archivado.
-- Un caso explícito de **derivación**: que mandar `calories` en un `POST` sea 400, y que la
-  respuesta traiga siempre las calorías que dictan los macros. Es la regla que más caro
-  sale equivocar.
+- Un caso explícito de **calorías tecleadas**: que la respuesta devuelva las kcal que
+  mandaste aunque no cuadren con los gramos, y que un consumo sin calorías sea 400. Es la
+  regla que más caro sale equivocar.
 
 ---
 
-# Ciclo 2 — Peso y evolución
+# Ciclo 2 — Peso y evolución (retirado)
 
-## El modelo
+Se implementó entero —agregado `WeighIn`, servicio `PlanProgress`, sus dos consultas, la
+tabla `weigh_ins` y la gráfica SVG— y **se retiró a petición del usuario**. La tabla la
+tira `V011__drop_weigh_ins.sql`; `V006` se queda donde estaba, porque una migración
+aplicada no se edita.
 
-Tercer agregado, `WeighIn` (prefijo `W`), en el mismo contexto:
+Lo que sobrevive es el **peso de partida y el objetivo del plan**, que es de donde sale
+`Goal` y la línea "Perder peso: 84 → 78 kg". Lo que se fue es la serie de pesadas: el
+progreso contra el plan, la tendencia semanal y la gráfica.
 
-```java
-public final class WeighIn extends AggregateRoot<WeighInId> {
-
-    public static Result<WeighIn> record(
-        WeighInId id, Weight weight, LocalDate measuredOn, Instant now)
-
-    public Result<Void> correct(Weight weight, Instant now)
-    public Result<Void> delete(Instant now)
-}
-```
-
-Invariantes: el peso está dentro de los límites de `Weight`, la fecha no está en el
-futuro y **hay una sola pesada por día** (índice único sobre `measured_on`; registrar dos
-veces el mismo día corrige la anterior, que es lo que uno espera al pesarse dos veces por
-la mañana).
-
-**La pesada no toca el plan.** El plan guarda dónde empezaste y a dónde vas; la báscula es
-una serie de hechos aparte. Actualizar el `startWeight` en cada pesada borraría el punto
-de partida y con él la única referencia contra la que el progreso significa algo.
-
-### `PlanProgress`
-
-Servicio de dominio, gemelo de `BudgetPace` en `economy`: recibe el plan, la serie de pesadas
-y el día de hoy, y devuelve un `Progress`.
-
-```java
-public final class PlanProgress {
-    public Progress of(Plan plan, Collection<WeighIn> series, LocalDate today)
-}
-
-public record Progress(
-    Weight start, Weight current, Weight target, Goal goal,
-    int remainingGrams,                 // con signo: negativo si hay que bajar
-    int percentage,                     // recorrido sobre el total, acotado a 0..100
-    boolean reached,
-    int trendGramsPerWeek) implements ValueObject {}
-```
-
-**Sin ninguna pesada, el peso actual es el de partida.** Es lo honesto: pesas lo que dijiste
-que pesabas cuando empezaste.
-
-El porcentaje se acota a `0..100`: pasarte del objetivo es 100%, no 130%, y quedarte por
-detrás del peso de partida es 0%, no un número negativo. Con `start == target` —un plan de
-mantenimiento— la división no existe, así que el porcentaje es 100 o 0 según `reached`, que
-sale de `Goal.isReached(...)` y ya sabe en qué dirección se mide.
-
-Lo interesante —y lo que hace que el ciclo valga la pena en vez de ser una resta— es la
-**tendencia**: media de los últimos 7 días contra la de los 7 anteriores, en gramos por
-semana. Es lo que distingue "peso lo mismo que ayer" de "llevo tres semanas parado". Si a
-alguna de las dos ventanas le falta al menos una pesada, la tendencia es cero: **inventar una
-tendencia con un solo dato es peor que no darla**.
-
-## Aplicación y API
-
-```
-commands/recordweighin/     RecordWeighInCommand + Handler
-commands/correctweighin/    CorrectWeighInCommand + Handler
-commands/deleteweighin/     DeleteWeighInCommand + Handler
-queries/getprogress/        GetProgressQuery + Handler
-queries/listweighins/       ListWeighInsQuery + Handler
-dto/                        WeighInDto, ProgressDto
-ports/WeighInRepository.java    + findOn(fecha), que es lo que hace el upsert
-ports/WeighInReadModel.java     find, findBetween y findLatest
-```
-
-**`RecordWeighIn` es un upsert por fecha**, y lo resuelve el handler dentro de la
-transacción: si ya hay pesada ese día la corrige, si no la crea. La regla no está duplicada
-en el dominio porque no es una regla de negocio, es la forma del caso de uso —pesarse dos
-veces la misma mañana es corregir, no apuntar dos pesos—. El índice único de la tabla es lo
-que impide que se cuele una segunda por otro camino.
-
-`GetProgress` pide **solo las dos últimas semanas** para la tendencia, y si ese rango viene
-vacío cae a `findLatest()`: dejar de pesarse un mes no debe hacer que el peso actual vuelva
-al de partida. `ListWeighIns` devuelve **90 días por defecto** —lo que necesita la gráfica—
-y la serie ordenada de la más antigua a la más reciente.
-
-| Método | Ruta | Caso de uso |
-|---|---|---|
-| `POST` | `/nutrition/weigh-ins` | registrar pesada (upsert por fecha) |
-| `GET` | `/nutrition/weigh-ins` | serie del rango (`from`, `to`) |
-| `PUT` | `/nutrition/weigh-ins/{id}` | corregir |
-| `DELETE` | `/nutrition/weigh-ins/{id}` | borrar |
-| `GET` | `/nutrition/progress` | inicio, actual, objetivo, restante, %, tendencia |
-
-Tres eventos más para el broadcaster de `/events/nutrition`: `weighInRecorded`,
-`weighInCorrected` y `weighInDeleted`.
-
-```sql
-CREATE TABLE weigh_ins (
-    id          INTEGER PRIMARY KEY,
-    weight_g    INTEGER NOT NULL,
-    measured_on TEXT    NOT NULL UNIQUE,
-    recorded_at TEXT    NOT NULL
-)
-```
-
-Va en `V006__create_weigh_ins.sql`. El `UNIQUE` de `measured_on` es lo que sostiene "una
-pesada por día" a nivel de base de datos, igual que el índice parcial hace con el plan
-activo; hay un test de integración que lo comprueba.
-
-## UI
-
-La gráfica va en **SVG inline generado a mano**, sin librería. Una `polyline` con la serie,
-dos líneas horizontales de referencia (partida continua, objetivo discontinua) y un punto en
-la última pesada son unas cuarenta líneas de JS. Meter Chart.js son 200 KB y una dependencia
-externa más en un proyecto que hoy solo tiene Human.js, para dibujar una línea.
-
-La escala vertical la fijan **la serie y las dos referencias juntas**, no solo la serie: si el
-objetivo quedara fuera del cuadro, la gráfica diría que ya has llegado.
-
-Encima de la gráfica, la cifra que responde la pregunta: **kilos que faltan** —o "Objetivo
-alcanzado"—, con el peso actual, el objetivo y la tendencia semanal debajo en pequeño. La
-tendencia solo aparece cuando no es cero. Un campo para apuntar la pesada del día, con el
-mismo patrón inline que el resto.
-
-En **Inicio**, junto a las calorías restantes, una línea con los kilos que faltan.
+Si algún día vuelve, vuelve como un agregado `Measurement` genérico —peso, medidas,
+porcentaje de grasa son la misma serie temporal— y no como una tabla por métrica. El
+diseño de entonces está en el historial de este fichero.
 
 ---
 
@@ -671,4 +563,4 @@ no la pide nadie.
 
 **Fotos de progreso, medidas corporales y porcentaje de grasa.** Todo eso es otra serie
 temporal con su gráfica; si algún día entra, entra como un agregado `Measurement` genérico
-del que `WeighIn` sería un caso, no como cuatro tablas paralelas.
+del que el peso sería un caso, no como cuatro tablas paralelas.

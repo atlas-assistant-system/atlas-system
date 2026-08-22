@@ -26,7 +26,7 @@ La arquitectura y las decisiones de stack de este proyecto están documentadas e
 - [docs/validation-specification-conventions.md](docs/validation-specification-conventions.md) — por qué no se adoptan Validator/Specification y qué se usa en su lugar
 - [docs/conventions.md](docs/conventions.md) — convenciones de código, naming, testing y flujo de trabajo
 - [docs/economy-context.md](docs/economy-context.md) — diseño del contexto `economy`; el ciclo 1 (movimientos y saldo) ya está implementado, los ciclos 2 y 3 siguen esbozados
-- [docs/nutrition-context.md](docs/nutrition-context.md) — diseño del contexto `nutrition`; sus dos ciclos (plan y consumo diario; peso y evolución) están completos y cableados
+- [docs/nutrition-context.md](docs/nutrition-context.md) — diseño del contexto `nutrition`; el ciclo 1 (plan y consumo diario) está completo y cableado, y el ciclo 2 (peso y evolución) se implementó y se retiró
 
 Estos documentos son la fuente de verdad técnica del proyecto. Cualquier decisión arquitectónica nueva debe reflejarse ahí.
 
@@ -89,19 +89,18 @@ físico— y su propio bus de comandos y consultas.
   alimentos**: no hay base de datos nutricional ni códigos de barras, se teclean los macros. Cuatro
   capas completas, se monta en `/nutrition` tras la guardia de sesión de `presence`, y su SSE en
   `/events/nutrition`. **Aquí sí se escribe desde el espejo**, al revés que en `economy`: nada de
-  esto nace fuera —tú decides las calorías y tú te pesas—, así que la pestaña tiene formularios y
-  la API queda abierta igualmente para un Atajo de iOS. **Las calorías se teclean, no se derivan**
+  esto nace fuera —tú decides las calorías—, así que la pestaña tiene formularios y la API queda
+  abierta igualmente para un Atajo de iOS. **Las calorías se teclean, no se derivan**
   —ni en el consumo ni en el plan—: lo que sabes de lo que comes es la cifra de la etiqueta, no el
   desglose, y el alcohol no es ninguno de los tres macros. Pueden discrepar de los macros y nadie
   los concilia: mandan las tecleadas. El objetivo sí sigue derivado, de
-  `Goal.of(pesoInicial, pesoObjetivo)`, y no es un campo elegible. Solo hay un plan activo a la vez, y quien lo sostiene es un índice parcial de
-  SQLite, no solo el handler; lo mismo con "una pesada por día", que es un `UNIQUE` de la tabla.
-  El **ciclo 2** añade `WeighIn`, el progreso contra el plan y la **gráfica de peso en SVG a
-  mano** —sin Chart.js: la escala la fijan la serie y las dos líneas de referencia juntas—.
-  Registrar dos pesadas el mismo día corrige la primera. La **tendencia** (media de los últimos
-  7 días contra los 7 anteriores) es cero si a alguna ventana le falta un dato: inventarla con
-  un solo punto es peor que no darla.
-- **1590 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
+  `Goal.of(pesoInicial, pesoObjetivo)`, y no es un campo elegible. Solo hay un plan activo a la
+  vez, y quien lo sostiene es un índice parcial de SQLite, no solo el handler.
+  El **ciclo 2** —`WeighIn`, el progreso contra el plan y la gráfica de peso— se implementó y
+  **se retiró**: la tabla la tira `V011__drop_weigh_ins.sql` y `V006` se queda, porque una
+  migración aplicada no se edita. Del peso solo sobreviven el de partida y el objetivo del plan,
+  que son de donde sale `Goal`.
+- **1593 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
   ArchUnit.
 - **Mutation testing con PIT** sobre `atlas.domain.*` (excluido el kernel), umbral del 90%: hoy
   el dominio está al 95%, `economy` al 97% y `nutrition` entre el 94% y el 100%. No cuelga de `check` porque son ~30 s — se lanza a
