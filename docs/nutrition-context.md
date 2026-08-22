@@ -473,27 +473,34 @@ ser anterior a la regla.
 
 ## UI espejo
 
-Nueva pestaña **Nutrición**, en `src/main/resources/web-nutrition/`, servida por `core`
+Nueva pestaña **Nutrición**, en `src/main/resources/web-core/`, servida por `core`
 junto a las otras cuatro y en el mismo lenguaje visual: fondo negro, sin cajas, tipografía
 en `rem`, jerarquía por tamaño y opacidad.
 
-- **Calorías restantes hoy** como cifra protagonista, con las consumidas y la cuota debajo
-  en pequeño.
-- **Tres barras de macro** —proteína, carbos, grasa— con gramos consumidos sobre objetivo.
-  Barras finas de proporción, como el desglose de categorías de `economy`. Nada de anillos
-  concéntricos: a la distancia a la que se mira un espejo, tres anillos anidados no se
-  leen.
-- **Añadir consumo**: formulario inline de cuatro campos (proteína, carbos, grasa, nota),
-  con las calorías calculándose en vivo mientras tecleas —con la misma fórmula que el dominio—.
+- **Tira de la semana**: siete celdas —L a D— con un punto por día, verde dentro del rango
+  y marcado cuando te has pasado. Se pulsa para cambiar de día, y es lo que responde tanto
+  "¿cómo ha ido la semana?" como "¿qué me metí el jueves?": el resto de la vista se
+  recarga con el día elegido.
+- **Consumidas sobre objetivo** como cifra protagonista, con un **arco SVG a mano** debajo.
+  La escala del arco la fija el límite superior del rango, no lo consumido, para que
+  pasarse se vea como pasarse; dos marcas señalan el ±10%.
+- **Tres columnas de macro** —proteína, carbos, grasa— con gramos consumidos sobre
+  objetivo. Nada de anillos concéntricos: a la distancia a la que se mira un espejo, tres
+  anillos anidados no se leen.
+- **Añadir consumo**: formulario inline de cinco campos (calorías, proteína, carbos, grasa,
+  nota). Las calorías se teclean; no se calculan mientras escribes, porque no se derivan.
   Es el mismo patrón de escritura inline que ya usa `routines`.
-- **Entradas de hoy**: nota, gramos, calorías y un botón de borrar.
+- **Entradas del día**: nota, gramos, calorías y un botón de borrar.
 - **Plan**: el resumen en una línea y el formulario para fijarlo. Fijarlo dos veces es
   redefinirlo; el comando archiva el anterior por su cuenta, así que la vista no encadena
   dos llamadas.
-- **Últimos días**: una fila por día con fecha, calorías y una barra respecto a la cuota.
 
-En la vista de **Inicio**, una línea más junto a Agenda, Rutinas y Economía: calorías
-restantes hoy y kilos que faltan para el objetivo.
+**Sin lista de últimos días.** La tira de la semana ya es el histórico navegable, y una
+segunda lista debajo repetía las mismas cifras sin añadir nada. La consulta `ListDays`
+sigue viva porque es la que alimenta la tira.
+
+En la vista de **Inicio**, una línea más junto a Agenda, Rutinas y Economía: las calorías
+que te quedan hoy.
 
 ## Cableado
 
