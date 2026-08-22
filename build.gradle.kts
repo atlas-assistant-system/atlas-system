@@ -83,6 +83,17 @@ tasks.register<JavaExec>("seed") {
     jvmArgs("--enable-native-access=org.xerial.sqlitejdbc")
 }
 
+tasks.register<JavaExec>("reseed") {
+    group = "application"
+    description = "Borra training, routines, nutrition y appointments y los siembra de cero. No toca economy ni presence."
+    mainModule = "atlas"
+    mainClass = "atlas.app.Seeder"
+    args("--reset")
+    classpath = files(tasks.named("jar")) + configurations.runtimeClasspath.get()
+    systemProperty("log.format", "console")
+    jvmArgs("--enable-native-access=org.xerial.sqlitejdbc")
+}
+
 tasks.register<JavaExec>("seedEconomy") {
     group = "application"
     description = "Llena data/economy.db con datos de ejemplo. No hace nada si ya tiene movimientos."
