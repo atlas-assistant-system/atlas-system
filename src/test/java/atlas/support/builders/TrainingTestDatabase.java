@@ -19,7 +19,7 @@ public final class TrainingTestDatabase {
             "V003__create_workouts.sql", "V004__create_workout_exercises.sql",
             "V005__create_workout_logs.sql", "V006__create_set_logs.sql",
             "V007__index_set_logs_by_exercise.sql", "V008__index_workout_logs_by_date.sql",
-            "V009__create_sequences.sql"));
+            "V009__create_sequences.sql", "V010__add_workout_days.sql"));
 
         return connection;
     }

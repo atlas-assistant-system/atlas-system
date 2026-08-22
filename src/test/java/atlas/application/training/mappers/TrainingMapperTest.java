@@ -17,10 +17,12 @@ import atlas.domain.training.vos.Effort;
 import atlas.domain.training.vos.ExerciseName;
 import atlas.domain.training.vos.SetCount;
 import atlas.domain.training.vos.WorkoutName;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -59,12 +61,14 @@ class TrainingMapperTest {
         var line = new PlannedExercise(
             PlannedExerciseId.of(UUID_ONE), PRESS, 0, new SetCount(4), new Effort(70_000, 8, 0, 0));
         var workout = Workout.rehydrate(
-            WorkoutId.of(5), new WorkoutName("Empuje"), List.of(line), false);
+            WorkoutId.of(5), new WorkoutName("Empuje"), List.of(line),
+            Set.of(DayOfWeek.MONDAY, DayOfWeek.THURSDAY), false);
 
         var dto = TrainingMapper.toDto(workout);
 
         assertThat(dto.id()).isEqualTo("W00000005");
         assertThat(dto.name()).isEqualTo("Empuje");
+        assertThat(dto.days()).containsExactly("MONDAY", "THURSDAY");
         assertThat(dto.plan()).hasSize(1);
         assertThat(dto.plan().getFirst().exerciseId()).isEqualTo("E00000010");
         assertThat(dto.plan().getFirst().sets()).isEqualTo(4);

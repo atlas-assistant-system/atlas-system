@@ -34,6 +34,7 @@ public final class TrainingResponses {
         var body = new LinkedHashMap<String, Object>();
         body.put("id", dto.id());
         body.put("name", dto.name());
+        body.put("days", dto.days());
         body.put("archived", dto.archived());
         body.put("plan", dto.plan().stream().map(TrainingResponses::line).toList());
 

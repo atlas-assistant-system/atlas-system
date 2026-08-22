@@ -13,6 +13,7 @@ import atlas.domain.training.WorkoutLog;
 import atlas.domain.training.entities.PlannedExercise;
 import atlas.domain.training.entities.SetLog;
 import atlas.domain.training.vos.Effort;
+import java.time.DayOfWeek;
 import java.util.Collection;
 import java.util.List;
 
@@ -40,6 +41,7 @@ public final class TrainingMapper {
         return new WorkoutDto(
             workout.id().toString(),
             workout.name().value(),
+            workout.days().stream().map(DayOfWeek::name).toList(),
             workout.isArchived(),
             workout.plan().stream().map(TrainingMapper::toDto).toList());
     }

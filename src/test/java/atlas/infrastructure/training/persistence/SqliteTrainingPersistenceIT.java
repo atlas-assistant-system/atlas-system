@@ -26,11 +26,13 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.AfterEach;
@@ -125,6 +127,25 @@ class SqliteTrainingPersistenceIT {
         assertThat(found.plan()).extracting(l -> l.exerciseId()).containsExactly(press.id(), dips.id());
         assertThat(found.plan().getFirst().sets().value()).isEqualTo(4);
         assertThat(found.plan().getFirst().target()).isEqualTo(EIGHT_AT_SEVENTY);
+    }
+
+    @Test
+    void shouldKeepTheDaysOfTheWeekAWorkoutIsTrainedOn() {
+        var workout = aWorkout();
+        workout.scheduleOn(Set.of(DayOfWeek.MONDAY, DayOfWeek.THURSDAY), NOW);
+        unitOfWork.run(() -> workouts.create(workout));
+
+        var found = workouts.get(workout.id()).orElseThrow();
+
+        assertThat(found.days()).containsExactly(DayOfWeek.MONDAY, DayOfWeek.THURSDAY);
+    }
+
+    @Test
+    void shouldLeaveAWorkoutOffTheWeekWhenItHasNoDayAssigned() {
+        var workout = aWorkout();
+        unitOfWork.run(() -> workouts.create(workout));
+
+        assertThat(workouts.get(workout.id()).orElseThrow().days()).isEmpty();
     }
 
     @Test

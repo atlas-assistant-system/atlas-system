@@ -28,6 +28,8 @@ import atlas.application.training.commands.renameexercise.RenameExerciseCommand;
 import atlas.application.training.commands.renameexercise.RenameExerciseCommandHandler;
 import atlas.application.training.commands.renameworkout.RenameWorkoutCommand;
 import atlas.application.training.commands.renameworkout.RenameWorkoutCommandHandler;
+import atlas.application.training.commands.scheduleworkout.ScheduleWorkoutCommand;
+import atlas.application.training.commands.scheduleworkout.ScheduleWorkoutCommandHandler;
 import atlas.application.training.commands.setworkoutplan.SetWorkoutPlanCommand;
 import atlas.application.training.commands.setworkoutplan.SetWorkoutPlanCommandHandler;
 import atlas.application.training.commands.startworkoutlog.StartWorkoutLogCommand;
@@ -127,7 +129,7 @@ public final class TrainingApplication {
             "V003__create_workouts.sql", "V004__create_workout_exercises.sql",
             "V005__create_workout_logs.sql", "V006__create_set_logs.sql",
             "V007__index_set_logs_by_exercise.sql", "V008__index_workout_logs_by_date.sql",
-            "V009__create_sequences.sql"));
+            "V009__create_sequences.sql", "V010__add_workout_days.sql"));
 
         var events = new SimpleDomainEventPublisher();
         var commands = new SimpleCommandBus();
@@ -224,6 +226,7 @@ public final class TrainingApplication {
                 .put("/workouts/{id}", sessions.protect(handlers::renameWorkout))
                 .delete("/workouts/{id}", sessions.protect(handlers::archiveWorkout))
                 .put("/workouts/{id}/plan", sessions.protect(handlers::setWorkoutPlan))
+                .put("/workouts/{id}/schedule", sessions.protect(handlers::scheduleWorkout))
                 .get("/logs/{id}", sessions.protect(handlers::workoutLogDetail))
                 .delete("/logs/{id}", sessions.protect(handlers::discardWorkoutLog))
                 .post("/logs/{id}/sets", sessions.protect(handlers::addSet))
@@ -254,6 +257,8 @@ public final class TrainingApplication {
             new RenameWorkoutCommandHandler(unitOfWork, clock), renderer));
         commands.register(SetWorkoutPlanCommand.class, new LoggingCommandHandler<>(
             new SetWorkoutPlanCommandHandler(unitOfWork, clock, ids), renderer));
+        commands.register(ScheduleWorkoutCommand.class, new LoggingCommandHandler<>(
+            new ScheduleWorkoutCommandHandler(unitOfWork, clock), renderer));
         commands.register(ArchiveWorkoutCommand.class, new LoggingCommandHandler<>(
             new ArchiveWorkoutCommandHandler(unitOfWork, clock), renderer));
 

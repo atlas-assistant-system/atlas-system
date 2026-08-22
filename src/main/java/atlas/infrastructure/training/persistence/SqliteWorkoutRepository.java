@@ -16,8 +16,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.DayOfWeek;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Las líneas del plan se persisten como en {@code appointments}: al actualizar la raíz se
@@ -74,14 +78,15 @@ public final class SqliteWorkoutRepository extends AbstractSqlRepository<Workout
 
     @Override
     protected List<String> columns() {
-        return List.of("id", "name", "archived");
+        return List.of("id", "name", "days", "archived");
     }
 
     @Override
     protected void bind(PreparedStatement statement, Workout workout) throws SQLException {
         statement.setLong(1, workout.id().value());
         statement.setString(2, workout.name().value());
-        statement.setBoolean(3, workout.isArchived());
+        statement.setString(3, writeDays(workout.days()));
+        statement.setBoolean(4, workout.isArchived());
     }
 
     @Override
@@ -92,12 +97,26 @@ public final class SqliteWorkoutRepository extends AbstractSqlRepository<Workout
             throw new PersistenceException("Corrupt value in workouts.name");
         }
 
-        return Workout.rehydrate(id, name.value(), linesOf(id), row.getBoolean("archived"));
+        return Workout.rehydrate(
+            id, name.value(), linesOf(id), readDays(row.getString("days")),
+            row.getBoolean("archived"));
     }
 
     @Override
     protected Object idValue(WorkoutId id) {
         return id.value();
+    }
+
+    /** Los días se guardan por nombre y separados por comas, igual que en {@code routines}. */
+    private static String writeDays(Set<DayOfWeek> days) {
+        return days.stream().sorted().map(DayOfWeek::name).collect(Collectors.joining(","));
+    }
+
+    private static Set<DayOfWeek> readDays(String stored) {
+        return stored == null || stored.isBlank()
+            ? Set.of()
+            : Arrays.stream(stored.split(",")).map(String::trim).map(DayOfWeek::valueOf)
+                .collect(Collectors.toSet());
     }
 
     private List<PlannedExercise> linesOf(WorkoutId id) {

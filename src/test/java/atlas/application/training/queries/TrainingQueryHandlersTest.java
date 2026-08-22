@@ -37,6 +37,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -179,7 +180,7 @@ class TrainingQueryHandlersTest {
     }
 
     private static Workout aWorkout() {
-        return Workout.rehydrate(WORKOUT, new WorkoutName("Empuje"), List.of(), false);
+        return Workout.rehydrate(WORKOUT, new WorkoutName("Empuje"), List.of(), Set.of(), false);
     }
 
     private static WorkoutLog aLog() {

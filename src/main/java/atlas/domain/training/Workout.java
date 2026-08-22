@@ -8,16 +8,26 @@ import atlas.domain.training.events.WorkoutArchivedEvent;
 import atlas.domain.training.events.WorkoutDefinedEvent;
 import atlas.domain.training.events.WorkoutPlanChangedEvent;
 import atlas.domain.training.events.WorkoutRenamedEvent;
+import atlas.domain.training.events.WorkoutScheduledEvent;
 import atlas.domain.training.vos.PlannedLine;
 import atlas.domain.training.vos.PlannedSet;
 import atlas.domain.training.vos.WorkoutName;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * La plantilla: "Día de empuje" con sus líneas. Una línea es {@code 4 × (8 reps @ 70 kg)},
  * no cuatro filas — así se escribe una rutina en papel y así se teclea una vez.
+ *
+ * <p>
+ * Una plantilla puede llevar los días en que se entrena —"Empuje los lunes y los jueves"—, y
+ * eso es todo lo que sabe del calendario: es una etiqueta para que el espejo sepa qué ofrecer
+ * hoy, no un registro de cumplimiento. Si lo hiciste o no lo dice {@code routines}.
  *
  * <p>
  * El plan se reemplaza entero con {@link #setPlan}, en vez de tener añadir, quitar,
@@ -28,27 +38,41 @@ public final class Workout extends AggregateRoot<WorkoutId> {
 
     private final List<PlannedExercise> plan = new ArrayList<>();
 
+    /** EnumSet: itera de lunes a domingo por su propio orden, sin ordenar en cada lectura. */
+    private final EnumSet<DayOfWeek> days = EnumSet.noneOf(DayOfWeek.class);
+
     private WorkoutName name;
     private boolean archived;
 
-    private Workout(WorkoutId id, WorkoutName name, List<PlannedExercise> plan, boolean archived) {
+    private Workout(
+        WorkoutId id,
+        WorkoutName name,
+        List<PlannedExercise> plan,
+        Set<DayOfWeek> days,
+        boolean archived) {
+
         super(ObjectGuard.notNull(id, "id"));
         this.name = ObjectGuard.notNull(name, "name");
         this.plan.addAll(ObjectGuard.notNull(plan, "plan"));
+        this.days.addAll(ObjectGuard.notNull(days, "days"));
         this.archived = archived;
     }
 
     public static Result<Workout> define(WorkoutId id, WorkoutName name, Instant now) {
-        var workout = new Workout(id, name, List.of(), false);
+        var workout = new Workout(id, name, List.of(), Set.of(), false);
         workout.registerEvent(new WorkoutDefinedEvent(id, now));
 
         return Result.success(workout);
     }
 
     public static Workout rehydrate(
-        WorkoutId id, WorkoutName name, List<PlannedExercise> plan, boolean archived) {
+        WorkoutId id,
+        WorkoutName name,
+        List<PlannedExercise> plan,
+        Set<DayOfWeek> days,
+        boolean archived) {
 
-        return new Workout(id, name, plan, archived);
+        return new Workout(id, name, plan, days, archived);
     }
 
     public Result<Void> rename(WorkoutName newName, Instant now) {
@@ -87,6 +111,25 @@ public final class Workout extends AggregateRoot<WorkoutId> {
         return Result.success();
     }
 
+    /**
+     * Fija los días de la semana en que toca esta plantilla. Se reemplazan enteros, como el
+     * plan: en pantalla es marcar y desmarcar días. Un conjunto vacío la deja fuera de la
+     * semana, disponible pero sin día asignado.
+     */
+    public Result<Void> scheduleOn(Set<DayOfWeek> weekdays, Instant now) {
+        if (archived) {
+            return Result.failure(WorkoutErrors.ALREADY_ARCHIVED);
+        }
+
+        ObjectGuard.notNull(weekdays, "weekdays");
+
+        days.clear();
+        days.addAll(weekdays);
+        registerEvent(new WorkoutScheduledEvent(id(), now));
+
+        return Result.success();
+    }
+
     public Result<Void> archive(Instant now) {
         if (archived) {
             return Result.failure(WorkoutErrors.ALREADY_ARCHIVED);
@@ -113,6 +156,15 @@ public final class Workout extends AggregateRoot<WorkoutId> {
 
     public List<PlannedExercise> plan() {
         return List.copyOf(plan);
+    }
+
+    /** Copia en EnumSet, no {@code Set.copyOf}: quien lee la semana la quiere en orden. */
+    public Set<DayOfWeek> days() {
+        return Collections.unmodifiableSet(EnumSet.copyOf(days));
+    }
+
+    public boolean isScheduledOn(DayOfWeek day) {
+        return days.contains(day);
     }
 
     public WorkoutName name() {

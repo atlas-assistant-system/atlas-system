@@ -41,6 +41,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
@@ -204,7 +205,7 @@ class WorkoutLogCommandHandlersTest {
             PlannedExerciseId.of(new UUID(1, 1)), PRESS, 0,
             new SetCount(sets), new Effort(70_000, 8, 0, 0));
 
-        return Workout.rehydrate(WORKOUT, new WorkoutName("Empuje"), List.of(line), false);
+        return Workout.rehydrate(WORKOUT, new WorkoutName("Empuje"), List.of(line), Set.of(), false);
     }
 
     private WorkoutLog aStartedLog() {

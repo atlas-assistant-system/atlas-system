@@ -12,6 +12,7 @@ import atlas.application.training.commands.recordset.RecordSetCommand;
 import atlas.application.training.commands.removeset.RemoveSetCommand;
 import atlas.application.training.commands.renameexercise.RenameExerciseCommand;
 import atlas.application.training.commands.renameworkout.RenameWorkoutCommand;
+import atlas.application.training.commands.scheduleworkout.ScheduleWorkoutCommand;
 import atlas.application.training.commands.setworkoutplan.SetWorkoutPlanCommand;
 import atlas.application.training.commands.startworkoutlog.StartWorkoutLogCommand;
 import atlas.application.training.commands.unarchiveexercise.UnarchiveExerciseCommand;
@@ -138,6 +139,15 @@ public final class TrainingHandlers {
 
         Result<WorkoutDto> result = commands.dispatch(
             new SetWorkoutPlanCommand(workoutId(request), TrainingRequests.plan(body)));
+
+        return workoutOrError(result);
+    }
+
+    public HttpResponse scheduleWorkout(HttpRequest request) {
+        var body = Json.parse(request.body());
+
+        Result<WorkoutDto> result = commands.dispatch(
+            new ScheduleWorkoutCommand(workoutId(request), Values.weekdays(body, "days")));
 
         return workoutOrError(result);
     }

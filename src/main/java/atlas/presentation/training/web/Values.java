@@ -3,11 +3,15 @@ package atlas.presentation.training.web;
 import atlas.domain.sharedkernel.exceptions.FormatException;
 import atlas.domain.training.enums.Metric;
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Los valores tal y como llegan por HTTP en este contexto. No se comparte con los demas:
@@ -90,6 +94,33 @@ public final class Values {
         }
 
         return (List<Map<String, Object>>) items;
+    }
+
+    /** Los dias vienen por nombre ingles ("MONDAY"): es como los escribe DayOfWeek. */
+    public static Set<DayOfWeek> weekdays(Map<String, Object> body, String field) {
+        var value = body.get(field);
+        if (value == null) {
+            return Set.of();
+        }
+
+        if (!(value instanceof List<?> items)) {
+            throw new FormatException("'" + field + "' must be a list of weekday names.");
+        }
+
+        var days = new LinkedHashSet<DayOfWeek>();
+        for (var item : items) {
+            if (!(item instanceof String text)) {
+                throw new FormatException("'" + field + "' must be a list of weekday names.");
+            }
+
+            try {
+                days.add(DayOfWeek.valueOf(text.trim().toUpperCase(Locale.ROOT)));
+            } catch (IllegalArgumentException e) {
+                throw new FormatException("'" + text + "' is not a weekday name.");
+            }
+        }
+
+        return days;
     }
 
     public static LocalDate date(Map<String, Object> body, String field) {

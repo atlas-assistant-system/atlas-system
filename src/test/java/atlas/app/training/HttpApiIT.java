@@ -237,6 +237,37 @@ class HttpApiIT {
     }
 
     @Test
+    void shouldAssignAWorkoutToTheDaysOfTheWeekItIsTrainedOn() throws Exception {
+        var workout = json(send("POST", "/training/workouts", "{\"name\":\"Empuje\"}")).get("id");
+
+        var scheduled = json(send("PUT", "/training/workouts/" + workout + "/schedule",
+            "{\"days\":[\"THURSDAY\",\"MONDAY\"]}"));
+
+        assertThat(scheduled.get("days")).isEqualTo(List.of("MONDAY", "THURSDAY"));
+    }
+
+    @Test
+    void shouldLeaveAWorkoutOffTheWeekWhenTheDaysAreCleared() throws Exception {
+        var workout = json(send("POST", "/training/workouts", "{\"name\":\"Empuje\"}")).get("id");
+        send("PUT", "/training/workouts/" + workout + "/schedule", "{\"days\":[\"MONDAY\"]}");
+
+        var cleared = json(send("PUT", "/training/workouts/" + workout + "/schedule",
+            "{\"days\":[]}"));
+
+        assertThat(cleared.get("days")).isEqualTo(List.of());
+    }
+
+    @Test
+    void shouldRejectSomethingThatIsNotAWeekday() throws Exception {
+        var workout = json(send("POST", "/training/workouts", "{\"name\":\"Empuje\"}")).get("id");
+
+        var response = send("PUT", "/training/workouts/" + workout + "/schedule",
+            "{\"days\":[\"LUNES\"]}");
+
+        assertThat(response.statusCode()).isEqualTo(400);
+    }
+
+    @Test
     void shouldRejectAPlanWithASetCountNobodyDoes() throws Exception {
         var press = anExercise("Press banca", "LOAD");
         var workout = json(send("POST", "/training/workouts", "{\"name\":\"Empuje\"}")).get("id");

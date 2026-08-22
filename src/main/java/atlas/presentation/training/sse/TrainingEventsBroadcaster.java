@@ -12,6 +12,7 @@ import atlas.domain.training.events.WorkoutDefinedEvent;
 import atlas.domain.training.events.WorkoutLogDiscardedEvent;
 import atlas.domain.training.events.WorkoutPlanChangedEvent;
 import atlas.domain.training.events.WorkoutRenamedEvent;
+import atlas.domain.training.events.WorkoutScheduledEvent;
 import atlas.domain.training.events.WorkoutStartedEvent;
 import atlas.presentation.common.web.Json;
 import atlas.presentation.sharedkernel.sse.SseEvent;
@@ -38,6 +39,8 @@ public final class TrainingEventsBroadcaster {
             event -> broadcast(hub, "workoutRenamed", "workoutId", event.workoutId().toString()));
         events.subscribe(WorkoutPlanChangedEvent.class,
             event -> broadcast(hub, "workoutPlanChanged", "workoutId", event.workoutId().toString()));
+        events.subscribe(WorkoutScheduledEvent.class,
+            event -> broadcast(hub, "workoutScheduled", "workoutId", event.workoutId().toString()));
         events.subscribe(WorkoutArchivedEvent.class,
             event -> broadcast(hub, "workoutArchived", "workoutId", event.workoutId().toString()));
 

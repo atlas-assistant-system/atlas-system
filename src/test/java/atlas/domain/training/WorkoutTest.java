@@ -8,14 +8,17 @@ import atlas.domain.training.events.WorkoutArchivedEvent;
 import atlas.domain.training.events.WorkoutDefinedEvent;
 import atlas.domain.training.events.WorkoutPlanChangedEvent;
 import atlas.domain.training.events.WorkoutRenamedEvent;
+import atlas.domain.training.events.WorkoutScheduledEvent;
 import atlas.domain.training.vos.Effort;
 import atlas.domain.training.vos.PlannedLine;
 import atlas.domain.training.vos.PlannedSet;
 import atlas.domain.training.vos.SetCount;
 import atlas.domain.training.vos.WorkoutName;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -180,11 +183,56 @@ class WorkoutTest {
         var line = new PlannedExercise(
             PlannedExerciseId.of(UUID.randomUUID()), PRESS, 0, new SetCount(4), EIGHT_AT_SEVENTY);
 
-        var workout = Workout.rehydrate(ID, new WorkoutName("Empuje"), List.of(line), true);
+        var workout = Workout.rehydrate(
+            ID, new WorkoutName("Empuje"), List.of(line), Set.of(DayOfWeek.MONDAY), true);
 
         assertThat(workout.plan()).containsExactly(line);
+        assertThat(workout.days()).containsExactly(DayOfWeek.MONDAY);
         assertThat(workout.isArchived()).isTrue();
         assertThat(workout.pendingEvents()).isEmpty();
+    }
+
+    @Test
+    void shouldAssignTheWorkoutToTheDaysOfTheWeekItIsTrainedOn() {
+        var workout = define();
+
+        var scheduled = workout.scheduleOn(Set.of(DayOfWeek.MONDAY, DayOfWeek.THURSDAY), NOW);
+
+        assertThat(scheduled.isSuccess()).isTrue();
+        assertThat(workout.days()).containsExactly(DayOfWeek.MONDAY, DayOfWeek.THURSDAY);
+        assertThat(workout.isScheduledOn(DayOfWeek.MONDAY)).isTrue();
+        assertThat(workout.isScheduledOn(DayOfWeek.TUESDAY)).isFalse();
+        assertThat(workout.pendingEvents()).contains(new WorkoutScheduledEvent(ID, NOW));
+    }
+
+    @Test
+    void shouldLeaveTheWorkoutOffTheWeekWhenNoDayIsGiven() {
+        var workout = define();
+        workout.scheduleOn(Set.of(DayOfWeek.MONDAY), NOW);
+
+        workout.scheduleOn(Set.of(), NOW);
+
+        assertThat(workout.days()).isEmpty();
+        assertThat(workout.isScheduledOn(DayOfWeek.MONDAY)).isFalse();
+    }
+
+    @Test
+    void shouldKeepTheDaysSortedSoTheWeekAlwaysReadsInOrder() {
+        var workout = define();
+
+        workout.scheduleOn(Set.of(DayOfWeek.FRIDAY, DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY), NOW);
+
+        assertThat(workout.days())
+            .containsExactly(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY);
+    }
+
+    @Test
+    void shouldNotScheduleAnArchivedWorkout() {
+        var workout = define();
+        workout.archive(NOW);
+
+        assertThat(workout.scheduleOn(Set.of(DayOfWeek.MONDAY), NOW).error())
+            .isEqualTo(WorkoutErrors.ALREADY_ARCHIVED);
     }
 
     private static Workout define() {

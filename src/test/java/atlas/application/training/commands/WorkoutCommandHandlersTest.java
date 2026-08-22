@@ -13,6 +13,8 @@ import atlas.application.training.commands.defineworkout.DefineWorkoutCommand;
 import atlas.application.training.commands.defineworkout.DefineWorkoutCommandHandler;
 import atlas.application.training.commands.renameworkout.RenameWorkoutCommand;
 import atlas.application.training.commands.renameworkout.RenameWorkoutCommandHandler;
+import atlas.application.training.commands.scheduleworkout.ScheduleWorkoutCommand;
+import atlas.application.training.commands.scheduleworkout.ScheduleWorkoutCommandHandler;
 import atlas.application.training.commands.setworkoutplan.SetWorkoutPlanCommand;
 import atlas.application.training.commands.setworkoutplan.SetWorkoutPlanCommandHandler;
 import atlas.application.training.ports.ExerciseRepository;
@@ -30,10 +32,12 @@ import atlas.domain.training.vos.WorkoutName;
 import atlas.support.builders.UnitOfWorkStub;
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +59,8 @@ class WorkoutCommandHandlersTest {
         new DefineWorkoutCommandHandler(unitOfWork, CLOCK);
     private final RenameWorkoutCommandHandler rename =
         new RenameWorkoutCommandHandler(unitOfWork, CLOCK);
+    private final ScheduleWorkoutCommandHandler schedule =
+        new ScheduleWorkoutCommandHandler(unitOfWork, CLOCK);
     private final ArchiveWorkoutCommandHandler archive =
         new ArchiveWorkoutCommandHandler(unitOfWork, CLOCK);
     private final SetWorkoutPlanCommandHandler setPlan = new SetWorkoutPlanCommandHandler(
@@ -174,6 +180,29 @@ class WorkoutCommandHandlersTest {
     }
 
     @Test
+    void shouldAssignAWorkoutToTheDaysOfTheWeekItIsTrainedOn() {
+        var workout = aWorkout(false);
+        when(workouts.get(ID)).thenReturn(Optional.of(workout));
+
+        var result = schedule.handle(
+            new ScheduleWorkoutCommand(ID, Set.of(DayOfWeek.MONDAY, DayOfWeek.THURSDAY)));
+
+        assertThat(result.value().days()).containsExactly("MONDAY", "THURSDAY");
+        verify(workouts).update(workout);
+    }
+
+    @Test
+    void shouldNotScheduleAWorkoutThatIsNotThere() {
+        when(workouts.get(ID)).thenReturn(Optional.empty());
+
+        var result = schedule.handle(
+            new ScheduleWorkoutCommand(ID, Set.of(DayOfWeek.MONDAY)));
+
+        assertThat(result.error()).isEqualTo(WorkoutErrors.notFound(ID));
+        verify(workouts, never()).update(any());
+    }
+
+    @Test
     void shouldArchiveAnExistingWorkout() {
         var workout = aWorkout(false);
         when(workouts.get(ID)).thenReturn(Optional.of(workout));
@@ -184,7 +213,7 @@ class WorkoutCommandHandlersTest {
     }
 
     private static Workout aWorkout(boolean archived) {
-        return Workout.rehydrate(ID, new WorkoutName("Dia de empuje"), List.of(), archived);
+        return Workout.rehydrate(ID, new WorkoutName("Dia de empuje"), List.of(), Set.of(), archived);
     }
 
     private static Exercise anExercise(boolean archived) {
