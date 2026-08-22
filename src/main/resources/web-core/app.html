@@ -318,6 +318,10 @@
             <p class="label">A&ntilde;adir consumo</p>
             <form id="nutrition-intake-form" class="nutrition-form" autocomplete="off">
                 <div class="nutrition-form-row">
+                    <label>Calor&iacute;as
+                        <input name="calories" type="number" min="0" max="20000" step="1" value="0"
+                               required>
+                    </label>
                     <label>Prote&iacute;na
                         <input name="protein" type="number" min="0" max="2000" step="1" value="0">
                     </label>
@@ -329,7 +333,7 @@
                     </label>
                 </div>
                 <p class="nutrition-live">
-                    <b id="nutrition-live-calories">0</b> kcal
+                    Con esos macros ser&iacute;an <b id="nutrition-live-calories">0</b> kcal
                 </p>
                 <input name="note" type="text" maxlength="140" placeholder="Qu&eacute; era (opcional)"
                        aria-label="Nota del consumo">
@@ -359,6 +363,10 @@
                     </label>
                 </div>
                 <div class="nutrition-form-row">
+                    <label>Calor&iacute;as al d&iacute;a
+                        <input name="calories" type="number" min="0" max="20000" step="1" value="0"
+                               required>
+                    </label>
                     <label>Prote&iacute;na
                         <input name="protein" type="number" min="0" max="2000" step="1" value="0">
                     </label>

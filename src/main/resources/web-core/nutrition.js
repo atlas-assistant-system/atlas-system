@@ -146,12 +146,12 @@
 
         const amount = document.createElement('span');
         amount.className = 'nutrition-macro-amount';
-        amount.textContent = day.target
-            ? day.consumed[macro.key] + ' / ' + day.target[macro.key] + ' g'
-            : day.consumed[macro.key] + ' g';
+        amount.textContent = day.targetMacros
+            ? day.consumedMacros[macro.key] + ' / ' + day.targetMacros[macro.key] + ' g'
+            : day.consumedMacros[macro.key] + ' g';
 
-        const share = day.target && day.target[macro.key] > 0
-            ? 100 * day.consumed[macro.key] / day.target[macro.key]
+        const share = day.targetMacros && day.targetMacros[macro.key] > 0
+            ? 100 * day.consumedMacros[macro.key] / day.targetMacros[macro.key]
             : 0;
 
         const bar = document.createElement('div');
@@ -230,7 +230,7 @@
 
         const calories = document.createElement('span');
         calories.className = 'nutrition-intake-calories';
-        calories.textContent = kcal(intake.macros.calories);
+        calories.textContent = kcal(intake.calories);
 
         item.append(what, detail, calories, removeButton(
             'Borrar ' + (intake.note || 'el consumo'),
@@ -249,7 +249,7 @@
 
         const calories = document.createElement('span');
         calories.className = 'nutrition-day-calories';
-        calories.textContent = kcal(day.consumed.calories);
+        calories.textContent = kcal(day.consumedCalories);
 
         const bar = document.createElement('div');
         bar.className = 'nutrition-bar';
@@ -345,13 +345,13 @@
      */
     function renderGauge(day) {
         gauge.replaceChildren();
-        if (!day.target) return;
+        if (day.targetCalories === null) return;
 
         const { width, height, from, peak, to } = GAUGE;
         const canvas = svg('svg', {
             viewBox: `0 0 ${width} ${height}`,
             role: 'img',
-            'aria-label': `${number(day.consumed.calories)} de ${number(day.target.calories)} kcal`,
+            'aria-label': `${number(day.consumedCalories)} de ${number(day.targetCalories)} kcal`,
         });
         const shape = `M ${from[0]} ${from[1]} Q ${peak[0]} ${peak[1]} ${to[0]} ${to[1]}`;
 
@@ -365,7 +365,7 @@
         const share = value => Math.max(0, Math.min(1, value / scale));
         const length = track.getTotalLength();
         progress.style.strokeDasharray = length;
-        progress.style.strokeDashoffset = length * (1 - share(day.consumed.calories));
+        progress.style.strokeDashoffset = length * (1 - share(day.consumedCalories));
 
         for (const bound of [day.lowerCalories, day.upperCalories]) {
             const at = track.getPointAtLength(length * share(bound));
@@ -388,12 +388,12 @@
         selected = day.date;
         dateLabel.textContent = longDayText(day.date);
         intakesLabel.textContent = day.date === isoOf(new Date()) ? 'Hoy' : longDayText(day.date);
-        noPlan.hidden = Boolean(day.target);
+        noPlan.hidden = day.targetCalories !== null;
 
-        headline.textContent = day.target
-            ? number(day.consumed.calories) + ' / ' + number(day.target.calories)
-            : number(day.consumed.calories);
-        headline.dataset.status = day.target && day.overBudget ? 'EXCEEDED' : '';
+        headline.textContent = day.targetCalories === null
+            ? number(day.consumedCalories)
+            : number(day.consumedCalories) + ' / ' + number(day.targetCalories);
+        headline.dataset.status = day.overBudget ? 'EXCEEDED' : '';
 
         renderGauge(day);
         replace(macroList, MACROS.map(macro => macroColumn(day, macro)));
@@ -419,7 +419,7 @@
     function renderPlan(plan) {
         planSummary.textContent = plan
             ? plan.goalLabel + ': ' + plan.startWeight + ' → ' + plan.targetWeight
-                + ' kg · ' + kcal(plan.dailyMacros.calories) + ' al día'
+                + ' kg · ' + kcal(plan.dailyCalories) + ' al día'
             : 'Sin plan.';
     }
 
@@ -454,18 +454,20 @@
 
     async function refreshSummary() {
         const day = await read('/nutrition/today');
-        if (summaryEaten) summaryEaten.textContent = kcal(day.consumed.calories);
-        if (summaryQuota) summaryQuota.textContent = day.target ? kcal(day.target.calories) : '—';
+        if (summaryEaten) summaryEaten.textContent = kcal(day.consumedCalories);
+        if (summaryQuota) {
+            summaryQuota.textContent = day.targetCalories === null ? '—' : kcal(day.targetCalories);
+        }
         if (summaryRemaining) {
-            summaryRemaining.textContent = day.target
-                ? kcal(Math.abs(day.remaining.calories))
-                : kcal(day.consumed.calories);
+            summaryRemaining.textContent = day.targetCalories === null
+                ? kcal(day.consumedCalories)
+                : kcal(Math.abs(day.remainingCalories));
             summaryRemaining.classList.toggle('negative', Boolean(day.overBudget));
         }
         if (summaryGoal) {
-            summaryGoal.textContent = day.target
-                ? (day.overBudget ? 'De más hoy' : 'Te quedan hoy')
-                : 'Sin plan';
+            summaryGoal.textContent = day.targetCalories === null
+                ? 'Sin plan'
+                : (day.overBudget ? 'De más hoy' : 'Te quedan hoy');
         }
         if (summaryWeight) {
             const progress = await readOptional('/nutrition/progress');
@@ -506,6 +508,7 @@
     intakeForm.addEventListener('input', renderLiveCalories);
 
     onSubmit(intakeForm, fields => write('POST', '/nutrition/intakes', {
+        calories: grams(fields.calories.value),
         protein: grams(fields.protein.value),
         carbs: grams(fields.carbs.value),
         fat: grams(fields.fat.value),
@@ -516,6 +519,7 @@
     onSubmit(planForm, fields => write('POST', '/nutrition/plan', {
         startWeight: weight(fields.startWeight.value),
         targetWeight: weight(fields.targetWeight.value),
+        calories: grams(fields.calories.value),
         protein: grams(fields.protein.value),
         carbs: grams(fields.carbs.value),
         fat: grams(fields.fat.value),
