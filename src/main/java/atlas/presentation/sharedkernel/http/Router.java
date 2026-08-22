@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,12 +30,12 @@ public final class Router implements HttpHandler {
 
     private final List<Route> routes;
 
-    private Router(List<Route> routes) {
+    Router(List<Route> routes) {
         this.routes = routes;
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static RouterBuilder builder() {
+        return new RouterBuilder();
     }
 
     public HttpResponse dispatch(HttpRequest request) {
@@ -222,29 +221,4 @@ public final class Router implements HttpHandler {
         }
     }
 
-    private static final class BodyTooLargeException extends RuntimeException {
-
-        private BodyTooLargeException() {
-            super("The request body exceeds " + MAX_BODY_BYTES + " bytes.");
-        }
-    }
-
-    public static final class Builder {
-
-        private final List<Route> routes = new ArrayList<>();
-
-        private Builder() {}
-
-        public Builder mount(Routes mounted) {
-            ObjectGuard.notNull(mounted, "mounted");
-
-            routes.addAll(mounted.all());
-
-            return this;
-        }
-
-        public Router build() {
-            return new Router(List.copyOf(routes));
-        }
-    }
 }

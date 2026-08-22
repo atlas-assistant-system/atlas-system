@@ -6,23 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class SseClientTest {
-
-    private static final class CountingStream extends OutputStream {
-
-        private final AtomicInteger closes = new AtomicInteger();
-
-        @Override
-        public void write(int b) {}
-
-        @Override
-        public void close() {
-            closes.incrementAndGet();
-        }
-    }
 
     @Test
     void shouldCloseTheUnderlyingStreamOnlyOnce() {

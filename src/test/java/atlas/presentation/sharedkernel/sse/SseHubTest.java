@@ -3,20 +3,10 @@ package atlas.presentation.sharedkernel.sse;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
 class SseHubTest {
-
-    private static final class BrokenPipe extends OutputStream {
-
-        @Override
-        public void write(int b) throws IOException {
-            throw new IOException("broken pipe");
-        }
-    }
 
     private final SseHub hub = new SseHub();
 

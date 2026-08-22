@@ -54,7 +54,7 @@ public final class SseHub {
         }
     }
 
-    private int deliver(Delivery delivery) {
+    private int deliver(SseDelivery delivery) {
         var delivered = 0;
 
         for (var entry : clients.entrySet()) {
@@ -68,11 +68,5 @@ public final class SseHub {
         }
 
         return delivered;
-    }
-
-    @FunctionalInterface
-    private interface Delivery {
-
-        void to(SseClient client) throws IOException;
     }
 }
