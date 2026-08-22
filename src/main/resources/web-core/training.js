@@ -9,11 +9,32 @@
     const exerciseForm = document.getElementById('training-exercise-form');
     const setForm = document.getElementById('training-set-form');
     const setFormExercise = document.getElementById('training-set-exercise');
+    const workoutForm = document.getElementById('training-workout-form');
+    const editor = document.getElementById('training-editor');
+    const editorName = document.getElementById('training-editor-name');
+    const editorDays = document.getElementById('training-editor-days');
+    const editorPlan = document.getElementById('training-editor-plan');
+    const editorEmpty = document.getElementById('training-editor-empty');
+    const lineForm = document.getElementById('training-line-form');
     let started = false;
 
     /** Solo un entreno abierto a la vez en pantalla; si hay dos hoy, se ve el ultimo. */
     let current = null;
     let exercises = new Map();
+
+    /** La rutina que se esta editando. Sobrevive a los refrescos que llegan por SSE. */
+    let editing = null;
+    let workouts = new Map();
+
+    const WEEKDAYS = [
+        { key: 'MONDAY', label: 'L' },
+        { key: 'TUESDAY', label: 'M' },
+        { key: 'WEDNESDAY', label: 'X' },
+        { key: 'THURSDAY', label: 'J' },
+        { key: 'FRIDAY', label: 'V' },
+        { key: 'SATURDAY', label: 'S' },
+        { key: 'SUNDAY', label: 'D' },
+    ];
 
     const METRICS = [
         { key: 'LOAD', label: 'Carga' },
@@ -183,11 +204,26 @@
         renderSets(current);
     }
 
-    function renderStartBar(workouts) {
-        const buttons = workouts.map(workout => {
+    /** getDay() empieza en domingo; la semana de DayOfWeek empieza en lunes. */
+    function today() {
+        return WEEKDAYS[(new Date().getDay() + 6) % 7].key;
+    }
+
+    /*
+     * Lo que toca hoy va primero y marcado: si "Empuje" esta asignado al lunes, el lunes es
+     * lo que el espejo ofrece. Sigue siendo un boton, no una imposicion: entrenar otra cosa
+     * vale, y el cumplimiento no se mide aqui sino en rutinas.
+     */
+    function renderStartBar(plans) {
+        const day = today();
+        const ordered = [...plans].sort(
+            (left, right) => Number(right.days.includes(day)) - Number(left.days.includes(day)));
+
+        const buttons = ordered.map(workout => {
             const node = document.createElement('button');
             node.type = 'button';
             node.textContent = workout.name;
+            if (workout.days.includes(day)) node.dataset.today = 'true';
             node.addEventListener('click', () => guard(
                 () => write('POST', '/training/logs', { workoutId: workout.id })));
             return node;
@@ -223,44 +259,137 @@
             return item;
         }));
 
-        setFormExercise.replaceChildren(...list.map(exercise => {
+        const options = () => list.map(exercise => {
             const option = document.createElement('option');
             option.value = exercise.id;
             option.textContent = exercise.name;
             return option;
-        }));
+        });
+
+        setFormExercise.replaceChildren(...options());
+        lineForm.elements.exerciseId.replaceChildren(...options());
     }
 
-    function renderWorkouts(workouts) {
-        workoutList.replaceChildren(...workouts.map(workout => {
+    function dayLabels(workout) {
+        return WEEKDAYS
+            .filter(day => workout.days.includes(day.key))
+            .map(day => day.label)
+            .join(' ');
+    }
+
+    function renderWorkouts(plans) {
+        workouts = new Map(plans.map(workout => [workout.id, workout]));
+
+        workoutList.replaceChildren(...plans.map(workout => {
             const item = document.createElement('li');
             item.className = 'training-item';
+            if (workout.id === editing) item.dataset.editing = 'true';
 
             const name = document.createElement('span');
             name.className = 'training-item-name';
             name.textContent = workout.name;
 
-            const size = document.createElement('span');
-            size.className = 'training-item-detail';
-            size.textContent = workout.plan.length + ' ejercicios';
+            const detail = document.createElement('span');
+            detail.className = 'training-item-detail';
+            detail.textContent = dayLabels(workout) || workout.plan.length + ' ejercicios';
 
-            item.append(name, size, removeButton(
+            item.append(name, detail, removeButton(
                 'Archivar ' + workout.name,
                 () => write('DELETE', '/training/workouts/' + workout.id)));
+
+            item.addEventListener('click', event => {
+                if (event.target.closest('.training-remove')) return;
+                editing = editing === workout.id ? null : workout.id;
+                renderWorkouts(plans);
+                renderEditor();
+            });
 
             return item;
         }));
     }
 
+    /* --- El editor de una rutina: sus dias de la semana y sus lineas --- */
+
+    function planLines(workout) {
+        return workout.plan.map(line => ({
+            exerciseId: line.exerciseId,
+            sets: line.sets,
+            target: line.target,
+        }));
+    }
+
+    /** El plan se fija de una pieza, asi que anadir y quitar reenvian la lista entera. */
+    function savePlan(workout, lines) {
+        return write('PUT', '/training/workouts/' + workout.id + '/plan', { plan: lines });
+    }
+
+    function renderDays(workout) {
+        editorDays.replaceChildren(...WEEKDAYS.map(day => {
+            const node = document.createElement('button');
+            node.type = 'button';
+            node.className = 'training-day';
+            node.textContent = day.label;
+            node.setAttribute('aria-label', day.key);
+            node.setAttribute('aria-pressed', String(workout.days.includes(day.key)));
+            node.addEventListener('click', () => guard(() => {
+                const days = workout.days.includes(day.key)
+                    ? workout.days.filter(each => each !== day.key)
+                    : [...workout.days, day.key];
+
+                return write('PUT', '/training/workouts/' + workout.id + '/schedule', { days });
+            }));
+
+            return node;
+        }));
+    }
+
+    /** "4 × 12 reps" o "4 × 70 kg × 12": como se escribe una rutina en papel. */
+    function lineText(line) {
+        return line.sets + ' × ' + effortText(line.target, metricOf(line.exerciseId));
+    }
+
+    function renderPlan(workout) {
+        editorPlan.replaceChildren(...workout.plan.map((line, index) => {
+            const item = document.createElement('li');
+            item.className = 'training-item';
+
+            const name = document.createElement('span');
+            name.className = 'training-item-name';
+            name.textContent = nameOf(line.exerciseId);
+
+            const detail = document.createElement('span');
+            detail.className = 'training-item-detail';
+            detail.textContent = lineText(line);
+
+            item.append(name, detail, removeButton('Quitar del plan', () => savePlan(
+                workout, planLines(workout).filter((each, position) => position !== index))));
+
+            return item;
+        }));
+
+        editorEmpty.hidden = workout.plan.length > 0;
+    }
+
+    function renderEditor() {
+        const workout = editing === null ? null : workouts.get(editing);
+        editor.hidden = !workout;
+        if (!workout) return;
+
+        editorName.textContent = workout.name;
+        renderDays(workout);
+        renderPlan(workout);
+    }
+
     async function refresh() {
-        const [list, workouts] = await Promise.all([
+        const [list, plans] = await Promise.all([
             read('/training/exercises'),
             read('/training/workouts'),
         ]);
 
         renderExercises(list);
-        renderWorkouts(workouts);
-        renderStartBar(workouts);
+        renderWorkouts(plans);
+        renderEditor();
+        renderStartBar(plans);
         renderToday(await read('/training/today'));
     }
 
@@ -286,6 +415,26 @@
         name: fields.name.value.trim(),
         metric: fields.metric.value,
     }));
+
+    onSubmit(workoutForm, fields => write('POST', '/training/workouts', {
+        name: fields.name.value.trim(),
+    }));
+
+    /* "Press de banca 4x12" es una linea: el ejercicio, cuantas series y que hay en cada una. */
+    onSubmit(lineForm, fields => {
+        const workout = workouts.get(editing);
+
+        return savePlan(workout, [...planLines(workout), {
+            exerciseId: fields.exerciseId.value,
+            sets: count(fields.sets.value),
+            target: {
+                load: load(fields.load.value),
+                reps: count(fields.reps.value),
+                seconds: count(fields.seconds.value),
+                meters: count(fields.meters.value),
+            },
+        }]);
+    });
 
     /*
      * Una serie del guion se rellena (PUT sobre su id); una fuera del guion se anade (POST).
@@ -314,8 +463,8 @@
         const events = new EventSource('/events/training');
         const reload = () => guard(refresh);
         ['exerciseDefined', 'exerciseRenamed', 'exerciseArchived', 'exerciseUnarchived',
-            'workoutDefined', 'workoutRenamed', 'workoutPlanChanged', 'workoutArchived',
-            'workoutStarted', 'setRecorded', 'setRemoved', 'workoutDiscarded']
+            'workoutDefined', 'workoutRenamed', 'workoutPlanChanged', 'workoutScheduled',
+            'workoutArchived', 'workoutStarted', 'setRecorded', 'setRemoved', 'workoutDiscarded']
             .forEach(name => events.addEventListener(name, reload));
     }
 

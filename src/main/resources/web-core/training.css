@@ -250,3 +250,46 @@
     border-color: var(--training-accent);
     color: var(--training-accent);
 }
+
+/* --- El editor de una rutina --- */
+
+.training-editor {
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* La rutina que se esta editando: sin esto no se sabe de quien es el plan de abajo. */
+.training-item[data-editing="true"] .training-item-name {
+    color: var(--training-accent);
+}
+
+.training-days {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 0.9rem;
+}
+
+.training-day {
+    flex: 1 1 0;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.3rem;
+    color: inherit;
+    font: inherit;
+    padding: 0.35rem 0;
+    cursor: pointer;
+    opacity: 0.4;
+}
+
+.training-day[aria-pressed="true"] {
+    border-color: var(--training-accent);
+    color: var(--training-accent);
+    opacity: 1;
+}
+
+/* Lo que toca hoy: el boton que el espejo quiere que pulses. */
+.training-start button[data-today="true"] {
+    border-color: var(--training-accent);
+    color: var(--training-accent);
+}

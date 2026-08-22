@@ -428,6 +428,38 @@
 
             <p class="label">Rutinas</p>
             <ul id="training-workouts" class="training-list"></ul>
+
+            <form id="training-workout-form" class="training-form" autocomplete="off">
+                <div class="training-form-row">
+                    <input name="name" placeholder="Empuje" aria-label="Nombre de la rutina" required>
+                </div>
+                <button type="submit">Anadir rutina</button>
+                <p class="training-form-error"></p>
+            </form>
+
+            <div id="training-editor" class="training-editor" hidden>
+                <p class="label"><span id="training-editor-name"></span></p>
+
+                <div id="training-editor-days" class="training-days"></div>
+
+                <ul id="training-editor-plan" class="training-list"></ul>
+                <p id="training-editor-empty" class="training-empty" hidden>
+                    Esta rutina no tiene ejercicios todavia.
+                </p>
+
+                <form id="training-line-form" class="training-form" autocomplete="off">
+                    <div class="training-form-row">
+                        <select name="exerciseId" aria-label="Ejercicio"></select>
+                        <input name="sets" inputmode="numeric" placeholder="series" aria-label="Series" required>
+                        <input name="reps" inputmode="numeric" placeholder="reps" aria-label="Repeticiones">
+                        <input name="load" inputmode="decimal" placeholder="kg" aria-label="Carga en kilos">
+                        <input name="seconds" inputmode="numeric" placeholder="seg" aria-label="Segundos">
+                        <input name="meters" inputmode="numeric" placeholder="m" aria-label="Metros">
+                    </div>
+                    <button type="submit">Anadir al plan</button>
+                    <p class="training-form-error"></p>
+                </form>
+            </div>
         </section>
     </div>
 </main>
