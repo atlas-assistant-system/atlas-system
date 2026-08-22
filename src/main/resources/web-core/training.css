@@ -293,3 +293,34 @@
     border-color: var(--training-accent);
     color: var(--training-accent);
 }
+
+/*
+ * Con el catalogo lleno, 12 rem de lista dejaban las fichas de metrica pegadas al ultimo
+ * ejercicio: la lista respira segun la altura de la pantalla y cada fila de fichas va sola.
+ */
+.training-list {
+    max-height: min(24rem, 34vh);
+    margin-bottom: 0.4rem;
+}
+
+.training-sets {
+    max-height: min(26rem, 40vh);
+}
+
+.training-section > .label:not(:first-child) {
+    margin-top: 1.8rem;
+}
+
+.training-form {
+    margin-top: 0.9rem;
+}
+
+.training-form-row .chips {
+    flex: 1 0 100%;
+    max-height: 8.5rem;
+    overflow-y: auto;
+}
+
+.training-form input {
+    flex: 1 1 8rem;
+}
