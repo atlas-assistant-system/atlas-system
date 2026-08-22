@@ -1,0 +1,383 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Atlas — Entrenamiento",
+    "version": "1.0.0",
+    "description": "Qué hiciste y con cuánto peso. El cumplimiento (si entrenaste hoy, cuántas veces por semana) vive en el contexto de rutinas, no aquí. La carga viaja en kilos como cadena (\"72.5\") y se guarda en gramos."
+  },
+  "servers": [{ "url": "/" }],
+  "tags": [
+    { "name": "exercises", "description": "El catálogo. Tecleado por ti: no hay base de datos de ejercicios." },
+    { "name": "workouts", "description": "Las plantillas. Una línea es 4 × (8 reps @ 70 kg)." },
+    { "name": "logs", "description": "Los entrenos hechos, con lo previsto congelado junto a lo real." }
+  ],
+  "paths": {
+    "/training/exercises": {
+      "get": {
+        "tags": ["exercises"],
+        "summary": "El catálogo",
+        "parameters": [
+          { "name": "archived", "in": "query", "schema": { "type": "boolean", "default": false },
+            "description": "true incluye los archivados" }
+        ],
+        "responses": {
+          "200": { "description": "Ejercicios, por nombre",
+            "content": { "application/json": { "schema": {
+              "type": "array", "items": { "$ref": "#/components/schemas/Exercise" } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["exercises"],
+        "summary": "Definir un ejercicio",
+        "description": "La métrica se fija aquí y no se cambia nunca: cambiarla con historial detrás cambiaría el significado de lo ya registrado.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object", "required": ["name", "metric"],
+          "properties": {
+            "name": { "type": "string", "maxLength": 60, "example": "Press banca" },
+            "metric": { "$ref": "#/components/schemas/Metric" }
+          } } } } },
+        "responses": {
+          "201": { "description": "Creado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Exercise" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "description": "Ya existe un ejercicio con ese nombre" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/training/exercises/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/ExerciseId" }],
+      "put": {
+        "tags": ["exercises"],
+        "summary": "Renombrar",
+        "description": "Corregir un nombre mal escrito arregla también el pasado: el histórico une por id.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object", "required": ["name"],
+          "properties": { "name": { "type": "string", "maxLength": 60 } } } } } },
+        "responses": {
+          "200": { "description": "Renombrado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Exercise" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Archivado, o el nombre ya es de otro" }
+        }
+      },
+      "delete": {
+        "tags": ["exercises"],
+        "summary": "Archivar",
+        "description": "No borra: un ejercicio archivado no entra en plantillas nuevas, pero el histórico lo conserva.",
+        "responses": {
+          "204": { "description": "Archivado" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Ya estaba archivado" }
+        }
+      }
+    },
+    "/training/exercises/{id}/restore": {
+      "parameters": [{ "$ref": "#/components/parameters/ExerciseId" }],
+      "post": {
+        "tags": ["exercises"],
+        "summary": "Desarchivar",
+        "responses": {
+          "204": { "description": "De vuelta en el catálogo" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "No estaba archivado" }
+        }
+      }
+    },
+    "/training/workouts": {
+      "get": {
+        "tags": ["workouts"],
+        "summary": "Las plantillas",
+        "parameters": [
+          { "name": "archived", "in": "query", "schema": { "type": "boolean", "default": false } }
+        ],
+        "responses": {
+          "200": { "description": "Plantillas con su plan",
+            "content": { "application/json": { "schema": {
+              "type": "array", "items": { "$ref": "#/components/schemas/Workout" } } } } }
+        }
+      },
+      "post": {
+        "tags": ["workouts"],
+        "summary": "Definir una plantilla",
+        "description": "Nace vacía; el plan se fija después con PUT /plan.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object", "required": ["name"],
+          "properties": { "name": { "type": "string", "example": "Día de empuje" } } } } } },
+        "responses": {
+          "201": { "description": "Creada",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Workout" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/training/workouts/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/WorkoutId" }],
+      "get": {
+        "tags": ["workouts"],
+        "summary": "Una plantilla con su plan",
+        "responses": {
+          "200": { "description": "La plantilla",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Workout" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["workouts"],
+        "summary": "Renombrar",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object", "required": ["name"],
+          "properties": { "name": { "type": "string" } } } } } },
+        "responses": {
+          "200": { "description": "Renombrada",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Workout" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Archivada" }
+        }
+      },
+      "delete": {
+        "tags": ["workouts"],
+        "summary": "Archivar",
+        "responses": {
+          "204": { "description": "Archivada" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Ya estaba archivada" }
+        }
+      }
+    },
+    "/training/workouts/{id}/plan": {
+      "parameters": [{ "$ref": "#/components/parameters/WorkoutId" }],
+      "put": {
+        "tags": ["workouts"],
+        "summary": "Fijar el plan entero",
+        "description": "Reemplaza la lista completa, no la fusiona. La posición sale del orden de la lista, así que reordenar es mandarla en otro orden. Una lista vacía vacía el plan.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object", "required": ["plan"],
+          "properties": { "plan": { "type": "array", "items": {
+            "type": "object", "required": ["exerciseId", "sets"],
+            "properties": {
+              "exerciseId": { "type": "string", "example": "E00000010" },
+              "sets": { "type": "integer", "minimum": 1, "maximum": 20, "example": 4 },
+              "target": { "$ref": "#/components/schemas/Effort" }
+            } } } } } } } },
+        "responses": {
+          "200": { "description": "Plan fijado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Workout" } } } },
+          "400": { "description": "Series fuera de rango, carga imposible o ejercicio archivado" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Plantilla archivada" }
+        }
+      }
+    },
+    "/training/logs": {
+      "get": {
+        "tags": ["logs"],
+        "summary": "El histórico",
+        "description": "Sin rango, los últimos 30 días acabando hoy. Del más reciente al más antiguo.",
+        "parameters": [
+          { "name": "from", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "to", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 500 } }
+        ],
+        "responses": {
+          "200": { "description": "Entrenos con sus series",
+            "content": { "application/json": { "schema": {
+              "type": "array", "items": { "$ref": "#/components/schemas/WorkoutLog" } } } } }
+        }
+      },
+      "post": {
+        "tags": ["logs"],
+        "summary": "Empezar un entreno",
+        "description": "Con workoutId, copia el plan de la plantilla y lo congela: editarla después no toca este entreno. Sin workoutId es un entreno libre, y las series se añaden sueltas. Sin performedOn, hoy.",
+        "requestBody": { "content": { "application/json": { "schema": {
+          "type": "object",
+          "properties": {
+            "workoutId": { "type": "string", "nullable": true, "example": "W00000005" },
+            "performedOn": { "type": "string", "format": "date", "nullable": true }
+          } } } } },
+        "responses": {
+          "201": { "description": "Empezado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkoutLog" } } } },
+          "400": { "description": "Fechado en el futuro" },
+          "404": { "description": "La plantilla no existe" }
+        }
+      }
+    },
+    "/training/today": {
+      "get": {
+        "tags": ["logs"],
+        "summary": "Los entrenos de hoy",
+        "description": "Puede haber cero, uno o dos: mañana y tarde son dos entrenos del mismo día.",
+        "responses": {
+          "200": { "description": "Entrenos de hoy",
+            "content": { "application/json": { "schema": {
+              "type": "array", "items": { "$ref": "#/components/schemas/WorkoutLog" } } } } }
+        }
+      }
+    },
+    "/training/logs/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/LogId" }],
+      "get": {
+        "tags": ["logs"],
+        "summary": "Un entreno con sus series",
+        "responses": {
+          "200": { "description": "El entreno",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkoutLog" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["logs"],
+        "summary": "Descartar el entreno entero",
+        "responses": {
+          "204": { "description": "Descartado" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/training/logs/{id}/sets": {
+      "parameters": [{ "$ref": "#/components/parameters/LogId" }],
+      "post": {
+        "tags": ["logs"],
+        "summary": "Una serie fuera del guion",
+        "description": "Queda sin previsto: no había nada contra lo que compararla.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "allOf": [
+            { "type": "object", "required": ["exerciseId"],
+              "properties": { "exerciseId": { "type": "string", "example": "E00000010" } } },
+            { "$ref": "#/components/schemas/Effort" }
+          ] } } } },
+        "responses": {
+          "200": { "description": "Añadida",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkoutLog" } } } },
+          "400": { "description": "La serie no mide nada" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/training/logs/{id}/sets/{setId}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/LogId" },
+        { "name": "setId", "in": "path", "required": true,
+          "schema": { "type": "string", "format": "uuid" } }
+      ],
+      "put": {
+        "tags": ["logs"],
+        "summary": "Registrar o corregir una serie",
+        "description": "Rellena lo realmente levantado. El previsto no se toca: la cuarta serie que se cae a 6 reps queda como 8 previstas y 6 hechas.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "$ref": "#/components/schemas/Effort" } } } },
+        "responses": {
+          "200": { "description": "Registrada",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkoutLog" } } } },
+          "400": { "description": "La serie no mide nada" },
+          "404": { "description": "El entreno o la serie no existen" }
+        }
+      },
+      "delete": {
+        "tags": ["logs"],
+        "summary": "Quitar una serie",
+        "responses": {
+          "204": { "description": "Quitada" },
+          "404": { "description": "El entreno o la serie no existen" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "ExerciseId": { "name": "id", "in": "path", "required": true,
+        "schema": { "type": "string", "example": "E00000010" } },
+      "WorkoutId": { "name": "id", "in": "path", "required": true,
+        "schema": { "type": "string", "example": "W00000005" } },
+      "LogId": { "name": "id", "in": "path", "required": true,
+        "schema": { "type": "string", "example": "T00000003" } }
+    },
+    "responses": {
+      "BadRequest": { "description": "Datos inválidos",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "No existe",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Unauthorized": { "description": "Sin sesión abierta" }
+    },
+    "schemas": {
+      "Metric": {
+        "type": "string",
+        "enum": ["LOAD", "REPS", "TIME", "DISTANCE"],
+        "description": "Qué se mide y, por tanto, qué significa progresar. LOAD compara la carga; REPS las repeticiones (dominadas); TIME los segundos (plancha); DISTANCE los metros."
+      },
+      "Effort": {
+        "type": "object",
+        "description": "Las cuatro medidas con que se mide entrenar. Las que no apliquen van a cero.",
+        "properties": {
+          "load": { "type": "string", "description": "Kilos, con decimales", "example": "72.5" },
+          "reps": { "type": "integer", "example": 8 },
+          "seconds": { "type": "integer", "example": 0 },
+          "meters": { "type": "integer", "example": 0 }
+        }
+      },
+      "Exercise": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "E00000010" },
+          "name": { "type": "string", "example": "Press banca" },
+          "metric": { "$ref": "#/components/schemas/Metric" },
+          "metricLabel": { "type": "string", "example": "Carga" },
+          "archived": { "type": "boolean" }
+        }
+      },
+      "PlannedExercise": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "exerciseId": { "type": "string", "example": "E00000010" },
+          "position": { "type": "integer" },
+          "sets": { "type": "integer", "example": 4 },
+          "target": { "$ref": "#/components/schemas/Effort" }
+        }
+      },
+      "Workout": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "W00000005" },
+          "name": { "type": "string", "example": "Día de empuje" },
+          "archived": { "type": "boolean" },
+          "plan": { "type": "array", "items": { "$ref": "#/components/schemas/PlannedExercise" } }
+        }
+      },
+      "SetLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "exerciseId": { "type": "string", "example": "E00000010" },
+          "position": { "type": "integer" },
+          "planned": { "allOf": [{ "$ref": "#/components/schemas/Effort" }],
+            "nullable": true,
+            "description": "Lo previsto, congelado al empezar. Nulo en una serie fuera del guion." },
+          "actual": { "allOf": [{ "$ref": "#/components/schemas/Effort" }],
+            "nullable": true,
+            "description": "Lo realmente hecho. Nulo mientras la serie está pendiente." }
+        }
+      },
+      "WorkoutLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "T00000003" },
+          "workoutId": { "type": "string", "nullable": true,
+            "description": "Nulo si fue un entreno libre" },
+          "performedOn": { "type": "string", "format": "date" },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "sets": { "type": "array", "items": { "$ref": "#/components/schemas/SetLog" } }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "example": "Workout.SetCountOutOfRange" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}
