@@ -3,12 +3,14 @@ package atlas.application.training.commands.defineexercise;
 import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.application.training.dto.ExerciseDto;
 import atlas.application.training.mappers.TrainingMapper;
+import atlas.application.training.ports.ExerciseRepository;
 import atlas.application.training.ports.TrainingUnitOfWork;
 import atlas.domain.sharedkernel.results.Result;
 import atlas.domain.training.Exercise;
 import atlas.domain.training.ExerciseErrors;
 import atlas.domain.training.vos.ExerciseName;
 import java.time.Clock;
+import java.time.Instant;
 
 public final class DefineExerciseCommandHandler
     implements CommandHandler<DefineExerciseCommand, Result<ExerciseDto>> {
@@ -32,8 +34,9 @@ public final class DefineExerciseCommandHandler
 
         return unitOfWork.execute(() -> {
             var exercises = unitOfWork.exercises();
-            if (exercises.findByName(nameResult.value()).isPresent()) {
-                return Result.failure(ExerciseErrors.NAME_ALREADY_TAKEN);
+            var sameName = exercises.findByName(nameResult.value());
+            if (sameName.isPresent()) {
+                return bringBack(sameName.get(), command, exercises, now);
             }
 
             var defined = Exercise.define(
@@ -47,5 +50,37 @@ public final class DefineExerciseCommandHandler
 
             return Result.success(TrainingMapper.toDto(exercise));
         });
+    }
+
+    /**
+     * Archivar no borra y el nombre sigue cogido, que es lo que mantiene unido el histórico.
+     * Pero entonces volver a darlo de alta no puede ser un callejón sin salida: si el que
+     * tiene el nombre está archivado, definirlo otra vez lo recupera con su id y sus series
+     * detrás, en vez de rebotar con un nombre que ya no se ve en ninguna lista.
+     *
+     * <p>
+     * Con otra métrica no: la de un ejercicio es inmutable porque cambiarla cambiaría el
+     * significado de lo ya registrado. Ahí sí es un conflicto, y con su propio mensaje.
+     */
+    private static Result<ExerciseDto> bringBack(
+        Exercise sameName, DefineExerciseCommand command, ExerciseRepository exercises,
+        Instant now) {
+
+        if (!sameName.isArchived()) {
+            return Result.failure(ExerciseErrors.NAME_ALREADY_TAKEN);
+        }
+
+        if (sameName.metric() != command.metric()) {
+            return Result.failure(ExerciseErrors.NAME_TAKEN_BY_ANOTHER_MEASURE);
+        }
+
+        var restored = sameName.unarchive(now);
+        if (restored.isFailure()) {
+            return Result.failure(restored.error());
+        }
+
+        exercises.update(sameName);
+
+        return Result.success(TrainingMapper.toDto(sameName));
     }
 }

@@ -167,6 +167,32 @@ class ExerciseCommandHandlersTest {
         verify(exercises, never()).update(any());
     }
 
+    @Test
+    void shouldBringBackAnArchivedExerciseInsteadOfRefusingItsName() {
+        var archived = anExercise(true);
+        when(exercises.findByName(new ExerciseName("Press banca")))
+            .thenReturn(Optional.of(archived));
+
+        var result = define.handle(new DefineExerciseCommand("Press banca", Metric.LOAD));
+
+        assertThat(result.value().id()).isEqualTo(ID.toString());
+        assertThat(archived.isArchived()).isFalse();
+        verify(exercises).update(archived);
+        verify(exercises, never()).create(any());
+    }
+
+    @Test
+    void shouldNotBringBackAnArchivedExerciseUnderAnotherMeasure() {
+        when(exercises.findByName(new ExerciseName("Press banca")))
+            .thenReturn(Optional.of(anExercise(true)));
+
+        var result = define.handle(new DefineExerciseCommand("Press banca", Metric.REPS));
+
+        assertThat(result.error()).isEqualTo(ExerciseErrors.NAME_TAKEN_BY_ANOTHER_MEASURE);
+        verify(exercises, never()).update(any());
+        verify(exercises, never()).create(any());
+    }
+
     private static Exercise anExercise(boolean archived) {
         return Exercise.rehydrate(ID, new ExerciseName("Press banca"), Metric.LOAD, archived);
     }

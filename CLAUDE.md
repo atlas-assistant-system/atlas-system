@@ -127,11 +127,14 @@ físico— y su propio bus de comandos y consultas.
   el guion pendiente, sin `planned` es una serie fuera de guion.
   **No hay máquina de estados del entreno** —nada que cerrar— y si entrenas mañana y tarde
   son dos logs del mismo día. Ejercicios y plantillas se archivan, nunca se borran, y el
-  nombre único de un ejercicio sobrevive al archivado para que el histórico siga uniendo.
+  nombre único de un ejercicio sobrevive al archivado para que el histórico siga uniendo;
+  por eso **volver a dar de alta ese nombre recupera el archivado** (mismo id, mismas series)
+  en vez de rebotar, que era un callejón sin salida desde la pestaña. Con otra métrica no:
+  la métrica es inmutable.
   El **ciclo 2** (progresión: mejor marca, histórico por ejercicio y volumen) está diseñado
   en `docs/training-context.md` y sin implementar; no añade dominio, son dos consultas
   sobre `Metric`.
-- **1807 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
+- **1810 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
   ArchUnit.
 - **Mutation testing con PIT** sobre `atlas.domain.*` (excluido el kernel), umbral del 90%: hoy
   el dominio está al 95%, `economy` al 97%, `nutrition` entre el 94% y el 100% y `training`

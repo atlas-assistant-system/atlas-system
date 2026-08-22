@@ -19,6 +19,10 @@ public final class ExerciseErrors {
     public static final Error NAME_ALREADY_TAKEN = Error.conflict(
         "Exercise.NameAlreadyTaken", "There is already an exercise with that name.");
 
+    public static final Error NAME_TAKEN_BY_ANOTHER_MEASURE = Error.conflict(
+        "Exercise.NameTakenByAnotherMeasure",
+        "An archived exercise holds that name under a different measure.");
+
     public static Error notFound(ExerciseId id) {
         return Error.notFound("Exercise.NotFound", "Exercise '" + id + "' was not found.");
     }

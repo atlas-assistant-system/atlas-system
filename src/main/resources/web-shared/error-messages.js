@@ -104,6 +104,7 @@ window.AtlasErrorMessages = {
     'Exercise.AlreadyArchived': 'Ese ejercicio ya está archivado.',
     'Exercise.NotArchived': 'Ese ejercicio no está archivado.',
     'Exercise.NameAlreadyTaken': 'Ya tienes un ejercicio con ese nombre.',
+    'Exercise.NameTakenByAnotherMeasure': 'Tienes uno archivado con ese nombre que mide otra cosa. Usa otro nombre.',
     'Exercise.NotFound': 'Ese ejercicio ya no existe.',
     'Workout.NameRequired': 'Hace falta un nombre para la rutina.',
     'Workout.NameTooLong': 'El nombre es demasiado largo.',

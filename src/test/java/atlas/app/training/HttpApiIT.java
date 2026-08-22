@@ -89,12 +89,24 @@ class HttpApiIT {
     }
 
     @Test
-    void shouldStillHoldTheNameOfAnArchivedExerciseSoTheHistoryKeepsResolving() throws Exception {
+    void shouldBringBackAnArchivedExerciseWhenItsNameIsDefinedAgain() throws Exception {
+        var press = anExercise("Press banca", "LOAD");
+        send("DELETE", "/training/exercises/" + press, null);
+
+        var repeated = json(send("POST", "/training/exercises",
+            "{\"name\":\"Press banca\",\"metric\":\"LOAD\"}"));
+
+        assertThat(repeated.get("id")).isEqualTo(press);
+        assertThat(repeated.get("archived")).isEqualTo(false);
+    }
+
+    @Test
+    void shouldRefuseToBringBackAnArchivedExerciseUnderAnotherMeasure() throws Exception {
         var press = anExercise("Press banca", "LOAD");
         send("DELETE", "/training/exercises/" + press, null);
 
         var repeated = send("POST", "/training/exercises",
-            "{\"name\":\"Press banca\",\"metric\":\"LOAD\"}");
+            "{\"name\":\"Press banca\",\"metric\":\"REPS\"}");
 
         assertThat(repeated.statusCode()).isEqualTo(409);
     }
