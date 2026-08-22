@@ -15,6 +15,10 @@ import atlas.application.routines.ports.RoutineEntryRepository;
 import atlas.application.routines.ports.RoutineRepository;
 import atlas.application.routines.ports.RoutineUnitOfWork;
 import atlas.application.sharedkernel.unitofwork.UnitOfWork;
+import atlas.application.training.ports.ExerciseRepository;
+import atlas.application.training.ports.TrainingUnitOfWork;
+import atlas.application.training.ports.WorkoutLogRepository;
+import atlas.application.training.ports.WorkoutRepository;
 import java.util.function.Supplier;
 
 public final class UnitOfWorkStub {
@@ -65,5 +69,22 @@ public final class UnitOfWorkStub {
         RoutineEntryRepository entries) {
         with(unitOfWork, routines);
         when(unitOfWork.entries()).thenReturn(entries);
+    }
+
+    public static void withExercises(TrainingUnitOfWork unitOfWork, ExerciseRepository exercises) {
+        run(unitOfWork);
+        when(unitOfWork.exercises()).thenReturn(exercises);
+    }
+
+    public static void withWorkouts(TrainingUnitOfWork unitOfWork, WorkoutRepository workouts) {
+        run(unitOfWork);
+        when(unitOfWork.workouts()).thenReturn(workouts);
+    }
+
+    public static void withLogs(
+        TrainingUnitOfWork unitOfWork, WorkoutLogRepository logs, WorkoutRepository workouts) {
+        run(unitOfWork);
+        when(unitOfWork.logs()).thenReturn(logs);
+        when(unitOfWork.workouts()).thenReturn(workouts);
     }
 }
