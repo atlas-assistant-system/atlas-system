@@ -171,6 +171,4 @@ public final class SchemaMigrator {
             LOG.log(Level.WARNING, "Rollback after a failed migration did not succeed");
         }
     }
-
-    private record AppliedMigration(int version, String name, String checksum) {}
 }

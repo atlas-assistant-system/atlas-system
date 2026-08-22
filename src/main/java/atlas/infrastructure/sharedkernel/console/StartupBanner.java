@@ -20,7 +20,7 @@ public final class StartupBanner {
     private static final String GAP = "  ";
 
     private final List<String> wordmark;
-    private final List<Entry> entries = new ArrayList<>();
+    private final List<BannerEntry> entries = new ArrayList<>();
 
     private String color = PRIMARY_BLUE;
     private boolean colored = LogEntryRenderers.colorIsSupported();
@@ -71,7 +71,7 @@ public final class StartupBanner {
         StringGuard.notBlank(label, "label");
         ObjectGuard.notNull(value, "value");
 
-        entries.add(new Entry(label, value));
+        entries.add(new BannerEntry(label, value));
 
         return this;
     }
@@ -123,6 +123,4 @@ public final class StartupBanner {
     private static String pad(String label, int width) {
         return label + " ".repeat(width - label.length());
     }
-
-    private record Entry(String label, String value) {}
 }
