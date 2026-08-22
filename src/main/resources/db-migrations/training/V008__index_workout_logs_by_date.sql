@@ -1,0 +1,1 @@
+CREATE INDEX ix_workout_logs_performed_on ON workout_logs (performed_on)

@@ -1,0 +1,1 @@
+CREATE INDEX ix_set_logs_exercise ON set_logs (exercise_id)

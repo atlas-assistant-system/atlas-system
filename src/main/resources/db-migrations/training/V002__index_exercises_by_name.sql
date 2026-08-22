@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX ux_exercises_name ON exercises (name)
