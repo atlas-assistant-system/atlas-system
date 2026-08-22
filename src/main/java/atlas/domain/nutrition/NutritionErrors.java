@@ -10,5 +10,8 @@ public final class NutritionErrors {
     public static final Error MACROS_MUST_NOT_BE_NEGATIVE =
         Error.validation("Nutrition.MacrosMustNotBeNegative", "Macros are grams, never below zero.");
 
+    public static final Error CALORIES_MUST_NOT_BE_NEGATIVE =
+        Error.validation("Nutrition.CaloriesMustNotBeNegative", "Calories are never below zero.");
+
     private NutritionErrors() {}
 }

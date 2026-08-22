@@ -21,6 +21,7 @@ public final class Plan extends AggregateRoot<PlanId> {
     private final Instant definedAt;
 
     private Weight targetWeight;
+    private Calories dailyCalories;
     private Macros dailyMacros;
     private PlanStatus status;
 
@@ -28,6 +29,7 @@ public final class Plan extends AggregateRoot<PlanId> {
         PlanId id,
         Weight startWeight,
         Weight targetWeight,
+        Calories dailyCalories,
         Macros dailyMacros,
         PlanStatus status,
         LocalDate startedOn,
@@ -35,6 +37,7 @@ public final class Plan extends AggregateRoot<PlanId> {
         super(ObjectGuard.notNull(id, "id"));
         this.startWeight = ObjectGuard.notNull(startWeight, "startWeight");
         this.targetWeight = ObjectGuard.notNull(targetWeight, "targetWeight");
+        this.dailyCalories = ObjectGuard.notNull(dailyCalories, "dailyCalories");
         this.dailyMacros = ObjectGuard.notNull(dailyMacros, "dailyMacros");
         this.status = ObjectGuard.notNull(status, "status");
         this.startedOn = ObjectGuard.notNull(startedOn, "startedOn");
@@ -45,20 +48,22 @@ public final class Plan extends AggregateRoot<PlanId> {
         PlanId id,
         Weight startWeight,
         Weight targetWeight,
+        Calories dailyCalories,
         Macros dailyMacros,
         LocalDate startedOn,
         LocalDate today,
         Instant now) {
 
-        if (dailyMacros.isZero()) {
-            return Result.failure(PlanErrors.MACROS_REQUIRED);
+        if (dailyCalories.isZero()) {
+            return Result.failure(PlanErrors.CALORIES_REQUIRED);
         }
 
         if (startedOn.isAfter(today)) {
             return Result.failure(PlanErrors.CANNOT_START_IN_THE_FUTURE);
         }
 
-        var plan = new Plan(id, startWeight, targetWeight, dailyMacros, PlanStatus.ACTIVE, startedOn, now);
+        var plan = new Plan(
+            id, startWeight, targetWeight, dailyCalories, dailyMacros, PlanStatus.ACTIVE, startedOn, now);
         plan.registerEvent(new PlanDefinedEvent(id, now));
 
         return Result.success(plan);
@@ -68,23 +73,28 @@ public final class Plan extends AggregateRoot<PlanId> {
         PlanId id,
         Weight startWeight,
         Weight targetWeight,
+        Calories dailyCalories,
         Macros dailyMacros,
         PlanStatus status,
         LocalDate startedOn,
         Instant definedAt) {
 
-        return new Plan(id, startWeight, targetWeight, dailyMacros, status, startedOn, definedAt);
+        return new Plan(
+            id, startWeight, targetWeight, dailyCalories, dailyMacros, status, startedOn, definedAt);
     }
 
-    public Result<Void> adjust(Macros newDailyMacros, Weight newTargetWeight, Instant now) {
+    public Result<Void> adjust(
+        Calories newDailyCalories, Macros newDailyMacros, Weight newTargetWeight, Instant now) {
+
         if (isArchived()) {
             return Result.failure(PlanErrors.ALREADY_ARCHIVED);
         }
 
-        if (newDailyMacros.isZero()) {
-            return Result.failure(PlanErrors.MACROS_REQUIRED);
+        if (newDailyCalories.isZero()) {
+            return Result.failure(PlanErrors.CALORIES_REQUIRED);
         }
 
+        this.dailyCalories = newDailyCalories;
         this.dailyMacros = newDailyMacros;
         this.targetWeight = ObjectGuard.notNull(newTargetWeight, "newTargetWeight");
         registerEvent(new PlanAdjustedEvent(id(), now));
@@ -108,7 +118,7 @@ public final class Plan extends AggregateRoot<PlanId> {
     }
 
     public Calories dailyCalories() {
-        return dailyMacros.calories();
+        return dailyCalories;
     }
 
     public boolean isArchived() {

@@ -28,14 +28,6 @@ class MacrosTest {
         assertThat(result.value().isZero()).isTrue();
     }
 
-    @ParameterizedTest
-    @CsvSource({"150, 200, 60, 1940", "0, 0, 0, 0", "0, 0, 100, 900", "100, 0, 0, 400", "0, 100, 0, 400"})
-    void shouldDeriveCaloriesFromTheGrams(int protein, int carbs, int fat, int expectedKcal) {
-        var macros = Macros.create(protein, carbs, fat).value();
-
-        assertThat(macros.calories()).isEqualTo(new Calories(expectedKcal));
-    }
-
     @Test
     void shouldAddEachMacroSeparately() {
         var breakfast = Macros.create(30, 60, 10).value();

@@ -9,10 +9,6 @@ public record Macros(int protein, int carbs, int fat) implements ValueObject {
 
     public static final Macros NONE = new Macros(0, 0, 0);
 
-    private static final int KCAL_PER_PROTEIN_GRAM = 4;
-    private static final int KCAL_PER_CARB_GRAM = 4;
-    private static final int KCAL_PER_FAT_GRAM = 9;
-
     public Macros {
         NumberGuard.notNegative(protein, "protein");
         NumberGuard.notNegative(carbs, "carbs");
@@ -29,11 +25,6 @@ public record Macros(int protein, int carbs, int fat) implements ValueObject {
 
     public Macros plus(Macros other) {
         return new Macros(protein + other.protein, carbs + other.carbs, fat + other.fat);
-    }
-
-    public Calories calories() {
-        return new Calories(
-            protein * KCAL_PER_PROTEIN_GRAM + carbs * KCAL_PER_CARB_GRAM + fat * KCAL_PER_FAT_GRAM);
     }
 
     public boolean isZero() {

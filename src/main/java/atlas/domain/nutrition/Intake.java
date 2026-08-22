@@ -18,12 +18,19 @@ public final class Intake extends AggregateRoot<IntakeId> {
     private final LocalDate consumedOn;
     private final Instant recordedAt;
 
+    private Calories calories;
     private Macros macros;
     private Optional<IntakeNote> note;
 
     private Intake(
-        IntakeId id, Macros macros, Optional<IntakeNote> note, LocalDate consumedOn, Instant recordedAt) {
+        IntakeId id,
+        Calories calories,
+        Macros macros,
+        Optional<IntakeNote> note,
+        LocalDate consumedOn,
+        Instant recordedAt) {
         super(ObjectGuard.notNull(id, "id"));
+        this.calories = ObjectGuard.notNull(calories, "calories");
         this.macros = ObjectGuard.notNull(macros, "macros");
         this.note = ObjectGuard.notNull(note, "note");
         this.consumedOn = ObjectGuard.notNull(consumedOn, "consumedOn");
@@ -32,38 +39,47 @@ public final class Intake extends AggregateRoot<IntakeId> {
 
     public static Result<Intake> record(
         IntakeId id,
+        Calories calories,
         Macros macros,
         Optional<IntakeNote> note,
         LocalDate consumedOn,
         LocalDate today,
         Instant now) {
 
-        if (macros.isZero()) {
-            return Result.failure(IntakeErrors.MACROS_REQUIRED);
+        if (calories.isZero()) {
+            return Result.failure(IntakeErrors.CALORIES_REQUIRED);
         }
 
         if (consumedOn.isAfter(today)) {
             return Result.failure(IntakeErrors.CANNOT_BE_DATED_IN_THE_FUTURE);
         }
 
-        var intake = new Intake(id, macros, note, consumedOn, now);
+        var intake = new Intake(id, calories, macros, note, consumedOn, now);
         intake.registerEvent(new IntakeRecordedEvent(id, now));
 
         return Result.success(intake);
     }
 
     public static Intake rehydrate(
-        IntakeId id, Macros macros, Optional<IntakeNote> note, LocalDate consumedOn, Instant recordedAt) {
+        IntakeId id,
+        Calories calories,
+        Macros macros,
+        Optional<IntakeNote> note,
+        LocalDate consumedOn,
+        Instant recordedAt) {
 
-        return new Intake(id, macros, note, consumedOn, recordedAt);
+        return new Intake(id, calories, macros, note, consumedOn, recordedAt);
     }
 
-    public Result<Void> correct(Macros newMacros, Optional<IntakeNote> newNote, Instant now) {
-        if (newMacros.isZero()) {
-            return Result.failure(IntakeErrors.MACROS_REQUIRED);
+    public Result<Void> correct(
+        Calories newCalories, Macros newMacros, Optional<IntakeNote> newNote, Instant now) {
+
+        if (newCalories.isZero()) {
+            return Result.failure(IntakeErrors.CALORIES_REQUIRED);
         }
 
-        this.macros = newMacros;
+        this.calories = newCalories;
+        this.macros = ObjectGuard.notNull(newMacros, "newMacros");
         this.note = ObjectGuard.notNull(newNote, "newNote");
         registerEvent(new IntakeCorrectedEvent(id(), now));
 
@@ -77,7 +93,7 @@ public final class Intake extends AggregateRoot<IntakeId> {
     }
 
     public Calories calories() {
-        return macros.calories();
+        return calories;
     }
 
     public Macros macros() {

@@ -4,8 +4,8 @@ import atlas.domain.sharedkernel.results.Error;
 
 public final class PlanErrors {
 
-    public static final Error MACROS_REQUIRED =
-        Error.validation("Plan.MacrosRequired", "A plan without a daily quota is not a plan.");
+    public static final Error CALORIES_REQUIRED =
+        Error.validation("Plan.CaloriesRequired", "A plan without a daily calorie quota is not a plan.");
 
     public static final Error CANNOT_START_IN_THE_FUTURE =
         Error.validation("Plan.CannotStartInTheFuture", "A plan starts today or earlier.");
