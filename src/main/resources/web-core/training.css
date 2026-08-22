@@ -299,12 +299,12 @@
  * ejercicio: la lista respira segun la altura de la pantalla y cada fila de fichas va sola.
  */
 .training-list {
-    max-height: min(24rem, 34vh);
+    max-height: min(34rem, 48vh);
     margin-bottom: 0.4rem;
 }
 
 .training-sets {
-    max-height: min(26rem, 40vh);
+    max-height: min(38rem, 56vh);
 }
 
 .training-section > .label:not(:first-child) {
