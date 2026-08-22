@@ -7,6 +7,7 @@ import atlas.domain.sharedkernel.results.Result;
 
 public record CorrectIntakeCommand(
     IntakeId intakeId,
+    int calories,
     int protein,
     int carbs,
     int fat,

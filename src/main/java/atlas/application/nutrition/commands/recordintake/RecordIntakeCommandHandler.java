@@ -5,6 +5,7 @@ import atlas.application.nutrition.mappers.NutritionMapper;
 import atlas.application.nutrition.ports.NutritionUnitOfWork;
 import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.nutrition.Intake;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.IntakeNote;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.sharedkernel.results.Result;
@@ -23,6 +24,11 @@ public final class RecordIntakeCommandHandler implements CommandHandler<RecordIn
 
     @Override
     public Result<IntakeDto> handle(RecordIntakeCommand command) {
+        var caloriesResult = Calories.create(command.calories());
+        if (caloriesResult.isFailure()) {
+            return Result.failure(caloriesResult.error());
+        }
+
         var macrosResult = Macros.create(command.protein(), command.carbs(), command.fat());
         if (macrosResult.isFailure()) {
             return Result.failure(macrosResult.error());
@@ -40,7 +46,8 @@ public final class RecordIntakeCommandHandler implements CommandHandler<RecordIn
         return unitOfWork.execute(() -> {
             var intakes = unitOfWork.intakes();
             var recorded = Intake.record(
-                intakes.nextId(), macrosResult.value(), noteResult.value(), consumedOn, today, now);
+                intakes.nextId(), caloriesResult.value(), macrosResult.value(), noteResult.value(),
+                consumedOn, today, now);
             if (recorded.isFailure()) {
                 return Result.failure(recorded.error());
             }

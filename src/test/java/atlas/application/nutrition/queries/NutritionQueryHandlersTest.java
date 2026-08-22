@@ -27,6 +27,7 @@ import atlas.domain.nutrition.Plan;
 import atlas.domain.nutrition.PlanErrors;
 import atlas.domain.nutrition.PlanId;
 import atlas.domain.nutrition.enums.PlanStatus;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.nutrition.vos.Weight;
 import java.time.Clock;
@@ -82,13 +83,13 @@ class NutritionQueryHandlersTest {
         assertThat(result.isSuccess()).isTrue();
 
         var totals = result.value();
-        assertThat(totals.consumed().protein()).isEqualTo(75);
-        assertThat(totals.consumed().carbs()).isEqualTo(100);
-        assertThat(totals.consumed().fat()).isEqualTo(30);
-        assertThat(totals.consumed().calories()).isEqualTo(970);
-        assertThat(totals.target().calories()).isEqualTo(1_940);
-        assertThat(totals.remaining().protein()).isEqualTo(75);
-        assertThat(totals.remaining().calories()).isEqualTo(970);
+        assertThat(totals.consumedMacros().protein()).isEqualTo(75);
+        assertThat(totals.consumedMacros().carbs()).isEqualTo(100);
+        assertThat(totals.consumedMacros().fat()).isEqualTo(30);
+        assertThat(totals.consumedCalories()).isEqualTo(970);
+        assertThat(totals.targetCalories()).isEqualTo(1_940);
+        assertThat(totals.remainingMacros().protein()).isEqualTo(75);
+        assertThat(totals.remainingCalories()).isEqualTo(970);
         assertThat(totals.caloriePercentage()).isEqualTo(50);
         assertThat(totals.overBudget()).isFalse();
         assertThat(totals.intakes()).hasSize(2);
@@ -101,9 +102,10 @@ class NutritionQueryHandlersTest {
 
         var result = day.handle(new GetDayQuery(TODAY));
 
-        assertThat(result.value().consumed().calories()).isEqualTo(450);
-        assertThat(result.value().target()).isNull();
-        assertThat(result.value().remaining()).isNull();
+        assertThat(result.value().consumedCalories()).isEqualTo(450);
+        assertThat(result.value().targetCalories()).isNull();
+        assertThat(result.value().targetMacros()).isNull();
+        assertThat(result.value().remainingCalories()).isNull();
         assertThat(result.value().caloriePercentage()).isZero();
         assertThat(result.value().overBudget()).isFalse();
     }
@@ -115,8 +117,8 @@ class NutritionQueryHandlersTest {
 
         var result = day.handle(new GetDayQuery(TODAY));
 
-        assertThat(result.value().consumed().calories()).isZero();
-        assertThat(result.value().remaining().calories()).isEqualTo(1_940);
+        assertThat(result.value().consumedCalories()).isZero();
+        assertThat(result.value().remainingCalories()).isEqualTo(1_940);
         assertThat(result.value().overBudget()).isFalse();
     }
 
@@ -128,7 +130,7 @@ class NutritionQueryHandlersTest {
         var result = day.handle(new GetDayQuery(TODAY));
 
         assertThat(result.value().overBudget()).isTrue();
-        assertThat(result.value().remaining().protein()).isEqualTo(-50);
+        assertThat(result.value().remainingMacros().protein()).isEqualTo(-50);
     }
 
     @Test
@@ -189,8 +191,8 @@ class NutritionQueryHandlersTest {
     void shouldSummariseEachDayAgainstTheQuotaNewestFirst() {
         when(plans.findActive()).thenReturn(Optional.of(activePlan()));
         when(intakes.consumptionBetween(any(), any())).thenReturn(List.of(
-            new DayConsumption(TODAY.minusDays(1), new Macros(150, 200, 60)),
-            new DayConsumption(TODAY, new Macros(75, 100, 30))));
+            new DayConsumption(TODAY.minusDays(1), new Calories(1_940), new Macros(150, 200, 60)),
+            new DayConsumption(TODAY, new Calories(970), new Macros(75, 100, 30))));
 
         var result = listDays.handle(new ListDaysQuery(null, null));
 
@@ -206,13 +208,14 @@ class NutritionQueryHandlersTest {
     void shouldLeaveTheDaysWithoutAPercentageWhenThereIsNoPlan() {
         when(plans.findActive()).thenReturn(Optional.empty());
         when(intakes.consumptionBetween(any(), any()))
-            .thenReturn(List.of(new DayConsumption(TODAY, new Macros(75, 100, 30))));
+            .thenReturn(List.of(
+                new DayConsumption(TODAY, new Calories(970), new Macros(75, 100, 30))));
 
         var result = listDays.handle(new ListDaysQuery(null, null));
 
         assertThat(result.value().get(0).caloriePercentage()).isZero();
         assertThat(result.value().get(0).overBudget()).isFalse();
-        assertThat(result.value().get(0).consumed().calories()).isEqualTo(970);
+        assertThat(result.value().get(0).consumedCalories()).isEqualTo(970);
     }
 
     private static Plan activePlan() {
@@ -220,6 +223,7 @@ class NutritionQueryHandlersTest {
             PlanId.of(1),
             new Weight(84_000),
             new Weight(78_000),
+            new Calories(1_940),
             new Macros(150, 200, 60),
             PlanStatus.ACTIVE,
             TODAY.minusDays(30),
@@ -228,6 +232,11 @@ class NutritionQueryHandlersTest {
 
     private static Intake anIntakeOf(int protein, int carbs, int fat) {
         return Intake.rehydrate(
-            INTAKE_ID, new Macros(protein, carbs, fat), Optional.empty(), TODAY, NOW);
+            INTAKE_ID,
+            new Calories(4 * protein + 4 * carbs + 9 * fat),
+            new Macros(protein, carbs, fat),
+            Optional.empty(),
+            TODAY,
+            NOW);
     }
 }

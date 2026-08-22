@@ -21,6 +21,7 @@ import atlas.domain.nutrition.IntakeId;
 import atlas.domain.nutrition.NutritionErrors;
 import atlas.domain.nutrition.events.IntakeDeletedEvent;
 import atlas.domain.nutrition.events.IntakeRecordedEvent;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.IntakeNote;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.support.builders.UnitOfWorkStub;
@@ -62,7 +63,7 @@ class IntakeCommandHandlersTest {
         var intake = result.value();
         assertThat(intake.id()).isEqualTo("I00000007");
         assertThat(intake.macros().protein()).isEqualTo(30);
-        assertThat(intake.macros().calories()).isEqualTo(450);
+        assertThat(intake.calories()).isEqualTo(450);
         assertThat(intake.note()).isEqualTo("Tortilla y pan");
         assertThat(intake.consumedOn()).isEqualTo(TODAY);
 
@@ -89,7 +90,7 @@ class IntakeCommandHandlersTest {
     void shouldFailWhenNoMacroWasEaten() {
         var result = record.handle(anIntakeOf(0, 0, 0, null, TODAY));
 
-        assertThat(result.error()).isEqualTo(IntakeErrors.MACROS_REQUIRED);
+        assertThat(result.error()).isEqualTo(IntakeErrors.CALORIES_REQUIRED);
         verify(intakes, never()).create(any());
     }
 
@@ -122,7 +123,7 @@ class IntakeCommandHandlersTest {
         var intake = anExistingIntake();
         when(intakes.get(ID)).thenReturn(Optional.of(intake));
 
-        var result = correct.handle(new CorrectIntakeCommand(ID, 35, 55, 12, null));
+        var result = correct.handle(new CorrectIntakeCommand(ID, 480, 35, 55, 12, null));
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.value().macros().protein()).isEqualTo(35);
@@ -135,7 +136,7 @@ class IntakeCommandHandlersTest {
     void shouldKeepTheDayWhenTheIntakeIsCorrected() {
         when(intakes.get(ID)).thenReturn(Optional.of(anExistingIntake()));
 
-        var result = correct.handle(new CorrectIntakeCommand(ID, 35, 55, 12, null));
+        var result = correct.handle(new CorrectIntakeCommand(ID, 480, 35, 55, 12, null));
 
         assertThat(result.value().consumedOn()).isEqualTo(TODAY.minusDays(1));
     }
@@ -144,7 +145,7 @@ class IntakeCommandHandlersTest {
     void shouldFailToCorrectAnIntakeThatIsNotThere() {
         when(intakes.get(ID)).thenReturn(Optional.empty());
 
-        var result = correct.handle(new CorrectIntakeCommand(ID, 35, 55, 12, null));
+        var result = correct.handle(new CorrectIntakeCommand(ID, 480, 35, 55, 12, null));
 
         assertThat(result.error()).isEqualTo(IntakeErrors.notFound(ID));
         verify(intakes, never()).update(any());
@@ -154,9 +155,9 @@ class IntakeCommandHandlersTest {
     void shouldFailWhenTheCorrectionLeavesNoMacros() {
         when(intakes.get(ID)).thenReturn(Optional.of(anExistingIntake()));
 
-        var result = correct.handle(new CorrectIntakeCommand(ID, 0, 0, 0, null));
+        var result = correct.handle(new CorrectIntakeCommand(ID, 0, 35, 55, 12, null));
 
-        assertThat(result.error()).isEqualTo(IntakeErrors.MACROS_REQUIRED);
+        assertThat(result.error()).isEqualTo(IntakeErrors.CALORIES_REQUIRED);
         verify(intakes, never()).update(any());
     }
 
@@ -185,12 +186,14 @@ class IntakeCommandHandlersTest {
 
     private static Intake anExistingIntake() {
         return Intake.rehydrate(
-            ID, new Macros(30, 60, 10), Optional.of(new IntakeNote("Tortilla")), TODAY.minusDays(1), NOW);
+            ID, new Calories(450), new Macros(30, 60, 10), Optional.of(new IntakeNote("Tortilla")),
+            TODAY.minusDays(1), NOW);
     }
 
     private static RecordIntakeCommand anIntakeOf(
         int protein, int carbs, int fat, String note, LocalDate consumedOn) {
 
-        return new RecordIntakeCommand(protein, carbs, fat, note, consumedOn);
+        return new RecordIntakeCommand(
+            4 * protein + 4 * carbs + 9 * fat, protein, carbs, fat, note, consumedOn);
     }
 }

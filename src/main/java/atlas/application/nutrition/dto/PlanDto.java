@@ -10,6 +10,7 @@ public record PlanDto(
     BigDecimal targetWeight,
     String goal,
     String goalLabel,
+    int dailyCalories,
     MacrosDto dailyMacros,
     String status,
     LocalDate startedOn,

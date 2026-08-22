@@ -22,6 +22,7 @@ import atlas.domain.nutrition.PlanId;
 import atlas.domain.nutrition.enums.PlanStatus;
 import atlas.domain.nutrition.events.PlanArchivedEvent;
 import atlas.domain.nutrition.events.PlanDefinedEvent;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.nutrition.vos.Weight;
 import atlas.support.builders.UnitOfWorkStub;
@@ -68,7 +69,7 @@ class PlanCommandHandlersTest {
         assertThat(plan.targetWeight()).isEqualByComparingTo("78.0");
         assertThat(plan.goal()).isEqualTo("LOSE");
         assertThat(plan.goalLabel()).isEqualTo("Perder peso");
-        assertThat(plan.dailyMacros().calories()).isEqualTo(1_940);
+        assertThat(plan.dailyCalories()).isEqualTo(1_940);
         assertThat(plan.status()).isEqualTo("ACTIVE");
         assertThat(plan.startedOn()).isEqualTo(TODAY);
 
@@ -88,7 +89,7 @@ class PlanCommandHandlersTest {
     @Test
     void shouldStartThePlanTodayWhenNoDateIsGiven() {
         var command = new DefinePlanCommand(
-            new BigDecimal("84.0"), new BigDecimal("78.0"), 150, 200, 60, null);
+            new BigDecimal("84.0"), new BigDecimal("78.0"), 1_940, 150, 200, 60, null);
 
         assertThat(define.handle(command).value().startedOn()).isEqualTo(TODAY);
     }
@@ -136,14 +137,14 @@ class PlanCommandHandlersTest {
     void shouldFailWhenTheQuotaIsEmpty() {
         var result = define.handle(aPlanOf("84.0", "78.0", 0, 0, 0));
 
-        assertThat(result.error()).isEqualTo(PlanErrors.MACROS_REQUIRED);
+        assertThat(result.error()).isEqualTo(PlanErrors.CALORIES_REQUIRED);
         verify(plans, never()).create(any());
     }
 
     @Test
     void shouldFailWhenThePlanStartsInTheFuture() {
         var command = new DefinePlanCommand(
-            new BigDecimal("84.0"), new BigDecimal("78.0"), 150, 200, 60, TODAY.plusDays(1));
+            new BigDecimal("84.0"), new BigDecimal("78.0"), 1_940, 150, 200, 60, TODAY.plusDays(1));
 
         assertThat(define.handle(command).error()).isEqualTo(PlanErrors.CANNOT_START_IN_THE_FUTURE);
         verify(plans, never()).create(any());
@@ -154,7 +155,7 @@ class PlanCommandHandlersTest {
         var plan = activePlan();
         when(plans.findActive()).thenReturn(Optional.of(plan));
 
-        var result = adjust.handle(new AdjustPlanCommand(new BigDecimal("76.0"), 160, 180, 55));
+        var result = adjust.handle(new AdjustPlanCommand(new BigDecimal("76.0"), 1_855, 160, 180, 55));
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.value().targetWeight()).isEqualByComparingTo("76.0");
@@ -165,7 +166,7 @@ class PlanCommandHandlersTest {
 
     @Test
     void shouldFailToAdjustWhenThereIsNoActivePlan() {
-        var result = adjust.handle(new AdjustPlanCommand(new BigDecimal("76.0"), 160, 180, 55));
+        var result = adjust.handle(new AdjustPlanCommand(new BigDecimal("76.0"), 1_855, 160, 180, 55));
 
         assertThat(result.error()).isEqualTo(PlanErrors.NONE_ACTIVE);
         verify(plans, never()).update(any());
@@ -175,9 +176,9 @@ class PlanCommandHandlersTest {
     void shouldFailToAdjustWithAnEmptyQuota() {
         when(plans.findActive()).thenReturn(Optional.of(activePlan()));
 
-        var result = adjust.handle(new AdjustPlanCommand(new BigDecimal("76.0"), 0, 0, 0));
+        var result = adjust.handle(new AdjustPlanCommand(new BigDecimal("76.0"), 0, 160, 180, 55));
 
-        assertThat(result.error()).isEqualTo(PlanErrors.MACROS_REQUIRED);
+        assertThat(result.error()).isEqualTo(PlanErrors.CALORIES_REQUIRED);
         verify(plans, never()).update(any());
     }
 
@@ -207,6 +208,7 @@ class PlanCommandHandlersTest {
             PlanId.of(1),
             new Weight(84_000),
             new Weight(78_000),
+            new Calories(1_940),
             new Macros(150, 200, 60),
             PlanStatus.ACTIVE,
             TODAY.minusDays(30),
@@ -217,6 +219,7 @@ class PlanCommandHandlersTest {
         String startWeight, String targetWeight, int protein, int carbs, int fat) {
 
         return new DefinePlanCommand(
-            new BigDecimal(startWeight), new BigDecimal(targetWeight), protein, carbs, fat, TODAY);
+            new BigDecimal(startWeight), new BigDecimal(targetWeight),
+            4 * protein + 4 * carbs + 9 * fat, protein, carbs, fat, TODAY);
     }
 }

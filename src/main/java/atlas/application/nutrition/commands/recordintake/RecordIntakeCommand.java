@@ -6,6 +6,7 @@ import atlas.domain.sharedkernel.results.Result;
 import java.time.LocalDate;
 
 public record RecordIntakeCommand(
+    int calories,
     int protein,
     int carbs,
     int fat,

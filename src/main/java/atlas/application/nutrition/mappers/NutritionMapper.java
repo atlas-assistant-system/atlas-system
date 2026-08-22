@@ -37,6 +37,7 @@ public final class NutritionMapper {
             plan.targetWeight().toKilograms(),
             goal.name(),
             goal.label(),
+            plan.dailyCalories().kcal(),
             toDto(plan.dailyMacros()),
             plan.status().name(),
             plan.startedOn(),
@@ -46,6 +47,7 @@ public final class NutritionMapper {
     public static IntakeDto toDto(Intake intake) {
         return new IntakeDto(
             intake.id().toString(),
+            intake.calories().kcal(),
             toDto(intake.macros()),
             intake.note().map(IntakeNote::value).orElse(null),
             intake.consumedOn(),
@@ -84,19 +86,18 @@ public final class NutritionMapper {
             kilograms(progress.trendGramsPerWeek()));
     }
 
-    private static BigDecimal kilograms(int grams) {
-        return BigDecimal.valueOf(grams, GRAM_SCALE);
-    }
-
     public static MacrosDto toDto(Macros macros) {
-        return new MacrosDto(macros.protein(), macros.carbs(), macros.fat(), macros.calories().kcal());
+        return new MacrosDto(macros.protein(), macros.carbs(), macros.fat());
     }
 
     public static DayDto toDto(LocalDate date, DayTotals totals, Collection<Intake> intakes) {
         return new DayDto(
             date,
-            toDto(totals.consumed()),
-            toDto(totals.target()),
+            totals.consumedCalories().kcal(),
+            toDto(totals.consumedMacros()),
+            totals.targetCalories().kcal(),
+            toDto(totals.targetMacros()),
+            totals.remainingCalories(),
             remainingOf(totals),
             totals.caloriePercentage(),
             totals.lowerTarget().kcal(),
@@ -106,8 +107,12 @@ public final class NutritionMapper {
             toDtos(intakes));
     }
 
-    public static DayDto toDto(LocalDate date, Macros consumed, Collection<Intake> intakes) {
-        return new DayDto(date, toDto(consumed), null, null, 0, 0, 0, false, false, toDtos(intakes));
+    public static DayDto toDto(
+        LocalDate date, Calories consumed, Macros macros, Collection<Intake> intakes) {
+
+        return new DayDto(
+            date, consumed.kcal(), toDto(macros), null, null, null, null,
+            0, 0, 0, false, false, toDtos(intakes));
     }
 
     public static List<DaySummaryDto> toDays(Collection<DayConsumption> consumption, Calories dailyCalories) {
@@ -118,10 +123,11 @@ public final class NutritionMapper {
     }
 
     private static DaySummaryDto toSummaryDto(DayConsumption day, Calories dailyCalories) {
-        var consumed = day.macros().calories();
+        var consumed = day.calories();
 
         return new DaySummaryDto(
             day.date(),
+            consumed.kcal(),
             toDto(day.macros()),
             consumed.percentageOf(dailyCalories),
             dailyCalories.covers(consumed),
@@ -130,9 +136,10 @@ public final class NutritionMapper {
 
     private static MacrosDto remainingOf(DayTotals totals) {
         return new MacrosDto(
-            totals.remainingProtein(),
-            totals.remainingCarbs(),
-            totals.remainingFat(),
-            totals.remainingCalories());
+            totals.remainingProtein(), totals.remainingCarbs(), totals.remainingFat());
+    }
+
+    private static BigDecimal kilograms(int grams) {
+        return BigDecimal.valueOf(grams, GRAM_SCALE);
     }
 }

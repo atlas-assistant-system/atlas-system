@@ -5,6 +5,7 @@ import atlas.application.nutrition.mappers.NutritionMapper;
 import atlas.application.nutrition.ports.NutritionUnitOfWork;
 import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.nutrition.Plan;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.nutrition.vos.Weight;
 import atlas.domain.sharedkernel.results.Result;
@@ -34,6 +35,11 @@ public final class DefinePlanCommandHandler implements CommandHandler<DefinePlan
             return Result.failure(targetResult.error());
         }
 
+        var caloriesResult = Calories.create(command.calories());
+        if (caloriesResult.isFailure()) {
+            return Result.failure(caloriesResult.error());
+        }
+
         var macrosResult = Macros.create(command.protein(), command.carbs(), command.fat());
         if (macrosResult.isFailure()) {
             return Result.failure(macrosResult.error());
@@ -52,8 +58,8 @@ public final class DefinePlanCommandHandler implements CommandHandler<DefinePlan
             }
 
             var defined = Plan.define(
-                plans.nextId(), startResult.value(), targetResult.value(), macrosResult.value(),
-                startedOn, today, now);
+                plans.nextId(), startResult.value(), targetResult.value(), caloriesResult.value(),
+                macrosResult.value(), startedOn, today, now);
             if (defined.isFailure()) {
                 return Result.failure(defined.error());
             }

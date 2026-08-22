@@ -19,6 +19,7 @@ import atlas.domain.nutrition.WeighIn;
 import atlas.domain.nutrition.WeighInId;
 import atlas.domain.nutrition.enums.PlanStatus;
 import atlas.domain.nutrition.services.PlanProgress;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.nutrition.vos.Weight;
 import java.time.Clock;
@@ -161,6 +162,7 @@ class ProgressQueryHandlersTest {
             PlanId.of(1),
             new Weight(84_000),
             new Weight(78_000),
+            new Calories(1_940),
             new Macros(150, 200, 60),
             PlanStatus.ACTIVE,
             TODAY.minusDays(30),

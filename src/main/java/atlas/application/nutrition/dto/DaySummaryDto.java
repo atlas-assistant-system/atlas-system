@@ -4,7 +4,8 @@ import java.time.LocalDate;
 
 public record DaySummaryDto(
     LocalDate date,
-    MacrosDto consumed,
+    int consumedCalories,
+    MacrosDto consumedMacros,
     int caloriePercentage,
     boolean withinRange,
     boolean overBudget) {}

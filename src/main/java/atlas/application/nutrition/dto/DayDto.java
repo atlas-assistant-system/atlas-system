@@ -5,9 +5,12 @@ import java.util.List;
 
 public record DayDto(
     LocalDate date,
-    MacrosDto consumed,
-    MacrosDto target,
-    MacrosDto remaining,
+    int consumedCalories,
+    MacrosDto consumedMacros,
+    Integer targetCalories,
+    MacrosDto targetMacros,
+    Integer remainingCalories,
+    MacrosDto remainingMacros,
     int caloriePercentage,
     int lowerCalories,
     int upperCalories,

@@ -9,6 +9,7 @@ import java.time.LocalDate;
 public record DefinePlanCommand(
     BigDecimal startWeight,
     BigDecimal targetWeight,
+    int calories,
     int protein,
     int carbs,
     int fat,

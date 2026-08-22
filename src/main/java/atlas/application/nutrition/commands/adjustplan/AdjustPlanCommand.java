@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 
 public record AdjustPlanCommand(
     BigDecimal targetWeight,
+    int calories,
     int protein,
     int carbs,
     int fat) implements Command<Result<PlanDto>> {}

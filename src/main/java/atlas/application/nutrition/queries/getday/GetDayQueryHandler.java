@@ -7,6 +7,7 @@ import atlas.application.nutrition.ports.PlanReadModel;
 import atlas.application.sharedkernel.cqrs.QueryHandler;
 import atlas.domain.nutrition.Intake;
 import atlas.domain.nutrition.Plan;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.DayTotals;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.sharedkernel.results.Result;
@@ -30,21 +31,28 @@ public final class GetDayQueryHandler implements QueryHandler<GetDayQuery, Resul
     public Result<DayDto> handle(GetDayQuery query) {
         var date = query.date() == null ? LocalDate.now(clock) : query.date();
         var eaten = intakes.findOn(date);
-        var consumed = totalOf(eaten);
+        var calories = caloriesOf(eaten);
+        var macros = macrosOf(eaten);
 
         return plans.findActive()
-            .map(plan -> withQuota(date, consumed, eaten, plan))
-            .orElseGet(() -> Result.success(NutritionMapper.toDto(date, consumed, eaten)));
+            .map(plan -> withQuota(date, calories, macros, eaten, plan))
+            .orElseGet(() -> Result.success(
+                NutritionMapper.toDto(date, calories, macros, eaten)));
     }
 
     private static Result<DayDto> withQuota(
-        LocalDate date, Macros consumed, Collection<Intake> eaten, Plan plan) {
+        LocalDate date, Calories calories, Macros macros, Collection<Intake> eaten, Plan plan) {
 
-        return Result.success(
-            NutritionMapper.toDto(date, new DayTotals(consumed, plan.dailyMacros()), eaten));
+        var totals = new DayTotals(macros, calories, plan.dailyMacros(), plan.dailyCalories());
+
+        return Result.success(NutritionMapper.toDto(date, totals, eaten));
     }
 
-    private static Macros totalOf(Collection<Intake> eaten) {
+    private static Calories caloriesOf(Collection<Intake> eaten) {
+        return eaten.stream().map(Intake::calories).reduce(Calories.NONE, Calories::plus);
+    }
+
+    private static Macros macrosOf(Collection<Intake> eaten) {
         return eaten.stream().map(Intake::macros).reduce(Macros.NONE, Macros::plus);
     }
 }

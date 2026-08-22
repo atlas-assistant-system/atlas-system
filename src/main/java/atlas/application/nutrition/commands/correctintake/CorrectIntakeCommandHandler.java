@@ -5,6 +5,7 @@ import atlas.application.nutrition.mappers.NutritionMapper;
 import atlas.application.nutrition.ports.NutritionUnitOfWork;
 import atlas.application.sharedkernel.cqrs.CommandHandler;
 import atlas.domain.nutrition.IntakeErrors;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.IntakeNote;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.sharedkernel.results.Result;
@@ -22,6 +23,11 @@ public final class CorrectIntakeCommandHandler implements CommandHandler<Correct
 
     @Override
     public Result<IntakeDto> handle(CorrectIntakeCommand command) {
+        var caloriesResult = Calories.create(command.calories());
+        if (caloriesResult.isFailure()) {
+            return Result.failure(caloriesResult.error());
+        }
+
         var macrosResult = Macros.create(command.protein(), command.carbs(), command.fat());
         if (macrosResult.isFailure()) {
             return Result.failure(macrosResult.error());
@@ -42,7 +48,8 @@ public final class CorrectIntakeCommandHandler implements CommandHandler<Correct
             }
 
             var intake = found.get();
-            var corrected = intake.correct(macrosResult.value(), noteResult.value(), now);
+            var corrected = intake.correct(
+                caloriesResult.value(), macrosResult.value(), noteResult.value(), now);
             if (corrected.isFailure()) {
                 return Result.failure(corrected.error());
             }
