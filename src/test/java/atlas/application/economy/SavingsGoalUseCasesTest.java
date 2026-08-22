@@ -13,6 +13,7 @@ import atlas.application.economy.commands.changesavingsgoal.ChangeSavingsGoalCom
 import atlas.application.economy.commands.changesavingsgoal.ChangeSavingsGoalCommandHandler;
 import atlas.application.economy.commands.setsavingsgoal.SetSavingsGoalCommand;
 import atlas.application.economy.commands.setsavingsgoal.SetSavingsGoalCommandHandler;
+import atlas.application.economy.ports.Balance;
 import atlas.application.economy.ports.EconomyUnitOfWork;
 import atlas.application.economy.ports.MovementReadModel;
 import atlas.application.economy.ports.SavingsGoalReadModel;
@@ -150,7 +151,7 @@ class SavingsGoalUseCasesTest {
     void shouldProjectEachGoalFromTheLastSixWholeMonths() {
         when(readModel.findAll()).thenReturn(List.of(aGoal()));
         when(movements.balanceBetween(LocalDate.of(2026, 2, 1), LocalDate.of(2026, 7, 31)))
-            .thenReturn(new MovementReadModel.Balance(1200000, 600000));
+            .thenReturn(new Balance(1200000, 600000));
 
         var result = list.handle(new ListSavingsGoalsQuery());
 
@@ -167,7 +168,7 @@ class SavingsGoalUseCasesTest {
     void shouldSayHowMuchTheRateWouldHaveToRiseWhenTheGoalIsOutOfReach() {
         when(readModel.findAll()).thenReturn(List.of(aGoal()));
         when(movements.balanceBetween(LocalDate.of(2026, 2, 1), LocalDate.of(2026, 7, 31)))
-            .thenReturn(new MovementReadModel.Balance(600000, 540000));
+            .thenReturn(new Balance(600000, 540000));
 
         var result = list.handle(new ListSavingsGoalsQuery());
 
@@ -185,7 +186,7 @@ class SavingsGoalUseCasesTest {
             goalNamed("Coche", LocalDate.of(2028, 1, 31)),
             goalNamed("Viaje", LocalDate.of(2027, 1, 31))));
         when(movements.balanceBetween(LocalDate.of(2026, 2, 1), LocalDate.of(2026, 7, 31)))
-            .thenReturn(new MovementReadModel.Balance(0, 0));
+            .thenReturn(new Balance(0, 0));
 
         var result = list.handle(new ListSavingsGoalsQuery());
 

@@ -5,6 +5,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import atlas.application.economy.ports.Balance;
+import atlas.application.economy.ports.CategorySpend;
 import atlas.application.economy.ports.MovementReadModel;
 import atlas.application.economy.queries.getbalance.GetBalanceQuery;
 import atlas.application.economy.queries.getbalance.GetBalanceQueryHandler;
@@ -87,7 +89,7 @@ class EconomyQueryHandlersTest {
     @Test
     void shouldReadTheBalanceOfTheCurrentMonthWhenNoPeriodIsGiven() {
         when(movements.balanceBetween(FIRST_OF_MONTH, LAST_OF_MONTH))
-            .thenReturn(new MovementReadModel.Balance(200000, 74550));
+            .thenReturn(new Balance(200000, 74550));
 
         var result = new GetBalanceQueryHandler(movements, clock).handle(new GetBalanceQuery(null, null));
 
@@ -101,7 +103,7 @@ class EconomyQueryHandlersTest {
     @Test
     void shouldReportANegativeNetWhenSpendingBeatsIncome() {
         when(movements.balanceBetween(FIRST_OF_MONTH, LAST_OF_MONTH))
-            .thenReturn(new MovementReadModel.Balance(1000, 2500));
+            .thenReturn(new Balance(1000, 2500));
 
         var result = new GetBalanceQueryHandler(movements, clock).handle(new GetBalanceQuery(null, null));
 
@@ -112,7 +114,7 @@ class EconomyQueryHandlersTest {
     void shouldHonourThePeriodItIsGiven() {
         var from = LocalDate.of(2026, 1, 1);
         var to = LocalDate.of(2026, 12, 31);
-        when(movements.balanceBetween(from, to)).thenReturn(new MovementReadModel.Balance(0, 0));
+        when(movements.balanceBetween(from, to)).thenReturn(new Balance(0, 0));
 
         var result = new GetBalanceQueryHandler(movements, clock).handle(new GetBalanceQuery(from, to));
 
@@ -123,8 +125,8 @@ class EconomyQueryHandlersTest {
     @Test
     void shouldBreakSpendingDownByCategoryFromLargestToSmallest() {
         when(movements.spendingBetween(FIRST_OF_MONTH, LAST_OF_MONTH)).thenReturn(List.of(
-            new MovementReadModel.CategorySpend(Category.LEISURE, 2500),
-            new MovementReadModel.CategorySpend(Category.FOOD, 7500)));
+            new CategorySpend(Category.LEISURE, 2500),
+            new CategorySpend(Category.FOOD, 7500)));
 
         var result = new GetBreakdownQueryHandler(movements, clock).handle(new GetBreakdownQuery(null, null));
 

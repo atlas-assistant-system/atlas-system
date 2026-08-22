@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import atlas.application.economy.ports.BudgetReadModel;
+import atlas.application.economy.ports.CategorySpend;
 import atlas.application.economy.ports.MovementReadModel;
 import atlas.application.economy.queries.listbudgets.ListBudgetsQuery;
 import atlas.application.economy.queries.listbudgets.ListBudgetsQueryHandler;
@@ -35,7 +36,7 @@ class ListBudgetsQueryHandlerTest {
     void shouldCrossEachBudgetWithWhatWasSpentThisMonth() {
         when(budgets.findAll()).thenReturn(List.of(budgetOf(Category.FOOD, 20000)));
         when(movements.spendingBetween(FIRST_OF_MONTH, LAST_OF_MONTH))
-            .thenReturn(List.of(new MovementReadModel.CategorySpend(Category.FOOD, 18000)));
+            .thenReturn(List.of(new CategorySpend(Category.FOOD, 18000)));
 
         var result = handler.handle(new ListBudgetsQuery());
 
@@ -67,8 +68,8 @@ class ListBudgetsQueryHandlerTest {
     void shouldIgnoreSpendingOnCategoriesWithoutABudget() {
         when(budgets.findAll()).thenReturn(List.of(budgetOf(Category.FOOD, 20000)));
         when(movements.spendingBetween(FIRST_OF_MONTH, LAST_OF_MONTH)).thenReturn(List.of(
-            new MovementReadModel.CategorySpend(Category.FOOD, 1000),
-            new MovementReadModel.CategorySpend(Category.HEALTH, 9999)));
+            new CategorySpend(Category.FOOD, 1000),
+            new CategorySpend(Category.HEALTH, 9999)));
 
         assertThat(handler.handle(new ListBudgetsQuery()).value()).hasSize(1);
     }
@@ -78,8 +79,8 @@ class ListBudgetsQueryHandlerTest {
         when(budgets.findAll()).thenReturn(List.of(
             budgetOf(Category.FOOD, 20000), budgetOf(Category.LEISURE, 10000)));
         when(movements.spendingBetween(FIRST_OF_MONTH, LAST_OF_MONTH)).thenReturn(List.of(
-            new MovementReadModel.CategorySpend(Category.FOOD, 2000),
-            new MovementReadModel.CategorySpend(Category.LEISURE, 9000)));
+            new CategorySpend(Category.FOOD, 2000),
+            new CategorySpend(Category.LEISURE, 9000)));
 
         var result = handler.handle(new ListBudgetsQuery());
 

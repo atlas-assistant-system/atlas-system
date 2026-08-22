@@ -16,8 +16,4 @@ public interface MovementReadModel {
     Balance balanceBetween(LocalDate from, LocalDate to);
 
     List<CategorySpend> spendingBetween(LocalDate from, LocalDate to);
-
-    record Balance(long incomeCents, long expenseCents) {}
-
-    record CategorySpend(Category category, long cents) {}
 }

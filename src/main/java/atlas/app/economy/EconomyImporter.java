@@ -25,7 +25,7 @@ public final class EconomyImporter {
         var csv = Path.of(args[0]);
         var directory = Path.of(args.length > 1 ? args[1] : EconomySettings.DEFAULT_DATA_DIRECTORY);
 
-        Summary summary;
+        ImportSummary summary;
         try {
             summary = importFrom(csv, directory, Clock.systemDefaultZone());
         } catch (RuntimeException e) {
@@ -44,22 +44,20 @@ public final class EconomyImporter {
             : summary.movements() + " movimientos de " + csv + " en " + directory.resolve("economy.db"));
     }
 
-    public static Summary importFrom(Path csv, Path dataDirectory, Clock clock) throws IOException {
+    public static ImportSummary importFrom(Path csv, Path dataDirectory, Clock clock) throws IOException {
         var commands = BankStatementDeserializer.deserialize(csv);
 
         var application = EconomyApplication.wire(EconomySeeder.quietRenderer(), dataDirectory, clock);
         try {
             if (!application.queries().dispatch(new ListMovementsQuery(null, null, null, 1)).value().isEmpty()) {
-                return new Summary(0, true);
+                return new ImportSummary(0, true);
             }
 
             commands.forEach(application.commands()::dispatch);
 
-            return new Summary(commands.size(), false);
+            return new ImportSummary(commands.size(), false);
         } finally {
             application.stop();
         }
     }
-
-    public record Summary(int movements, boolean alreadyPopulated) {}
 }

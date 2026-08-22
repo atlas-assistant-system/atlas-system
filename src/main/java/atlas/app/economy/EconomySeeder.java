@@ -42,7 +42,7 @@ public final class EconomySeeder {
 
         var directory = Path.of(args.length > 0 ? args[0] : "data");
 
-        Summary summary;
+        SeedSummary summary;
         try {
             summary = seed(directory, Clock.systemDefaultZone());
         } catch (RuntimeException e) {
@@ -80,11 +80,11 @@ public final class EconomySeeder {
             "Si el seeder llego a escribir antes de fallar, borra economy.db y repite.");
     }
 
-    public static Summary seed(Path dataDirectory, Clock clock) {
+    public static SeedSummary seed(Path dataDirectory, Clock clock) {
         var application = EconomyApplication.wire(quietRenderer(), dataDirectory, clock);
         try {
             if (!application.queries().dispatch(new ListMovementsQuery(null, null, null, 1)).value().isEmpty()) {
-                return new Summary(0, 0, 0, true);
+                return new SeedSummary(0, 0, 0, true);
             }
 
             var today = LocalDate.now(clock);
@@ -92,7 +92,7 @@ public final class EconomySeeder {
             var budgets = defineBudgets(application.commands());
             var goals = setGoals(application.commands(), today);
 
-            return new Summary(movements, budgets, goals, false);
+            return new SeedSummary(movements, budgets, goals, false);
         } finally {
             application.stop();
         }
@@ -155,43 +155,4 @@ public final class EconomySeeder {
         return LogEntryRenderers.forConsole(false, ZoneOffset.UTC);
     }
 
-    public record Summary(int movements, int budgets, int goals, boolean alreadyPopulated) {}
-
-    private record Recurring(
-        MovementKind kind, Category category, String note, int dayOfMonth, long baseCents, long spreadCents) {
-
-        RecordMovementCommand on(LocalDate month, Random random) {
-            var cents = baseCents + (spreadCents == 0 ? 0 : random.nextLong(spreadCents));
-
-            return new RecordMovementCommand(
-                kind, euros(cents), category, note, month.withDayOfMonth(dayOfMonth));
-        }
-    }
-
-    private record Occasional(Category category, String note, long minCents, long maxCents) {
-
-        private static final List<Occasional> ALL = List.of(
-            new Occasional(Category.FOOD, "Supermercado", 3500, 9500),
-            new Occasional(Category.FOOD, "Supermercado", 3500, 9500),
-            new Occasional(Category.FOOD, "Comida fuera", 1200, 4500),
-            new Occasional(Category.LEISURE, "Cine", 900, 2400),
-            new Occasional(Category.LEISURE, "Libros", 1500, 4000),
-            new Occasional(Category.TRANSPORT, "Guagua", 145, 800),
-            new Occasional(Category.SHOPPING, "Ropa", 2500, 8000),
-            new Occasional(Category.HEALTH, "Farmacia", 800, 3500),
-            new Occasional(Category.OTHER, "Varios", 500, 3000));
-
-        static RecordMovementCommand pick(Random random, LocalDate month) {
-            var what = ALL.get(random.nextInt(ALL.size()));
-            var cents = what.minCents() + random.nextLong(what.maxCents() - what.minCents());
-            var day = 1 + random.nextInt(month.lengthOfMonth());
-
-            return new RecordMovementCommand(
-                MovementKind.EXPENSE, euros(cents), what.category(), what.note(), month.withDayOfMonth(day));
-        }
-    }
-
-    private static BigDecimal euros(long cents) {
-        return BigDecimal.valueOf(cents, 2);
-    }
 }
