@@ -23,8 +23,6 @@ const state = {
     gesture: {
         candidate: null, candidateSince: 0, missingSince: 0, latched: null,
     },
-    pointer: { target: null, candidate: null, frames: 0, position: null, missing: 0 },
-    voice: { recognition: null, target: null, listening: false, preparing: false },
 };
 
 let eventSource = null;
@@ -36,7 +34,7 @@ const VIEWS = ['inicio', 'agenda', 'rutinas', 'economia', 'nutricion', 'entrenam
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
 const {
-    pointCoordinates, pointDistance, jointAngle, fingerIsExtended, isPinch,
+    pointCoordinates, jointAngle, fingerIsExtended, isPinch,
     isDirectionalPose, isPointingPose, isOpenPalmPose, staticDirection,
     PINCH_DISTANCE_RATIO, HAND_CONFIDENCE, GESTURE_HOLD_MS, PINCH_HOLD_MS, challengeDetector,
 } = AtlasGestures;
@@ -48,15 +46,12 @@ const enrollment = AtlasEnrollment.bind({
     faceStatus: (result, options) => faceStatus(result, options),
     center: { get: () => state.faceCenter, set: value => { state.faceCenter = value; } },
 });
-const INTERACTIVE = 'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), '
-    + 'select:not(:disabled), .clickable, .day, .item';
 // ponytail: pinned CDN keeps face recognition out of the Agenda build; self-host it if offline use is required.
 const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
 const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs';
 const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';
 const GESTURE_MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/'
     + 'gesture_recognizer/float16/1/gesture_recognizer.task';
-const VOICE_LANGUAGE = 'es-ES';
 
 function todayIso() {
     return isoDate(new Date());
@@ -261,7 +256,7 @@ function faceStatus(result, options = {}) {
 
 function trackHandGesture(result) {
     const observed = recognizedHandGesture(result);
-    trackPointer(result, observed);
+    AtlasInteraction.track(result, observed);
     const tracking = state.gesture;
     const now = performance.now();
     if (!observed) {
@@ -296,7 +291,7 @@ function publishGesture(observed) {
             && state.authentication.enrolledProfiles > 0) {
             authenticate();
         } else if (observed.type === 'PINCH' || observed.type === 'POINT') {
-            applyGesture(observed.type);
+            AtlasInteraction.apply(observed.type);
         }
         return;
     }
@@ -309,103 +304,11 @@ function publishGesture(observed) {
             setAuthenticated(false);
             refreshAuthentication();
         } else if (response.status === 204) {
-            applyGesture(observed.type);
+            AtlasInteraction.apply(observed.type);
         } else if (response.status === 401) {
             refreshAuthentication();
         }
     }).catch(() => {});
-}
-
-function trackPointer(result, observed) {
-    const point = result?.landmarks?.[0]?.[8];
-    const mapped = point && cameraPoint(point);
-    const pointer = document.getElementById('gesture-pointer');
-    if (!mapped) {
-        if (++state.pointer.missing >= 3) {
-            pointer.classList.remove('visible');
-            pointer.classList.remove('recognized');
-            pointer.dataset.gesture = 'TRACKING';
-            state.pointer.position = null;
-            setPointerTarget(null);
-        }
-        return;
-    }
-
-    state.pointer.missing = 0;
-    const position = smoothPointer(state.pointer.position, mapped);
-    state.pointer.position = position;
-    pointer.style.transform = `translate(${position.x}px, ${position.y}px)`;
-    pointer.classList.add('visible');
-    pointer.classList.toggle('recognized', Boolean(observed));
-    pointer.dataset.gesture = observed ? observed.type.replace('PALM_', '') : 'TRACKING';
-    const hit = document.elementFromPoint(position.x, position.y);
-    trackPointerTarget(hit && hit.closest(INTERACTIVE));
-}
-
-function smoothPointer(previous, current) {
-    if (!previous) {
-        return current;
-    }
-    const alpha = Math.max(0.25, Math.min(0.7, pointDistance(previous, current) / 120));
-    return {
-        x: previous.x + (current.x - previous.x) * alpha,
-        y: previous.y + (current.y - previous.y) * alpha,
-    };
-}
-
-function trackPointerTarget(target) {
-    if (state.pointer.candidate !== target) {
-        state.pointer.candidate = target;
-        state.pointer.frames = 1;
-        return;
-    }
-    if (++state.pointer.frames >= 2) {
-        setPointerTarget(target);
-    }
-}
-
-function cameraPoint(point) {
-    const video = document.getElementById('mirror');
-    if (!video.videoWidth || !video.videoHeight) {
-        return null;
-    }
-
-    let x = Array.isArray(point) ? point[0] : point.x;
-    let y = Array.isArray(point) ? point[1] : point.y;
-    if (!Number.isFinite(x) || !Number.isFinite(y)) {
-        return null;
-    }
-    if (x <= 1 && y <= 1) {
-        x *= video.videoWidth;
-        y *= video.videoHeight;
-    }
-
-    const scale = Math.max(innerWidth / video.videoWidth, innerHeight / video.videoHeight);
-    const offsetX = (innerWidth - video.videoWidth * scale) / 2;
-    const offsetY = (innerHeight - video.videoHeight * scale) / 2;
-
-    return {
-        x: Math.max(0, Math.min(innerWidth, innerWidth - (offsetX + x * scale))),
-        y: Math.max(0, Math.min(innerHeight, offsetY + y * scale)),
-    };
-}
-
-function setPointerTarget(target) {
-    if (state.pointer.target === target) {
-        return;
-    }
-    if (state.pointer.target) {
-        state.pointer.target.classList.remove('gesture-target');
-    }
-    state.pointer.target = target;
-    state.pointer.candidate = target;
-    state.pointer.frames = 0;
-    if (isTextField(target)) {
-        state.voice.target = target;
-    }
-    if (target) {
-        target.classList.add('gesture-target');
-    }
 }
 
 function recognizedHandGesture(result) {
@@ -443,244 +346,6 @@ function recognizedHandGesture(result) {
         handIndex: 0,
         confidence: Number((gesture?.score || HAND_CONFIDENCE).toFixed(3)),
     } : null;
-}
-
-function applyGesture(type) {
-    if (type === 'POINT') {
-        if (state.pointer.target && typeof state.pointer.target.focus === 'function') {
-            state.pointer.target.focus({ preventScroll: true });
-        }
-        return;
-    }
-    if (type === 'PINCH') {
-        activatePointerTarget();
-        return;
-    }
-    if (type === 'PALM_LEFT' || type === 'PALM_RIGHT') {
-        const offset = type === 'PALM_LEFT' ? 1 : -1;
-        const next = Math.max(0, Math.min(VIEWS.length - 1, VIEWS.indexOf(state.view) + offset));
-        switchView(VIEWS[next]);
-        return;
-    }
-    if (type === 'PALM_UP' || type === 'PALM_DOWN') {
-        if (!adjustFocusedControl(type)) {
-            scrollByGesture(type);
-        }
-        return;
-    }
-    if (type === 'OPEN_PALM') {
-        if (state.voice.listening || state.voice.preparing) {
-            stopVoiceInput();
-        } else if (!document.getElementById('panel').hidden) {
-            closePanel();
-        } else if (state.view !== 'inicio') {
-            switchView('inicio');
-        }
-        return;
-    }
-    if (type === 'THUMBS_UP') {
-        const form = document.activeElement && document.activeElement.closest('form');
-        if (form) {
-            form.requestSubmit();
-        }
-    }
-}
-
-function activatePointerTarget() {
-    const target = state.pointer.target;
-    if (!target) {
-        setInteractionStatus('No hay ningún control seleccionado.');
-        return;
-    }
-    if (isTextField(target)) {
-        target.focus({ preventScroll: true });
-        startVoiceInput(target);
-        return;
-    }
-    target.focus({ preventScroll: true });
-    target.click();
-}
-
-function isTextField(target) {
-    return target instanceof HTMLTextAreaElement
-        || target instanceof HTMLInputElement && ['text', 'search', 'email', 'tel', 'url'].includes(target.type);
-}
-
-function adjustFocusedControl(type) {
-    const control = document.activeElement;
-    const increment = type === 'PALM_UP' ? 1 : -1;
-    if (control instanceof HTMLSelectElement) {
-        control.selectedIndex = Math.max(0, Math.min(control.options.length - 1,
-            control.selectedIndex + increment));
-    } else if (control instanceof HTMLInputElement && ['date', 'time', 'number'].includes(control.type)) {
-        increment > 0 ? control.stepUp() : control.stepDown();
-    } else {
-        return false;
-    }
-    control.dispatchEvent(new Event('change', { bubbles: true }));
-    setInteractionStatus(control.value);
-    return true;
-}
-
-function scrollByGesture(type) {
-    let container = !document.getElementById('panel').hidden ? document.getElementById('panel') : state.pointer.target;
-    while (container && container !== document.body
-        && container.scrollHeight <= container.clientHeight) {
-        container = container.parentElement;
-    }
-    if (!container || container === document.body) {
-        container = document.querySelector(state.view === 'agenda' ? '#month-grid' : '#view-inicio');
-    }
-    const distance = Math.max(240, container.clientHeight * 0.7);
-    container.scrollBy({ top: type === 'PALM_UP' ? distance : -distance, behavior: 'smooth' });
-}
-
-let interactionStatusHandle = null;
-
-function setInteractionStatus(text) {
-    const status = document.getElementById('interaction-status');
-    status.textContent = text;
-    status.classList.add('visible');
-    clearTimeout(interactionStatusHandle);
-    interactionStatusHandle = setTimeout(() => status.classList.remove('visible'), 2500);
-}
-
-async function startVoiceInput(target) {
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) {
-        setInteractionStatus('El dictado no está disponible en este navegador.');
-        return;
-    }
-    stopVoiceInput();
-    const request = voiceRequest;
-    state.voice = { recognition: null, target, listening: false, preparing: true };
-    updateVoiceControl();
-
-    const local = await prepareOnDeviceVoice(Recognition);
-    if (request !== voiceRequest) {
-        return;
-    }
-
-    const recognition = new Recognition();
-    recognition.lang = VOICE_LANGUAGE;
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    if (local) {
-        recognition.processLocally = true;
-    }
-    state.voice = { recognition, target, listening: true, preparing: false };
-    recognition.onstart = () => {
-        updateVoiceControl();
-        setInteractionStatus('Escuchando…');
-    };
-    recognition.onresult = event => appendDictation(target, event.results[0][0].transcript);
-    recognition.onerror = event => {
-        if (event.error !== 'aborted') {
-            setInteractionStatus(voiceErrorMessage(event.error));
-        }
-    };
-    recognition.onend = () => {
-        if (state.voice.recognition === recognition) {
-            state.voice = { recognition: null, target, listening: false, preparing: false };
-            updateVoiceControl();
-        }
-    };
-    try {
-        recognition.start();
-    } catch (_) {
-        state.voice = { recognition: null, target, listening: false, preparing: false };
-        updateVoiceControl();
-        setInteractionStatus('No se pudo iniciar el dictado.');
-    }
-}
-
-async function prepareOnDeviceVoice(Recognition) {
-    if (!('processLocally' in Recognition.prototype)
-        || typeof Recognition.available !== 'function'
-        || typeof Recognition.install !== 'function') {
-        return false;
-    }
-
-    try {
-        const options = { langs: [VOICE_LANGUAGE], processLocally: true };
-        const availability = await Recognition.available(options);
-        if (availability === 'available') {
-            return true;
-        }
-        if (availability === 'unavailable') {
-            return false;
-        }
-
-        setInteractionStatus('Descargando el reconocimiento de voz en español…');
-        return await Recognition.install({ langs: [VOICE_LANGUAGE] });
-    } catch (_) {
-        return false;
-    }
-}
-
-function voiceErrorMessage(error) {
-    return ({
-        'not-allowed': 'Permite el micrófono en el navegador y vuelve a pulsar Dictar.',
-        'service-not-allowed': 'Este navegador no permite usar su servicio de voz.',
-        'audio-capture': 'No se encuentra un micrófono disponible.',
-        'no-speech': 'No se ha detectado voz. Inténtalo de nuevo.',
-        'network': 'No se puede acceder al reconocimiento de voz remoto. Actualiza Chrome para usar el dictado local.',
-        'language-not-supported': 'El reconocimiento no admite español.',
-    })[error] || 'No se pudo reconocer la voz.';
-}
-
-function toggleVoiceInput() {
-    if (state.voice.listening || state.voice.preparing) {
-        stopVoiceInput();
-        return;
-    }
-    const target = isTextField(document.activeElement) ? document.activeElement
-        : isTextField(state.pointer.target) ? state.pointer.target : state.voice.target;
-    if (!target?.isConnected) {
-        setInteractionStatus('Selecciona primero un campo de texto.');
-        return;
-    }
-    target.focus({ preventScroll: true });
-    startVoiceInput(target);
-}
-
-function updateVoiceControl() {
-    const control = document.getElementById('voice-control');
-    const supported = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
-    control.hidden = false;
-    control.disabled = !supported || state.voice.preparing;
-    control.classList.toggle('listening', state.voice.listening);
-    control.setAttribute('aria-pressed', String(state.voice.listening));
-    control.textContent = !supported ? 'Voz no disponible'
-        : state.voice.preparing ? 'Preparando voz…'
-            : state.voice.listening ? 'Detener voz' : 'Dictar';
-}
-
-function appendDictation(target, transcript) {
-    const start = target.selectionStart ?? target.value.length;
-    const end = target.selectionEnd ?? target.value.length;
-    const prefix = start > 0 && !/\s$/.test(target.value.slice(0, start)) ? ' ' : '';
-    let value = target.value.slice(0, start) + prefix + transcript.trim() + target.value.slice(end);
-    if (target.maxLength > 0) {
-        value = value.slice(0, target.maxLength);
-    }
-    target.value = value;
-    target.selectionStart = target.selectionEnd = Math.min(value.length, start + prefix.length + transcript.trim().length);
-    target.dispatchEvent(new Event('input', { bubbles: true }));
-    setInteractionStatus('Texto reconocido.');
-}
-
-let voiceRequest = 0;
-
-function stopVoiceInput() {
-    voiceRequest += 1;
-    const target = state.voice.target;
-    if (state.voice.recognition) {
-        state.voice.recognition.abort();
-    }
-    state.voice = { recognition: null, target, listening: false, preparing: false };
-    updateVoiceControl();
 }
 
 const SKY_ICONS = {
@@ -1482,10 +1147,7 @@ function setAuthenticated(authenticated) {
             Object.assign(state.gesture, {
                 candidate: null, candidateSince: 0, missingSince: 0, latched: null,
             });
-            stopVoiceInput();
-            setPointerTarget(null);
-            Object.assign(state.pointer, { position: null, missing: 0 });
-            document.getElementById('gesture-pointer').classList.remove('visible');
+            AtlasInteraction.reset();
         }
         disconnectEvents();
         closePanel();
@@ -1508,7 +1170,7 @@ function setAuthenticated(authenticated) {
     }
 
     if (changed) {
-        setInteractionStatus('Gestos activos: junta pulgar e índice para seleccionar; orienta índice y corazón para navegar.');
+        AtlasInteraction.status('Gestos activos: junta pulgar e índice para seleccionar; orienta índice y corazón para navegar.');
         refreshAll();
         connectEvents();
     }
@@ -1549,7 +1211,7 @@ async function refreshHomeProfile(profileId) {
     tickClock();
     await Promise.all([refreshWeather(), refreshNews()]);
     if (response.status === 404) {
-        setInteractionStatus('Completa el onboarding de Inicio en modo mantenimiento.');
+        AtlasInteraction.status('Completa el onboarding de Inicio en modo mantenimiento.');
     }
 }
 
@@ -1894,12 +1556,21 @@ function switchPeriod(period) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    updateVoiceControl();
-    document.getElementById('voice-control').addEventListener('click', toggleVoiceInput);
-    document.addEventListener('focusin', event => {
-        if (isTextField(event.target)) {
-            state.voice.target = event.target;
-        }
+    AtlasInteraction.bind({
+        video: document.getElementById('mirror'),
+        shiftView: offset => switchView(VIEWS[Math.max(0,
+            Math.min(VIEWS.length - 1, VIEWS.indexOf(state.view) + offset))]),
+        onCancel: () => {
+            if (!document.getElementById('panel').hidden) {
+                closePanel();
+            } else if (state.view !== 'inicio') {
+                switchView('inicio');
+            }
+        },
+        scrollRoot: () => (document.getElementById('panel').hidden
+            ? null : document.getElementById('panel')),
+        scrollFallback: () => document.querySelector(state.view === 'agenda'
+            ? '#month-grid' : '#view-inicio'),
     });
     startCamera();
     tickClock();

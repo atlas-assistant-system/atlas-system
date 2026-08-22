@@ -10,6 +10,7 @@ public final class UiHandlers {
     private static final String PAGE = StaticResources.read("/web-core/app.html");
     private static final String STYLES = StaticResources.read("/web-core/app.css");
     private static final String SCRIPT = StaticResources.read("/web-core/app.js");
+    private static final String INTERACTION_SCRIPT = StaticResources.read("/web-core/interaction.js");
     private static final String ROUTINES_STYLES = StaticResources.read("/web-core/routines.css");
     private static final String ROUTINES_SCRIPT = StaticResources.read("/web-core/routines.js");
     private static final String ECONOMY_STYLES = StaticResources.read("/web-core/economy.css");
@@ -31,6 +32,10 @@ public final class UiHandlers {
 
     public static HttpResponse script(HttpRequest request) {
         return new HttpResponse(200, "text/javascript; charset=utf-8", SCRIPT, Map.of());
+    }
+
+    public static HttpResponse interactionScript(HttpRequest request) {
+        return new HttpResponse(200, "text/javascript; charset=utf-8", INTERACTION_SCRIPT, Map.of());
     }
 
     public static HttpResponse routinesStyles(HttpRequest request) {

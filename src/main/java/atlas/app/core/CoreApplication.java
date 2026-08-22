@@ -20,6 +20,7 @@ public final class CoreApplication {
                 .get("/assets/errors.js", ErrorMessagesHandler::script)
                 .get("/assets/app.css", UiHandlers::styles)
                 .get("/assets/app.js", UiHandlers::script)
+                .get("/assets/interaction.js", UiHandlers::interactionScript)
                 .get("/assets/routines.css", UiHandlers::routinesStyles)
                 .get("/assets/routines.js", UiHandlers::routinesScript)
                 .get("/assets/economy.css", UiHandlers::economyStyles)
