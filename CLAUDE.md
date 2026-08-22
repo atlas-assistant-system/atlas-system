@@ -27,6 +27,7 @@ La arquitectura y las decisiones de stack de este proyecto están documentadas e
 - [docs/conventions.md](docs/conventions.md) — convenciones de código, naming, testing y flujo de trabajo
 - [docs/economy-context.md](docs/economy-context.md) — diseño del contexto `economy`; el ciclo 1 (movimientos y saldo) ya está implementado, los ciclos 2 y 3 siguen esbozados
 - [docs/nutrition-context.md](docs/nutrition-context.md) — diseño del contexto `nutrition`; el ciclo 1 (plan y consumo diario) está completo y cableado, y el ciclo 2 (peso y evolución) se implementó y se retiró
+- [docs/training-context.md](docs/training-context.md) — diseño del contexto `training`; el ciclo 1 (catálogo, plantillas y entrenos) está completo y cableado, el ciclo 2 (progresión) está diseñado sin implementar
 
 Estos documentos son la fuente de verdad técnica del proyecto. Cualquier decisión arquitectónica nueva debe reflejarse ahí.
 
@@ -36,11 +37,11 @@ El proyecto es **un único módulo JPMS** y cada bounded context es un subpaquet
 cada anillo. La convención de `architecture.md` aplicada a varios contextos:
 
 ```
-atlas/domain/sharedkernel/          appointments/  presence/  routines/  economy/
-atlas/application/sharedkernel/     appointments/  presence/  routines/  economy/
-atlas/infrastructure/sharedkernel/  appointments/  presence/  routines/  economy/
-atlas/presentation/sharedkernel/    appointments/  presence/  routines/  economy/
-atlas/app/appointments/  presence/  routines/  economy/   cableado de cada contexto
+atlas/domain/sharedkernel/          appointments/  presence/  routines/  economy/  nutrition/  training/
+atlas/application/sharedkernel/     appointments/  presence/  routines/  economy/  nutrition/  training/
+atlas/infrastructure/sharedkernel/  appointments/  presence/  routines/  economy/  nutrition/  training/
+atlas/presentation/sharedkernel/    appointments/  presence/  routines/  economy/  nutrition/  training/
+atlas/app/appointments/  presence/  routines/  economy/  nutrition/  training/   cableado de cada contexto
 atlas/app/Application.java                                composition root que los monta
 ```
 
@@ -58,7 +59,8 @@ físico— y su propio bus de comandos y consultas.
 ## Estado actual
 
 - **`core` compuesto** — es dueño de `/` y de la interfaz espejo. Tras autenticarse ofrece
-  `Inicio`, `Agenda`, `Rutinas`, `Economía` y `Nutrición` como pestañas de una sola aplicación;
+  `Inicio`, `Agenda`, `Rutinas`, `Economía`, `Nutrición` y `Entrenamiento` como pestañas de una
+  sola aplicación;
   consume los
   módulos por sus APIs públicas, sin introducir dependencias entre sus dominios.
 - **`appointments` migrado** — citas, recordatorios y calendario. Se monta en `/appointments`,
@@ -100,10 +102,33 @@ físico— y su propio bus de comandos y consultas.
   **se retiró**: la tabla la tira `V011__drop_weigh_ins.sql` y `V006` se queda, porque una
   migración aplicada no se edita. Del peso solo sobreviven el de partida y el objetivo del plan,
   que son de donde sale `Goal`.
-- **1593 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
+- **`training` implementado (ciclo 1)** — catálogo de ejercicios, plantillas y entrenos. Es
+  **Strong sin catálogo de ejercicios**: los tecleas tú. Cuatro capas completas, se monta en
+  `/training` tras la guardia de sesión de `presence`, y su SSE en `/events/training`.
+  **El cumplimiento no está aquí, está en `routines`**: "ir al gimnasio 4 veces por semana"
+  ya es una `Routine` con `Schedule.over(WEEK)` y `Target(4, "sesiones")`, con su racha.
+  `training` responde *qué hiciste y con cuánto peso*; `routines`, *si lo hiciste*. Los dos
+  contextos no se conocen.
+  **Una serie se mide de cuatro formas y solo cuatro** —carga en gramos, reps, segundos,
+  metros— en un `Effort` plano, y `Metric` (smart enum: `LOAD`, `REPS`, `TIME`, `DISTANCE`)
+  es la **única** definición de qué compara la mejor marca y qué suma el volumen, para que
+  no puedan divergir. La métrica de un ejercicio es inmutable: cambiarla con historial
+  detrás cambiaría el significado de lo registrado, así que se archiva y se crea otro.
+  **El historial no se reescribe**: al empezar un entreno, las series previstas se copian y
+  se congelan en `SetLog.planned`, así que editar la plantilla después no toca junio. Un
+  `SetLog` lleva `planned` y `actual` opcionales y al menos uno presente: sin `actual` es
+  el guion pendiente, sin `planned` es una serie fuera de guion.
+  **No hay máquina de estados del entreno** —nada que cerrar— y si entrenas mañana y tarde
+  son dos logs del mismo día. Ejercicios y plantillas se archivan, nunca se borran, y el
+  nombre único de un ejercicio sobrevive al archivado para que el histórico siga uniendo.
+  El **ciclo 2** (progresión: mejor marca, histórico por ejercicio y volumen) está diseñado
+  en `docs/training-context.md` y sin implementar; no añade dominio, son dos consultas
+  sobre `Metric`.
+- **1796 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
   ArchUnit.
 - **Mutation testing con PIT** sobre `atlas.domain.*` (excluido el kernel), umbral del 90%: hoy
-  el dominio está al 95%, `economy` al 97% y `nutrition` entre el 94% y el 100%. No cuelga de `check` porque son ~30 s — se lanza a
+  el dominio está al 95%, `economy` al 97%, `nutrition` entre el 94% y el 100% y `training`
+  al 96%. No cuelga de `check` porque son ~30 s — se lanza a
   mano con `gradle pitest`. Ojo con las versiones: el plugin 1.15.0 no vale con Gradle 9 y PIT
   1.19.4 no lee bytecode de Java 25.
 - **El Shared Kernel es un contexto más**, repartido por sus anillos igual que los demás
@@ -112,15 +137,15 @@ físico— y su propio bus de comandos y consultas.
   interviene. Las reglas de ArchUnit lo excluyen por el patrón `..sharedkernel..`, y viven en
   `src/test/java/atlas/architecture/rules/` — no pueden ser un subproyecto porque importan
   `ValueObject` del propio kernel y se formaría un ciclo.
-- **La puerta de sesión ya es única** — `appointments`, `economy`, `routines`, `nutrition` y
-  `presence` devuelven 401 sin sesión. Los cuatro primeros comparten el `SessionGuard` de
+- **La puerta de sesión ya es única** — `appointments`, `economy`, `routines`, `nutrition`,
+  `training` y `presence` devuelven 401 sin sesión. Los cinco primeros comparten el `SessionGuard` de
   `presentation/common/web/` y consultan la sesión de `presence` en memoria mediante un contrato
   booleano cableado en el composition root; no hay HTTP interno ni rutas proxy entre contextos.
   Cada `wire(...)` conserva una sobrecarga sin guardia (`() -> true`) para montar el contexto
-  suelto en sus tests. **Los cuatro SSE (`/events`, `/events/routines`, `/events/economy`,
-  `/events/nutrition`) van tras la misma guardia**, y como esta solo mira en el handshake mientras
+  suelto en sus tests. **Los cinco SSE (`/events`, `/events/routines`, `/events/economy`,
+  `/events/nutrition`, `/events/training`) van tras la misma guardia**, y como esta solo mira en el handshake mientras
   el stream dura mucho más, el composition root se suscribe a `SessionClosedEvent` y
-  `SessionExpiredEvent` de `presence` para cerrar los hubs de los cuatro contextos al cerrarse la
+  `SessionExpiredEvent` de `presence` para cerrar los hubs de los cinco contextos al cerrarse la
   sesión. El de `presence` no se toca: es el
   que la vista necesita para enterarse.
 - Las UIs independientes de `appointments` y `routines` se retiraron: la presentación de ambos
