@@ -3,70 +3,20 @@ package atlas.application.sharedkernel.unitofwork;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import atlas.application.sharedkernel.events.PendingEventDispatcher;
 import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
-import atlas.domain.sharedkernel.ddd.AggregateRoot;
-import atlas.domain.sharedkernel.events.DomainEvent;
 import atlas.domain.sharedkernel.results.Error;
 import atlas.domain.sharedkernel.results.Result;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class AbstractUnitOfWorkTest {
 
-    private static final Instant NOW = Instant.parse("2026-08-16T10:15:30Z");
-
-    private record SampleId(long value) {}
-
-    private record SampleChanged(SampleId id, Instant occurredOn) implements DomainEvent {}
-
-    private static final class SampleAggregate extends AggregateRoot<SampleId> {
-
-        SampleAggregate(long id) {
-            super(new SampleId(id));
-        }
-
-        void change() {
-            registerEvent(new SampleChanged(id(), NOW));
-        }
-    }
-
     private final List<String> journal = new ArrayList<>();
     private final SimpleDomainEventPublisher publisher = new SimpleDomainEventPublisher();
 
-    private final class RecordingUnitOfWork extends AbstractUnitOfWork {
-
-        private final boolean failOnCommit;
-
-        RecordingUnitOfWork(boolean failOnCommit) {
-            super(new PendingEventDispatcher(publisher));
-            this.failOnCommit = failOnCommit;
-        }
-
-        @Override
-        protected void begin() {
-            journal.add("begin");
-        }
-
-        @Override
-        protected void commit() {
-            if (failOnCommit) {
-                throw new IllegalStateException("database is locked");
-            }
-
-            journal.add("commit");
-        }
-
-        @Override
-        protected void rollback() {
-            journal.add("rollback");
-        }
-    }
-
     private RecordingUnitOfWork unitOfWork() {
-        return new RecordingUnitOfWork(false);
+        return new RecordingUnitOfWork(journal, publisher, false);
     }
 
     @Test
@@ -122,7 +72,7 @@ class AbstractUnitOfWorkTest {
         publisher.subscribe(SampleChanged.class, event -> journal.add("published"));
         var aggregate = new SampleAggregate(1);
 
-        assertThatThrownBy(() -> new RecordingUnitOfWork(true).run(() -> {
+        assertThatThrownBy(() -> new RecordingUnitOfWork(journal, publisher, true).run(() -> {
             aggregate.change();
             AggregateChanges.track(aggregate);
         })).isInstanceOf(IllegalStateException.class);

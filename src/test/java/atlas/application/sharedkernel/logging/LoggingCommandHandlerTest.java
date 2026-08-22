@@ -17,24 +17,6 @@ class LoggingCommandHandlerTest {
     private static final String SENSITIVE = "resultado de la analitica del paciente";
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-16T10:15:30Z"), ZoneOffset.UTC);
 
-    private record ScheduleAppointment(String slot, String notes) implements Command<Result<String>> {}
-
-    private record SummarisedCommand(String notes) implements Command<Result<String>>, LoggableSummary {
-
-        @Override
-        public String logSummary() {
-            return "slot=2026-08-17T09:00";
-        }
-    }
-
-    private record NoisyCommand() implements Command<Result<String>>, LoggableSummary {
-
-        @Override
-        public String logSummary() {
-            return "first\nINFO: forged line\tend";
-        }
-    }
-
     private final RecordingLogger logger = new RecordingLogger();
 
     private <C extends Command<R>, R> LoggingCommandHandler<C, R> decorate(CommandHandler<C, R> inner) {

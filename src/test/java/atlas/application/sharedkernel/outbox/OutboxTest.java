@@ -3,13 +3,8 @@ package atlas.application.sharedkernel.outbox;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import atlas.application.sharedkernel.events.DomainEventSerializer;
 import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
-import atlas.application.sharedkernel.unitofwork.AbstractUnitOfWork;
 import atlas.application.sharedkernel.unitofwork.AggregateChanges;
-import atlas.domain.sharedkernel.ddd.AggregateRoot;
-import atlas.domain.sharedkernel.events.DomainEvent;
-import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import atlas.infrastructure.sharedkernel.persistence.SqlOutboxStore;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -28,39 +23,6 @@ class OutboxTest {
     private static final Instant NOW = Instant.parse("2026-08-16T10:15:30Z");
     private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
 
-    private record NoteId(long value) {}
-
-    private record NoteRenamed(long id, Instant occurredOn) implements DomainEvent {}
-
-    private static final class Note extends AggregateRoot<NoteId> {
-
-        Note(long id) {
-            super(new NoteId(id));
-        }
-
-        void rename() {
-            registerEvent(new NoteRenamed(id().value(), NOW));
-        }
-    }
-
-    private static final class TextSerializer implements DomainEventSerializer {
-
-        @Override
-        public String typeOf(DomainEvent event) {
-            return event.getClass().getSimpleName();
-        }
-
-        @Override
-        public String serialize(DomainEvent event) {
-            return String.valueOf(((NoteRenamed) event).id());
-        }
-
-        @Override
-        public DomainEvent deserialize(String type, String payload) {
-            return new NoteRenamed(Long.parseLong(payload), NOW);
-        }
-    }
-
     private final List<String> published = new ArrayList<>();
     private final SimpleDomainEventPublisher publisher = new SimpleDomainEventPublisher();
 
@@ -70,49 +32,13 @@ class OutboxTest {
     private OutboxUnitOfWork unitOfWork;
     private boolean handlerFails;
 
-    private final class OutboxUnitOfWork extends AbstractUnitOfWork {
-
-        OutboxUnitOfWork() {
-            super(new OutboxEventDelivery(store, new TextSerializer(), processor));
-        }
-
-        @Override
-        protected void begin() {
-            onConnection(() -> connection.setAutoCommit(false));
-        }
-
-        @Override
-        protected void commit() {
-            onConnection(connection::commit);
-        }
-
-        @Override
-        protected void rollback() {
-            onConnection(connection::rollback);
-        }
-
-        private void onConnection(SqlAction action) {
-            try {
-                action.execute();
-            } catch (SQLException e) {
-                throw new PersistenceException("transaction failure", e);
-            }
-        }
-    }
-
-    @FunctionalInterface
-    private interface SqlAction {
-
-        void execute() throws SQLException;
-    }
-
     @BeforeEach
     void setUp() throws SQLException {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         store = new SqlOutboxStore(connection);
         store.createTableIfMissing();
-        processor = new OutboxProcessor(store, new TextSerializer(), publisher, CLOCK);
-        unitOfWork = new OutboxUnitOfWork();
+        processor = new OutboxProcessor(store, new TextSerializer(NOW), publisher, CLOCK);
+        unitOfWork = new OutboxUnitOfWork(connection, store, new TextSerializer(NOW), processor);
 
         publisher.subscribe(NoteRenamed.class, event -> {
             if (handlerFails) {
@@ -133,7 +59,7 @@ class OutboxTest {
         var note = new Note(1);
 
         unitOfWork.run(() -> {
-            note.rename();
+            note.rename(NOW);
             AggregateChanges.track(note);
         });
 
@@ -147,7 +73,7 @@ class OutboxTest {
         var note = new Note(1);
 
         unitOfWork.run(() -> {
-            note.rename();
+            note.rename(NOW);
             AggregateChanges.track(note);
         });
 
@@ -167,7 +93,7 @@ class OutboxTest {
         var note = new Note(1);
 
         unitOfWork.run(() -> {
-            note.rename();
+            note.rename(NOW);
             AggregateChanges.track(note);
         });
 
@@ -185,7 +111,7 @@ class OutboxTest {
         var note = new Note(1);
 
         unitOfWork.run(() -> {
-            note.rename();
+            note.rename(NOW);
             AggregateChanges.track(note);
         });
 
@@ -201,7 +127,7 @@ class OutboxTest {
         var note = new Note(1);
 
         assertThatThrownBy(() -> unitOfWork.run(() -> {
-            note.rename();
+            note.rename(NOW);
             AggregateChanges.track(note);
             throw new IllegalStateException("boom");
         })).isInstanceOf(IllegalStateException.class);
@@ -215,7 +141,7 @@ class OutboxTest {
         var note = new Note(1);
 
         unitOfWork.run(() -> {
-            note.rename();
+            note.rename(NOW);
             AggregateChanges.track(note);
         });
 

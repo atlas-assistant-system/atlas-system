@@ -3,12 +3,8 @@ package atlas.infrastructure.sharedkernel.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import atlas.application.sharedkernel.events.PendingEventDispatcher;
 import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
-import atlas.application.sharedkernel.unitofwork.AbstractUnitOfWork;
 import atlas.application.sharedkernel.unitofwork.AggregateChanges;
-import atlas.domain.sharedkernel.ddd.AggregateRoot;
-import atlas.domain.sharedkernel.events.DomainEvent;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -25,99 +21,12 @@ class AbstractSqlRepositoryTest {
 
     private static final Instant NOW = Instant.parse("2026-08-16T10:15:30Z");
 
-    private record NoteId(long value) {}
-
-    private record NoteRenamed(NoteId id, Instant occurredOn) implements DomainEvent {}
-
-    private static final class Note extends AggregateRoot<NoteId> {
-
-        private String text;
-
-        Note(long id, String text) {
-            super(new NoteId(id));
-            this.text = text;
-        }
-
-        void rename(String newText) {
-            this.text = newText;
-            registerEvent(new NoteRenamed(id(), NOW));
-        }
-
-        String text() {
-            return text;
-        }
-    }
-
-    private static final class NoteRepository extends AbstractSqlRepository<Note, NoteId> {
-
-        NoteRepository(Connection connection) {
-            super(connection, "notes", "id");
-        }
-
-        @Override
-        protected List<String> columns() {
-            return List.of("id", "text");
-        }
-
-        @Override
-        protected void bind(PreparedStatement statement, Note note) throws SQLException {
-            statement.setLong(1, note.id().value());
-            statement.setString(2, note.text());
-        }
-
-        @Override
-        protected Note mapRow(ResultSet row) throws SQLException {
-            return new Note(row.getLong("id"), row.getString("text"));
-        }
-
-        @Override
-        protected Object idValue(NoteId id) {
-            return id.value();
-        }
-    }
-
     private final SimpleDomainEventPublisher publisher = new SimpleDomainEventPublisher();
     private final List<String> published = new ArrayList<>();
 
     private Connection connection;
     private NoteRepository notes;
     private UnitOfWorkForTest unitOfWork;
-
-    private final class UnitOfWorkForTest extends AbstractUnitOfWork {
-
-        UnitOfWorkForTest() {
-            super(new PendingEventDispatcher(publisher));
-        }
-
-        @Override
-        protected void begin() {
-            onConnection(() -> connection.setAutoCommit(false));
-        }
-
-        @Override
-        protected void commit() {
-            onConnection(connection::commit);
-        }
-
-        @Override
-        protected void rollback() {
-            onConnection(connection::rollback);
-        }
-
-        private void onConnection(SqlAction action) {
-            try {
-                action.execute();
-            } catch (SQLException e) {
-                throw new PersistenceException("transaction failure", e);
-            }
-        }
-    }
-
-    @FunctionalInterface
-    private interface SqlAction {
-
-        void execute() throws SQLException;
-    }
 
     @BeforeEach
     void setUp() throws SQLException {
@@ -127,7 +36,7 @@ class AbstractSqlRepositoryTest {
         }
 
         notes = new NoteRepository(connection);
-        unitOfWork = new UnitOfWorkForTest();
+        unitOfWork = new UnitOfWorkForTest(connection, publisher);
         publisher.subscribe(NoteRenamed.class, event -> published.add("renamed:" + event.id().value()));
     }
 
@@ -164,7 +73,7 @@ class AbstractSqlRepositoryTest {
 
         unitOfWork.run(() -> {
             var note = notes.get(new NoteId(1)).orElseThrow();
-            note.rename("final");
+            note.rename("final", NOW);
             notes.update(note);
         });
 
@@ -177,7 +86,7 @@ class AbstractSqlRepositoryTest {
 
         unitOfWork.run(() -> {
             var note = notes.get(new NoteId(1)).orElseThrow();
-            note.rename("final");
+            note.rename("final", NOW);
             notes.update(note);
         });
 

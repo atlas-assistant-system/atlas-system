@@ -12,36 +12,6 @@ class AggregateRootTest {
 
     private static final Instant NOW = Instant.parse("2026-08-16T10:15:30Z");
 
-    private record SampleId(long value) {}
-
-    private record SampleCreatedEvent(SampleId id, Instant occurredOn) implements DomainEvent {}
-
-    private record UntimedEvent() implements DomainEvent {
-
-        @Override
-        public Instant occurredOn() {
-            return null;
-        }
-    }
-
-    private static final class SampleAggregate extends AggregateRoot<SampleId> {
-
-        private SampleAggregate(SampleId id) {
-            super(id);
-        }
-
-        static SampleAggregate create(SampleId id, Instant now) {
-            var aggregate = new SampleAggregate(id);
-            aggregate.registerEvent(new SampleCreatedEvent(id, now));
-
-            return aggregate;
-        }
-
-        void registerUntimedEvent() {
-            registerEvent(new UntimedEvent());
-        }
-    }
-
     @Test
     void shouldAccumulateEventsWhenBehaviorRegistersThem() {
         var aggregate = SampleAggregate.create(new SampleId(1), NOW);

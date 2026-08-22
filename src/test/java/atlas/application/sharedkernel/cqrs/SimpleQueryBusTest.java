@@ -8,10 +8,6 @@ import org.junit.jupiter.api.Test;
 
 class SimpleQueryBusTest {
 
-    private record ListNamesQuery(String prefix) implements Query<List<String>> {}
-
-    private record UnregisteredQuery() implements Query<String> {}
-
     private final SimpleQueryBus bus = new SimpleQueryBus();
 
     @Test

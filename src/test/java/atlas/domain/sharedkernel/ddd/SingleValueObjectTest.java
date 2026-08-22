@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test;
 
 class SingleValueObjectTest {
 
-    private record SampleTitle(String value) implements SingleValueObject<String> {}
-
     @Test
     void shouldExposeValueThroughInterfaceWhenImplementedByRecord() {
         SingleValueObject<String> title = new SampleTitle("checkup");

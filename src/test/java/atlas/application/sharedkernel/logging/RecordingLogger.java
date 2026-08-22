@@ -6,15 +6,13 @@ import java.util.ResourceBundle;
 
 final class RecordingLogger implements System.Logger {
 
-    record Entry(Level level, String message, Throwable thrown) {}
+    private final List<RecordedLogEntry> entries = new ArrayList<>();
 
-    private final List<Entry> entries = new ArrayList<>();
-
-    List<Entry> entries() {
+    List<RecordedLogEntry> entries() {
         return entries;
     }
 
-    Entry single() {
+    RecordedLogEntry single() {
         if (entries.size() != 1) {
             throw new IllegalStateException("Expected exactly one log entry but got " + entries.size());
         }
@@ -34,11 +32,11 @@ final class RecordingLogger implements System.Logger {
 
     @Override
     public void log(Level level, ResourceBundle bundle, String message, Object... params) {
-        entries.add(new Entry(level, message, null));
+        entries.add(new RecordedLogEntry(level, message, null));
     }
 
     @Override
     public void log(Level level, ResourceBundle bundle, String message, Throwable thrown) {
-        entries.add(new Entry(level, message, thrown));
+        entries.add(new RecordedLogEntry(level, message, thrown));
     }
 }

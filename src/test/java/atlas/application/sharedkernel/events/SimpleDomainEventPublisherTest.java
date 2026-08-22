@@ -3,7 +3,6 @@ package atlas.application.sharedkernel.events;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import atlas.domain.sharedkernel.events.DomainEvent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +11,6 @@ import org.junit.jupiter.api.Test;
 class SimpleDomainEventPublisherTest {
 
     private static final Instant NOW = Instant.parse("2026-08-16T10:15:30Z");
-
-    private record SomethingHappened(String detail, Instant occurredOn) implements DomainEvent {}
-
-    private record SomethingElseHappened(Instant occurredOn) implements DomainEvent {}
 
     private final SimpleDomainEventPublisher publisher = new SimpleDomainEventPublisher();
 

@@ -8,22 +8,6 @@ import org.junit.jupiter.api.Test;
 
 class EntityTest {
 
-    private record SampleId(long value) {}
-
-    private static final class SampleEntity extends Entity<SampleId> {
-
-        SampleEntity(SampleId id) {
-            super(id);
-        }
-    }
-
-    private static final class OtherEntity extends Entity<SampleId> {
-
-        OtherEntity(SampleId id) {
-            super(id);
-        }
-    }
-
     @Test
     void shouldExposeIdWhenConstructed() {
         var entity = new SampleEntity(new SampleId(1));

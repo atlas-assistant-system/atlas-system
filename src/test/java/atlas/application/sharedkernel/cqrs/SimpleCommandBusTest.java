@@ -7,10 +7,6 @@ import org.junit.jupiter.api.Test;
 
 class SimpleCommandBusTest {
 
-    private record GreetCommand(String name) implements Command<String> {}
-
-    private record UnregisteredCommand() implements Command<String> {}
-
     private final SimpleCommandBus bus = new SimpleCommandBus();
 
     @Test
