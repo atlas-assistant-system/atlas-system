@@ -4,12 +4,19 @@ const AtlasInteraction = (() => {
     const INTERACTIVE = 'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), '
         + 'select:not(:disabled), .clickable, .day, .item';
     const VOICE_LANGUAGE = 'es-ES';
+    // ponytail: radio e histéresis calibrados a ojo con la mano puesta; son constantes, no verdades.
+    const MAGNET_RADIUS = 120;
+    const HYSTERESIS = 0.75;
+    const ADJUST_WINDOW_MS = 700;
 
     const pointer = { target: null, candidate: null, frames: 0, position: null, missing: 0 };
     let voice = { recognition: null, target: null, listening: false, preparing: false };
     let voiceRequest = 0;
     let interactionStatusHandle = null;
     let config = null;
+    let targetCache = null;
+    let dictationTarget = null;
+    const adjustment = { type: null, at: 0, count: 0 };
 
     function bind(options) {
         config = options;
@@ -20,6 +27,35 @@ const AtlasInteraction = (() => {
                 voice.target = event.target;
             }
         });
+        addEventListener('scroll', invalidateTargets, { capture: true, passive: true });
+        addEventListener('resize', invalidateTargets);
+        new MutationObserver(mutations => {
+            if (mutations.some(mutation => !isChrome(mutation.target))) {
+                invalidateTargets();
+            }
+        }).observe(document.body, {
+            childList: true, subtree: true, attributes: true,
+            attributeFilter: ['hidden', 'disabled', 'class', 'style'],
+        });
+    }
+
+    // El puntero se mueve cada frame: si sus mutaciones invalidasen la caché, no habría caché.
+    function isChrome(node) {
+        const element = node instanceof Element ? node : node.parentElement;
+        return Boolean(element?.closest('#gesture-pointer, #interaction-status'));
+    }
+
+    function invalidateTargets() {
+        targetCache = null;
+    }
+
+    function targets() {
+        if (!targetCache) {
+            targetCache = [...document.querySelectorAll(INTERACTIVE)]
+                .map(element => ({ element, rect: element.getBoundingClientRect() }))
+                .filter(candidate => candidate.rect.width > 0 && candidate.rect.height > 0);
+        }
+        return targetCache;
     }
 
     function reset() {
@@ -53,7 +89,34 @@ const AtlasInteraction = (() => {
         element.classList.toggle('recognized', Boolean(observed));
         element.dataset.gesture = observed ? observed.type.replace('PALM_', '') : 'TRACKING';
         const hit = document.elementFromPoint(position.x, position.y);
-        trackPointerTarget(hit && hit.closest(INTERACTIVE));
+        const direct = hit && hit.closest(INTERACTIVE);
+        trackPointerTarget(direct || nearestTarget(position, targets(), pointer.target));
+    }
+
+    function rectDistance(position, rect) {
+        const dx = Math.max(rect.left - position.x, 0, position.x - rect.right);
+        const dy = Math.max(rect.top - position.y, 0, position.y - rect.bottom);
+        return Math.hypot(dx, dy);
+    }
+
+    function nearestTarget(position, candidates, current) {
+        let best = null;
+        let bestDistance = Infinity;
+        let currentDistance = Infinity;
+        for (const candidate of candidates) {
+            const distance = rectDistance(position, candidate.rect);
+            if (candidate.element === current) {
+                currentDistance = distance;
+            }
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = candidate.element;
+            }
+        }
+        if (currentDistance <= MAGNET_RADIUS && bestDistance > currentDistance * HYSTERESIS) {
+            return current;
+        }
+        return bestDistance <= MAGNET_RADIUS ? best : null;
     }
 
     function smoothPointer(previous, current) {
@@ -162,7 +225,7 @@ const AtlasInteraction = (() => {
     function activatePointerTarget() {
         const target = pointer.target;
         if (!target) {
-            setInteractionStatus('No hay ningún control seleccionado.');
+            startVoiceInput(null);
             return;
         }
         if (isTextField(target)) {
@@ -186,13 +249,28 @@ const AtlasInteraction = (() => {
             control.selectedIndex = Math.max(0, Math.min(control.options.length - 1,
                 control.selectedIndex + increment));
         } else if (control instanceof HTMLInputElement && ['date', 'time', 'number'].includes(control.type)) {
-            increment > 0 ? control.stepUp() : control.stepDown();
+            const steps = control.type === 'number' ? adjustmentSteps(type) : 1;
+            for (let step = 0; step < steps; step++) {
+                increment > 0 ? control.stepUp() : control.stepDown();
+            }
         } else {
             return false;
         }
         control.dispatchEvent(new Event('change', { bubbles: true }));
         setInteractionStatus(control.value);
         return true;
+    }
+
+    // 70 kg no pueden ser 70 gestos: repetir el mismo empujón acelera el paso.
+    function adjustmentSteps(type) {
+        const now = performance.now();
+        if (adjustment.type !== type || now - adjustment.at > ADJUST_WINDOW_MS) {
+            adjustment.count = 0;
+        }
+        adjustment.type = type;
+        adjustment.at = now;
+        adjustment.count++;
+        return adjustment.count < 3 ? 1 : adjustment.count < 6 ? 5 : 10;
     }
 
     function scrollByGesture(type) {
@@ -245,7 +323,14 @@ const AtlasInteraction = (() => {
             updateVoiceControl();
             setInteractionStatus('Escuchando…');
         };
-        recognition.onresult = event => appendDictation(target, event.results[0][0].transcript);
+        recognition.onresult = event => {
+            const transcript = event.results[0][0].transcript;
+            if (target) {
+                appendDictation(target, transcript);
+            } else {
+                obeyCommand(transcript);
+            }
+        };
         recognition.onerror = event => {
             if (event.error !== 'aborted') {
                 setInteractionStatus(voiceErrorMessage(event.error));
@@ -309,11 +394,126 @@ const AtlasInteraction = (() => {
         const target = isTextField(document.activeElement) ? document.activeElement
             : isTextField(pointer.target) ? pointer.target : voice.target;
         if (!target?.isConnected) {
-            setInteractionStatus('Selecciona primero un campo de texto.');
+            startVoiceInput(null);
             return;
         }
         target.focus({ preventScroll: true });
         startVoiceInput(target);
+    }
+
+    // Sin campo de texto delante, lo dicho manda sobre la pantalla: un número al control
+    // enfocado, o el nombre de cualquier cosa que se vea.
+    function obeyCommand(transcript) {
+        const focused = document.activeElement;
+        const number = parseSpokenNumber(transcript);
+        if (number !== null && focused instanceof HTMLInputElement && focused.type === 'number') {
+            focused.value = String(number);
+            focused.dispatchEvent(new Event('input', { bubbles: true }));
+            focused.dispatchEvent(new Event('change', { bubbles: true }));
+            setInteractionStatus(focused.value);
+            return;
+        }
+        const match = matchLabel(transcript, targets()
+            .map(candidate => ({ element: candidate.element, label: labelOf(candidate.element) })));
+        if (!match) {
+            setInteractionStatus(`No te he entendido: ${transcript.trim()}`);
+            return;
+        }
+        setPointerTarget(match);
+        activatePointerTarget();
+    }
+
+    function labelOf(element) {
+        return element.getAttribute('aria-label') || element.textContent.trim()
+            || element.getAttribute('placeholder') || element.value || '';
+    }
+
+    function normalize(text) {
+        return String(text ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase().replace(/[^a-z0-9.,\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function matchLabel(transcript, candidates) {
+        const text = normalize(transcript);
+        if (!text) {
+            return null;
+        }
+        const words = text.split(' ');
+        let best = null;
+        let bestScore = 0;
+        let bestLength = Infinity;
+        for (const candidate of candidates) {
+            const label = normalize(candidate.label);
+            if (!label) {
+                continue;
+            }
+            const score = labelScore(text, words, label);
+            if (score > bestScore || score === bestScore && score > 0 && label.length < bestLength) {
+                best = candidate.element;
+                bestScore = score;
+                bestLength = label.length;
+            }
+        }
+        return best;
+    }
+
+    function labelScore(text, words, label) {
+        if (label === text) {
+            return 3;
+        }
+        if (label.startsWith(text) || text.startsWith(label)) {
+            return 2;
+        }
+        const labelWords = label.split(' ');
+        const overlap = labelWords.filter(word => words.includes(word)).length / labelWords.length;
+        return overlap >= 0.6 ? 1 + overlap : 0;
+    }
+
+    const WORD_NUMBERS = {
+        cero: 0, un: 1, uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7,
+        ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12, trece: 13, catorce: 14, quince: 15,
+        dieciseis: 16, diecisiete: 17, dieciocho: 18, diecinueve: 19, veinte: 20, veintiun: 21,
+        veintiuno: 21, veintidos: 22, veintitres: 23, veinticuatro: 24, veinticinco: 25,
+        veintiseis: 26, veintisiete: 27, veintiocho: 28, veintinueve: 29, treinta: 30,
+        cuarenta: 40, cincuenta: 50, sesenta: 60, setenta: 70, ochenta: 80, noventa: 90,
+        cien: 100, ciento: 100, doscientos: 200, trescientos: 300, cuatrocientos: 400,
+        quinientos: 500, seiscientos: 600, setecientos: 700, ochocientos: 800, novecientos: 900,
+        mil: 1000,
+    };
+
+    function parseSpokenNumber(transcript) {
+        const text = normalize(transcript);
+        if (!text) {
+            return null;
+        }
+        const digits = text.match(/-?\d+(?:[.,]\d+)?/);
+        if (digits) {
+            return Number(digits[0].replace(',', '.'));
+        }
+        const [whole, fraction] = text.split(/\b(?:coma|punto)\b/);
+        const value = wordsToNumber(whole);
+        if (value === null) {
+            return null;
+        }
+        if (fraction !== undefined) {
+            const decimals = wordsToNumber(fraction);
+            return decimals === null ? value : Number(`${value}.${decimals}`);
+        }
+        return /\bmedio\b/.test(text) ? value + 0.5 : value;
+    }
+
+    function wordsToNumber(text) {
+        let total = 0;
+        let found = false;
+        for (const word of text.split(' ')) {
+            const value = WORD_NUMBERS[word];
+            if (value === undefined) {
+                continue;
+            }
+            total = value === 1000 ? (total || 1) * 1000 : total + value;
+            found = true;
+        }
+        return found ? total : null;
     }
 
     function updateVoiceControl() {
@@ -329,6 +529,11 @@ const AtlasInteraction = (() => {
     }
 
     function appendDictation(target, transcript) {
+        // La primera dictada sobre un campo sustituye; corregir no puede exigir borrar letra a letra.
+        if (dictationTarget !== target) {
+            dictationTarget = target;
+            target.value = '';
+        }
         const start = target.selectionStart ?? target.value.length;
         const end = target.selectionEnd ?? target.value.length;
         const prefix = start > 0 && !/\s$/.test(target.value.slice(0, start)) ? ' ' : '';
@@ -352,5 +557,8 @@ const AtlasInteraction = (() => {
         updateVoiceControl();
     }
 
-    return { bind, reset, track, apply, status: setInteractionStatus };
+    return {
+        bind, reset, track, apply, status: setInteractionStatus,
+        parseSpokenNumber, matchLabel, nearestTarget, MAGNET_RADIUS,
+    };
 })();

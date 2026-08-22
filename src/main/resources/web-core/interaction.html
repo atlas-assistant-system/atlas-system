@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Atlas · comprobación de la interacción</title>
+    <script defer src="/presence/gestures.js"></script>
+    <script defer src="/assets/interaction.js"></script>
+    <style>
+        body { background: #000; color: #fff; font-family: monospace; padding: 2rem; line-height: 1.6; }
+        li.fail { color: #ff6b6b; }
+        li.pass { color: #8bd17c; }
+        h1 { font-size: 1rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+<h1>Comprobación de la interacción</h1>
+<ul id="results"></ul>
+<script>
+    const results = [];
+
+    function check(name, actual, expected) {
+        const ok = JSON.stringify(actual) === JSON.stringify(expected);
+        results.push({ name, ok, detail: ok ? '' : ` — esperado ${JSON.stringify(expected)}, obtenido ${JSON.stringify(actual)}` });
+    }
+
+    function rect(left, top, width, height) {
+        return { left, top, right: left + width, bottom: top + height };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const { parseSpokenNumber, matchLabel, nearestTarget, MAGNET_RADIUS } = AtlasInteraction;
+
+        check('dígitos', parseSpokenNumber('70'), 70);
+        check('decimal con coma', parseSpokenNumber('12,5'), 12.5);
+        check('unidad', parseSpokenNumber('doce'), 12);
+        check('decena', parseSpokenNumber('setenta'), 70);
+        check('decena compuesta', parseSpokenNumber('ochenta y dos'), 82);
+        check('veintitantos', parseSpokenNumber('veinticinco'), 25);
+        check('centena', parseSpokenNumber('ciento veinte'), 120);
+        check('millar', parseSpokenNumber('mil doscientos'), 1200);
+        check('decimal dictado', parseSpokenNumber('doce coma cinco'), 12.5);
+        check('y medio', parseSpokenNumber('doce y medio'), 12.5);
+        check('con unidad detrás', parseSpokenNumber('setenta kilos'), 70);
+        check('sin número', parseSpokenNumber('eeeh'), null);
+        check('vacío', parseSpokenNumber(''), null);
+
+        const candidates = [
+            { element: 'guardar', label: 'Guardar' },
+            { element: 'guardar-y-cerrar', label: 'Guardar y cerrar' },
+            { element: 'press', label: 'Press banca' },
+            { element: 'entreno', label: 'Entrenamiento' },
+        ];
+        check('exacto', matchLabel('guardar', candidates), 'guardar');
+        check('sin acentos ni mayúsculas', matchLabel('ENTRENAMIENTO', candidates), 'entreno');
+        check('prefijo', matchLabel('press', candidates), 'press');
+        check('palabras sueltas', matchLabel('banca press', candidates), 'press');
+        check('empate gana la etiqueta corta', matchLabel('guardar', candidates), 'guardar');
+        check('nada parecido', matchLabel('tortilla de patatas', candidates), null);
+        check('transcripción vacía', matchLabel('', candidates), null);
+
+        const targets = [
+            { element: 'cerca', rect: rect(100, 100, 40, 20) },
+            { element: 'lejos', rect: rect(600, 600, 40, 20) },
+        ];
+        check('dentro del rectángulo', nearestTarget({ x: 110, y: 110 }, targets, null), 'cerca');
+        check('dentro del radio', nearestTarget({ x: 180, y: 110 }, targets, null), 'cerca');
+        check('fuera del radio no engancha', nearestTarget({ x: 400, y: 400 }, targets, null), null);
+        check('radio declarado', MAGNET_RADIUS > 0, true);
+        const pair = [
+            { element: 'a', rect: rect(100, 100, 20, 20) },
+            { element: 'b', rect: rect(200, 100, 20, 20) },
+        ];
+        check('histéresis mantiene el objetivo', nearestTarget({ x: 160, y: 110 }, pair, 'a'), 'a');
+        check('histéresis cede si el otro está mucho más cerca', nearestTarget({ x: 199, y: 110 }, pair, 'a'), 'b');
+        check('sin objetivo previo gana el más cercano', nearestTarget({ x: 199, y: 110 }, pair, null), 'b');
+
+        const list = document.getElementById('results');
+        for (const result of results) {
+            const item = document.createElement('li');
+            item.className = result.ok ? 'pass' : 'fail';
+            item.textContent = (result.ok ? 'OK   ' : 'FALLA ') + result.name + result.detail;
+            list.append(item);
+        }
+        const failed = results.filter(result => !result.ok).length;
+        document.querySelector('h1').textContent = failed
+            ? `${failed} de ${results.length} comprobaciones fallan`
+            : `${results.length} comprobaciones en verde`;
+    });
+</script>
+</body>
+</html>
