@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/assets/routines.css">
     <link rel="stylesheet" href="/assets/economy.css">
     <link rel="stylesheet" href="/assets/nutrition.css">
+    <link rel="stylesheet" href="/assets/training.css">
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/dist/human.js"
             integrity="sha384-vASLsXJSh9FIgw41jM2fwBSF2MoEPlegwV4SO9G3NeyRMcWf7XjSdYvU6MlwOfQl"
             crossorigin="anonymous"></script>
@@ -19,6 +20,7 @@
     <script defer src="/assets/routines.js"></script>
     <script defer src="/assets/economy.js"></script>
     <script defer src="/assets/nutrition.js"></script>
+    <script defer src="/assets/training.js"></script>
 </head>
 <body class="locked">
 <video id="mirror" autoplay playsinline muted></video>
@@ -33,6 +35,7 @@
     <button class="nav-link" data-view="rutinas">Rutinas</button>
     <button class="nav-link" data-view="economia">Econom&iacute;a</button>
     <button class="nav-link" data-view="nutricion">Nutrici&oacute;n</button>
+    <button class="nav-link" data-view="entrenamiento">Entrenamiento</button>
 </nav>
 
 <main id="view-inicio" class="view">
@@ -382,6 +385,53 @@
         </section>
     </div>
 </main>
+
+<main id="view-entrenamiento" class="view training-view" hidden>
+    <div class="training-layout">
+        <section class="training-section">
+            <p class="label">Hoy</p>
+            <p id="training-headline" class="training-headline">&mdash;</p>
+            <p id="training-subhead" class="training-subhead"></p>
+
+            <div id="training-start" class="training-start"></div>
+
+            <ol id="training-sets" class="training-sets"></ol>
+            <p id="training-sets-empty" class="training-empty" hidden>
+                Todavia no hay ninguna serie. Anade la primera abajo.
+            </p>
+
+            <form id="training-set-form" class="training-form" autocomplete="off" hidden>
+                <div class="training-form-row">
+                    <select id="training-set-exercise" name="exerciseId" aria-label="Ejercicio"></select>
+                    <input name="load" inputmode="decimal" placeholder="kg" aria-label="Carga en kilos">
+                    <input name="reps" inputmode="numeric" placeholder="reps" aria-label="Repeticiones">
+                    <input name="seconds" inputmode="numeric" placeholder="seg" aria-label="Segundos">
+                    <input name="meters" inputmode="numeric" placeholder="m" aria-label="Metros">
+                </div>
+                <button type="submit">Apuntar serie</button>
+                <p class="training-form-error"></p>
+            </form>
+        </section>
+
+        <section class="training-section">
+            <p class="label">Ejercicios</p>
+            <ul id="training-exercises" class="training-list"></ul>
+
+            <form id="training-exercise-form" class="training-form" autocomplete="off">
+                <div class="training-form-row">
+                    <input name="name" placeholder="Press banca" aria-label="Nombre del ejercicio" required>
+                    <select name="metric" aria-label="Que se mide"></select>
+                </div>
+                <button type="submit">Anadir ejercicio</button>
+                <p class="training-form-error"></p>
+            </form>
+
+            <p class="label">Rutinas</p>
+            <ul id="training-workouts" class="training-list"></ul>
+        </section>
+    </div>
+</main>
+
 
 <aside id="panel" class="panel" hidden></aside>
 <aside id="toasts"></aside>

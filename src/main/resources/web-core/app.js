@@ -32,7 +32,7 @@ let eventSource = null;
 const DURATIONS = [30, 60, 90, 120];
 const LEAD_TIMES = [10, 30, 60, 1440];
 const MONTH_INITIALS = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-const VIEWS = ['inicio', 'agenda', 'rutinas', 'economia', 'nutricion'];
+const VIEWS = ['inicio', 'agenda', 'rutinas', 'economia', 'nutricion', 'entrenamiento'];
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
 const {
@@ -1430,6 +1430,9 @@ function refreshAll() {
     if (state.view === 'economia') {
         window.AtlasEconomy?.activate();
     }
+    if (state.view === 'entrenamiento') {
+        window.AtlasTraining?.activate();
+    }
     if (state.view === 'nutricion') {
         window.AtlasNutrition?.activate();
     }
@@ -1499,6 +1502,7 @@ function setAuthenticated(authenticated) {
         document.getElementById('view-rutinas').hidden = true;
         document.getElementById('view-economia').hidden = true;
         document.getElementById('view-nutricion').hidden = true;
+        document.getElementById('view-entrenamiento').hidden = true;
         renderNextCountdown();
         return;
     }
@@ -1855,6 +1859,7 @@ function switchView(view) {
     document.getElementById('view-rutinas').hidden = view !== 'rutinas';
     document.getElementById('view-economia').hidden = view !== 'economia';
     document.getElementById('view-nutricion').hidden = view !== 'nutricion';
+    document.getElementById('view-entrenamiento').hidden = view !== 'entrenamiento';
 
     for (const link of document.querySelectorAll('.nav-link[data-view]')) {
         link.classList.toggle('active', link.dataset.view === view);
@@ -1868,6 +1873,9 @@ function switchView(view) {
     }
     if (view === 'economia') {
         window.AtlasEconomy?.activate();
+    }
+    if (view === 'entrenamiento') {
+        window.AtlasTraining?.activate();
     }
     if (view === 'nutricion') {
         window.AtlasNutrition?.activate();

@@ -1,0 +1,252 @@
+/*
+ * Entrenamiento. Lo de hoy manda: la lista de series ocupa la columna ancha y se rellena
+ * tocandola. El catalogo y las plantillas se tocan poco, asi que van a la columna estrecha
+ * y no compiten por el sitio. Como en nutricion, la pestana tiene que caber sin scroll.
+ */
+.training-view {
+    --training-accent: #6fcf97;
+    --training-pending: rgba(255, 255, 255, 0.5);
+
+    max-width: 76rem;
+    margin: 0 auto;
+    padding-top: 0.6rem;
+}
+
+.training-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(20rem, 1fr);
+    gap: 2.2rem;
+}
+
+.training-section {
+    min-width: 0;
+}
+
+.training-section > .label {
+    margin-bottom: 0.9rem;
+}
+
+.training-headline {
+    margin: 0;
+    font-size: 2.6rem;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.training-subhead {
+    margin: 0.35rem 0 1.2rem;
+    font-size: 1rem;
+    opacity: 0.4;
+}
+
+/* --- Las series de hoy --- */
+
+.training-sets {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    max-height: 26rem;
+    overflow-y: auto;
+}
+
+.training-exercise-name {
+    margin: 0.9rem 0 0.35rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.45;
+}
+
+.training-exercise-name:first-child {
+    margin-top: 0;
+}
+
+.training-set {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.5rem 0.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.training-set-index {
+    font-size: 0.9rem;
+    opacity: 0.3;
+    font-variant-numeric: tabular-nums;
+}
+
+.training-set-effort {
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Pendiente: se ve lo que toca, apagado, para que la vista sea el guion del entreno. */
+.training-set[data-state="PENDING"] .training-set-effort {
+    color: var(--training-pending);
+}
+
+.training-set[data-state="DONE"] .training-set-effort {
+    color: var(--training-accent);
+}
+
+/* La siguiente pendiente es la unica que destaca: es donde estas. */
+.training-set[data-next="true"] {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 0.35rem;
+}
+
+.training-set-planned {
+    font-size: 0.85rem;
+    opacity: 0.35;
+    font-variant-numeric: tabular-nums;
+}
+
+.training-set-actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.training-empty {
+    margin: 1.2rem 0;
+    font-size: 0.95rem;
+    opacity: 0.4;
+}
+
+/* --- La referencia de la ultima vez --- */
+
+.training-reference {
+    font-size: 0.8rem;
+    opacity: 0.4;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Formularios --- */
+
+.training-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.training-form-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.training-form input,
+.training-form select {
+    flex: 1 1 5rem;
+    min-width: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.3rem;
+    color: inherit;
+    font: inherit;
+    padding: 0.45rem 0.6rem;
+}
+
+.training-form input:focus,
+.training-form select:focus {
+    outline: none;
+    border-color: var(--training-accent);
+}
+
+.training-form button {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.3rem;
+    color: inherit;
+    font: inherit;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+}
+
+.training-form button:hover {
+    border-color: var(--training-accent);
+    color: var(--training-accent);
+}
+
+.training-form-error {
+    margin: 0;
+    min-height: 1.1rem;
+    font-size: 0.85rem;
+    color: #eb5757;
+}
+
+/* --- Listas laterales --- */
+
+.training-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+.training-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem 0.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.training-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.training-item-detail {
+    font-size: 0.8rem;
+    opacity: 0.35;
+}
+
+.training-remove {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    opacity: 0.3;
+    padding: 0 0.2rem;
+}
+
+.training-remove:hover {
+    opacity: 1;
+    color: #eb5757;
+}
+
+.training-start {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.training-start button {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.3rem;
+    color: inherit;
+    font: inherit;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+}
+
+.training-start button:hover {
+    border-color: var(--training-accent);
+    color: var(--training-accent);
+}

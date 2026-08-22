@@ -16,6 +16,8 @@ public final class UiHandlers {
     private static final String ECONOMY_SCRIPT = StaticResources.read("/web-core/economy.js");
     private static final String NUTRITION_STYLES = StaticResources.read("/web-core/nutrition.css");
     private static final String NUTRITION_SCRIPT = StaticResources.read("/web-core/nutrition.js");
+    private static final String TRAINING_STYLES = StaticResources.read("/web-core/training.css");
+    private static final String TRAINING_SCRIPT = StaticResources.read("/web-core/training.js");
 
     private UiHandlers() {}
 
@@ -53,5 +55,13 @@ public final class UiHandlers {
 
     public static HttpResponse nutritionScript(HttpRequest request) {
         return new HttpResponse(200, "text/javascript; charset=utf-8", NUTRITION_SCRIPT, Map.of());
+    }
+
+    public static HttpResponse trainingStyles(HttpRequest request) {
+        return new HttpResponse(200, "text/css; charset=utf-8", TRAINING_STYLES, Map.of());
+    }
+
+    public static HttpResponse trainingScript(HttpRequest request) {
+        return new HttpResponse(200, "text/javascript; charset=utf-8", TRAINING_SCRIPT, Map.of());
     }
 }
