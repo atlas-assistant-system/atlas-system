@@ -8,8 +8,6 @@
     const intakeList = document.getElementById('nutrition-intakes');
     const intakesEmpty = document.getElementById('nutrition-intakes-empty');
     const intakesLabel = document.getElementById('nutrition-intakes-label');
-    const dayList = document.getElementById('nutrition-days');
-    const daysEmpty = document.getElementById('nutrition-days-empty');
     const intakeForm = document.getElementById('nutrition-intake-form');
     const planForm = document.getElementById('nutrition-plan-form');
     const planSummary = document.getElementById('nutrition-plan-summary');
@@ -106,11 +104,6 @@
             day.setDate(monday.getDate() + index);
             return { label, iso: isoOf(day), number: day.getDate() };
         });
-    }
-
-    function dayText(day) {
-        const date = new Date(day + 'T00:00:00');
-        return date.getDate() + ' ' + MONTHS[date.getMonth()].slice(0, 3);
     }
 
     function longDayText(day) {
@@ -221,29 +214,6 @@
         return item;
     }
 
-    function dayRow(day) {
-        const item = document.createElement('li');
-        item.className = day.overBudget ? 'nutrition-day over' : 'nutrition-day';
-
-        const when = document.createElement('span');
-        when.className = 'nutrition-day-when';
-        when.textContent = dayText(day.date);
-
-        const calories = document.createElement('span');
-        calories.className = 'nutrition-day-calories';
-        calories.textContent = kcal(day.consumedCalories);
-
-        const bar = document.createElement('div');
-        bar.className = 'nutrition-bar';
-        const fill = document.createElement('span');
-        fill.style.width = Math.min(100, day.caloriePercentage) + '%';
-        if (day.overBudget) bar.dataset.status = 'EXCEEDED';
-        bar.append(fill);
-
-        item.append(when, calories, bar);
-        return item;
-    }
-
     function replace(list, rows) {
         list.replaceChildren(...rows);
     }
@@ -348,15 +318,9 @@
         renderPlan(await readOptional('/nutrition/plan'));
     }
 
-    async function refreshDays() {
-        const days = await read('/nutrition/days');
-        replace(dayList, days.map(dayRow));
-        daysEmpty.hidden = days.length > 0;
-    }
-
     async function refresh() {
         await refreshDay();
-        await Promise.all([renderWeek(), refreshPlan(), refreshDays()]);
+        await Promise.all([renderWeek(), refreshPlan()]);
     }
 
     async function refreshSummary() {

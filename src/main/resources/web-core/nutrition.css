@@ -173,8 +173,7 @@
 }
 
 .nutrition-macros,
-.nutrition-intakes,
-.nutrition-days {
+.nutrition-intakes {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -264,31 +263,6 @@
 .nutrition-intake-calories {
     opacity: 0.6;
     font-variant-numeric: tabular-nums;
-}
-
-.nutrition-day {
-    display: grid;
-    grid-template-columns: 4.5rem auto;
-    align-items: baseline;
-    gap: 0.9rem 1.5rem;
-    padding: 0.75rem 0;
-    font-size: 1.1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.nutrition-day-when {
-    opacity: 0.4;
-    font-variant-numeric: tabular-nums;
-}
-
-.nutrition-day-calories {
-    opacity: 0.6;
-    font-variant-numeric: tabular-nums;
-}
-
-.nutrition-day .nutrition-bar {
-    grid-column: 1 / -1;
-    margin-top: 0;
 }
 
 .nutrition-plan-summary {
