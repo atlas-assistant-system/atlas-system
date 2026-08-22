@@ -1,7 +1,6 @@
 package atlas.presentation.presence.requests;
 
 import atlas.presentation.presence.web.Values;
-import java.time.Instant;
 import java.util.Map;
 
 public final class PresenceRequests {
@@ -27,15 +26,4 @@ public final class PresenceRequests {
             Values.text(body, "nonce"),
             Values.instant(body, "capturedAt"));
     }
-
-    public record EnrollProfile(String displayName, String modelVersion, float[] descriptor) {}
-
-    public record FaceTemplate(String modelVersion, float[] descriptor) {}
-
-    public record CompleteAuthentication(
-        String modelVersion,
-        float[] descriptor,
-        String observedType,
-        String nonce,
-        Instant capturedAt) {}
 }

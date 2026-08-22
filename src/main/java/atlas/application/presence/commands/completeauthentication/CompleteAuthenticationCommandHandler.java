@@ -136,6 +136,4 @@ public final class CompleteAuthenticationCommandHandler
             return Result.failure(PresenceErrors.LIVENESS_FAILED);
         }
     }
-
-    private record TransactionOutcome(Result<SessionDto> result) {}
 }
