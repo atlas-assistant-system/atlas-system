@@ -4,12 +4,12 @@ import atlas.presentation.nutrition.web.Values;
 import java.time.LocalDate;
 import java.util.Map;
 
-public record RecordIntakeRequest(int protein, int carbs, int fat, String note, LocalDate consumedOn) {
+public record RecordIntakeRequest(
+    int calories, int protein, int carbs, int fat, String note, LocalDate consumedOn) {
 
     public static RecordIntakeRequest from(Map<String, Object> body) {
-        Values.rejectCalories(body);
-
         return new RecordIntakeRequest(
+            Values.calories(body),
             Values.grams(body, "protein"),
             Values.grams(body, "carbs"),
             Values.grams(body, "fat"),

@@ -23,6 +23,7 @@ public final class NutritionResponses {
         body.put("targetWeight", kilograms(dto.targetWeight()));
         body.put("goal", dto.goal());
         body.put("goalLabel", dto.goalLabel());
+        body.put("dailyCalories", dto.dailyCalories());
         body.put("dailyMacros", macros(dto.dailyMacros()));
         body.put("status", dto.status());
         body.put("startedOn", dto.startedOn().toString());
@@ -34,6 +35,7 @@ public final class NutritionResponses {
     public static Map<String, Object> intake(IntakeDto dto) {
         var body = new LinkedHashMap<String, Object>();
         body.put("id", dto.id());
+        body.put("calories", dto.calories());
         body.put("macros", macros(dto.macros()));
         body.put("note", dto.note());
         body.put("consumedOn", dto.consumedOn().toString());
@@ -49,9 +51,12 @@ public final class NutritionResponses {
     public static Map<String, Object> day(DayDto dto) {
         var body = new LinkedHashMap<String, Object>();
         body.put("date", dto.date().toString());
-        body.put("consumed", macros(dto.consumed()));
-        body.put("target", macros(dto.target()));
-        body.put("remaining", macros(dto.remaining()));
+        body.put("consumedCalories", dto.consumedCalories());
+        body.put("consumedMacros", macros(dto.consumedMacros()));
+        body.put("targetCalories", dto.targetCalories());
+        body.put("targetMacros", macros(dto.targetMacros()));
+        body.put("remainingCalories", dto.remainingCalories());
+        body.put("remainingMacros", macros(dto.remainingMacros()));
         body.put("caloriePercentage", dto.caloriePercentage());
         body.put("lowerCalories", dto.lowerCalories());
         body.put("upperCalories", dto.upperCalories());
@@ -64,17 +69,6 @@ public final class NutritionResponses {
 
     public static List<Map<String, Object>> days(List<DaySummaryDto> days) {
         return days.stream().map(NutritionResponses::daySummary).toList();
-    }
-
-    private static Map<String, Object> daySummary(DaySummaryDto dto) {
-        var body = new LinkedHashMap<String, Object>();
-        body.put("date", dto.date().toString());
-        body.put("consumed", macros(dto.consumed()));
-        body.put("caloriePercentage", dto.caloriePercentage());
-        body.put("withinRange", dto.withinRange());
-        body.put("overBudget", dto.overBudget());
-
-        return body;
     }
 
     public static Map<String, Object> weighIn(WeighInDto dto) {
@@ -106,6 +100,18 @@ public final class NutritionResponses {
         return body;
     }
 
+    private static Map<String, Object> daySummary(DaySummaryDto dto) {
+        var body = new LinkedHashMap<String, Object>();
+        body.put("date", dto.date().toString());
+        body.put("consumedCalories", dto.consumedCalories());
+        body.put("consumedMacros", macros(dto.consumedMacros()));
+        body.put("caloriePercentage", dto.caloriePercentage());
+        body.put("withinRange", dto.withinRange());
+        body.put("overBudget", dto.overBudget());
+
+        return body;
+    }
+
     private static Map<String, Object> macros(MacrosDto dto) {
         if (dto == null) {
             return null;
@@ -115,7 +121,6 @@ public final class NutritionResponses {
         body.put("protein", dto.protein());
         body.put("carbs", dto.carbs());
         body.put("fat", dto.fat());
-        body.put("calories", dto.calories());
 
         return body;
     }

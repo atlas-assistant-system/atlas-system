@@ -63,7 +63,7 @@ class HttpApiIT {
     @Test
     void shouldWalkTheWholeLifeOfAPlan() throws Exception {
         var created = send("POST", "/nutrition/plan", """
-            {"startWeight":"84.0","targetWeight":"78.0","protein":150,"carbs":200,"fat":60}""");
+            {"startWeight":"84.0","targetWeight":"78.0","calories":1940,"protein":150,"carbs":200,"fat":60}""");
         assertThat(created.statusCode()).isEqualTo(201);
 
         var plan = json(created);
@@ -74,15 +74,15 @@ class HttpApiIT {
         assertThat(plan.get("goalLabel")).isEqualTo("Perder peso");
         assertThat(plan.get("status")).isEqualTo("ACTIVE");
         assertThat(plan.get("startedOn")).isEqualTo("2026-08-22");
-        assertThat(macros(plan, "dailyMacros")).containsEntry("calories", 1940);
+        assertThat(plan.get("dailyCalories")).isEqualTo(1940);
 
         assertThat(json(send("GET", "/nutrition/plan", null)).get("goal")).isEqualTo("LOSE");
 
         var adjusted = json(send("PUT", "/nutrition/plan", """
-            {"targetWeight":"76.0","protein":160,"carbs":180,"fat":55}"""));
+            {"targetWeight":"76.0","calories":1855,"protein":160,"carbs":180,"fat":55}"""));
         assertThat(adjusted.get("targetWeight")).isEqualTo("76");
         assertThat(adjusted.get("startWeight")).isEqualTo("84");
-        assertThat(macros(adjusted, "dailyMacros")).containsEntry("calories", 1855);
+        assertThat(adjusted.get("dailyCalories")).isEqualTo(1855);
 
         assertThat(send("DELETE", "/nutrition/plan", null).statusCode()).isEqualTo(204);
         assertThat(send("GET", "/nutrition/plan", null).statusCode()).isEqualTo(404);
@@ -93,7 +93,7 @@ class HttpApiIT {
         var first = (String) json(definePlan()).get("id");
 
         var second = json(send("POST", "/nutrition/plan", """
-            {"startWeight":"78.0","targetWeight":"82.0","protein":180,"carbs":250,"fat":70}"""));
+            {"startWeight":"78.0","targetWeight":"82.0","calories":2350,"protein":180,"carbs":250,"fat":70}"""));
 
         assertThat(second.get("id")).isNotEqualTo(first);
         assertThat(second.get("goal")).isEqualTo("GAIN");
@@ -103,7 +103,7 @@ class HttpApiIT {
     @Test
     void shouldWalkTheWholeLifeOfAnIntake() throws Exception {
         var created = send("POST", "/nutrition/intakes", """
-            {"protein":30,"carbs":60,"fat":10,"note":"Tortilla y pan","consumedOn":"2026-08-21"}""");
+            {"calories":450,"protein":30,"carbs":60,"fat":10,"note":"Tortilla y pan","consumedOn":"2026-08-21"}""");
         assertThat(created.statusCode()).isEqualTo(201);
 
         var intake = json(created);
@@ -111,13 +111,14 @@ class HttpApiIT {
         assertThat(id).matches("I\\d{8}");
         assertThat(intake.get("note")).isEqualTo("Tortilla y pan");
         assertThat(intake.get("consumedOn")).isEqualTo("2026-08-21");
-        assertThat(macros(intake, "macros")).containsEntry("calories", 450);
+        assertThat(intake.get("calories")).isEqualTo(450);
 
         assertThat(json(send("GET", "/nutrition/intakes/" + id, null)).get("id")).isEqualTo(id);
 
         var corrected = json(send("PUT", "/nutrition/intakes/" + id, """
-            {"protein":35,"carbs":55,"fat":12}"""));
+            {"calories":480,"protein":35,"carbs":55,"fat":12}"""));
         assertThat(macros(corrected, "macros")).containsEntry("protein", 35);
+        assertThat(corrected.get("calories")).isEqualTo(480);
         assertThat(corrected.get("note")).isNull();
         assertThat(corrected.get("consumedOn")).isEqualTo("2026-08-21");
 
@@ -134,9 +135,11 @@ class HttpApiIT {
         var day = json(send("GET", "/nutrition/today", null));
 
         assertThat(day.get("date")).isEqualTo("2026-08-22");
-        assertThat(macros(day, "consumed")).containsEntry("protein", 75).containsEntry("calories", 970);
-        assertThat(macros(day, "target")).containsEntry("calories", 1940);
-        assertThat(macros(day, "remaining")).containsEntry("protein", 75).containsEntry("calories", 970);
+        assertThat(macros(day, "consumedMacros")).containsEntry("protein", 75);
+        assertThat(day.get("consumedCalories")).isEqualTo(970);
+        assertThat(day.get("targetCalories")).isEqualTo(1940);
+        assertThat(macros(day, "remainingMacros")).containsEntry("protein", 75);
+        assertThat(day.get("remainingCalories")).isEqualTo(970);
         assertThat(day.get("caloriePercentage")).isEqualTo(50);
         assertThat(day.get("overBudget")).isEqualTo(false);
         assertThat(intakesOf(day)).hasSize(2);
@@ -148,9 +151,10 @@ class HttpApiIT {
 
         var day = json(send("GET", "/nutrition/today", null));
 
-        assertThat(macros(day, "consumed")).containsEntry("calories", 450);
-        assertThat(day.get("target")).isNull();
-        assertThat(day.get("remaining")).isNull();
+        assertThat(day.get("consumedCalories")).isEqualTo(450);
+        assertThat(day.get("targetCalories")).isNull();
+        assertThat(day.get("targetMacros")).isNull();
+        assertThat(day.get("remainingCalories")).isNull();
         assertThat(day.get("caloriePercentage")).isEqualTo(0);
     }
 
@@ -162,7 +166,7 @@ class HttpApiIT {
         var day = json(send("GET", "/nutrition/days/2026-08-22", null));
 
         assertThat(day.get("overBudget")).isEqualTo(true);
-        assertThat(macros(day, "remaining")).containsEntry("protein", -50);
+        assertThat(macros(day, "remainingMacros")).containsEntry("protein", -50);
     }
 
     @Test
@@ -183,7 +187,7 @@ class HttpApiIT {
     @Test
     void shouldDateAnIntakeTodayWhenNoDateIsGiven() throws Exception {
         var intake = json(send("POST", "/nutrition/intakes", """
-            {"protein":30,"carbs":60,"fat":10}"""));
+            {"calories":450,"protein":30,"carbs":60,"fat":10}"""));
 
         assertThat(intake.get("consumedOn")).isEqualTo("2026-08-22");
         assertThat(intake.get("note")).isNull();
@@ -192,35 +196,50 @@ class HttpApiIT {
     @Test
     void shouldTreatAMissingMacroAsZero() throws Exception {
         var intake = json(send("POST", "/nutrition/intakes", """
-            {"carbs":25}"""));
+            {"calories":100,"carbs":25}"""));
 
         assertThat(macros(intake, "macros"))
             .containsEntry("protein", 0)
             .containsEntry("carbs", 25)
-            .containsEntry("fat", 0)
-            .containsEntry("calories", 100);
+            .containsEntry("fat", 0);
+        assertThat(intake.get("calories")).isEqualTo(100);
     }
 
     @Test
-    void shouldRefuseCaloriesSentByHand() throws Exception {
+    void shouldKeepTheCaloriesEvenWhenTheyDoNotMatchTheMacros() throws Exception {
+        var intake = json(send("POST", "/nutrition/intakes", """
+            {"calories":250,"protein":30,"carbs":60,"fat":10}"""));
+
+        assertThat(intake.get("calories")).isEqualTo(250);
+    }
+
+    @Test
+    void shouldAcceptCaloriesWithoutAnyMacro() throws Exception {
+        var intake = json(send("POST", "/nutrition/intakes", """
+            {"calories":150,"note":"Una cerveza"}"""));
+
+        assertThat(intake.get("calories")).isEqualTo(150);
+        assertThat(macros(intake, "macros")).containsEntry("protein", 0);
+    }
+
+    @Test
+    void shouldRejectAnIntakeWithoutCalories() throws Exception {
         var response = send("POST", "/nutrition/intakes", """
-            {"protein":30,"carbs":60,"fat":10,"calories":9999}""");
+            {"calories":0,"protein":30}""");
 
         assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(json(response).get("code")).isEqualTo("Intake.CaloriesRequired");
     }
 
     @Test
-    void shouldRejectAnIntakeWithoutAnyMacro() throws Exception {
-        var response = send("POST", "/nutrition/intakes", "{}");
-
-        assertThat(response.statusCode()).isEqualTo(400);
-        assertThat(json(response).get("code")).isEqualTo("Intake.MacrosRequired");
+    void shouldRejectAnIntakeWithNoBodyAtAll() throws Exception {
+        assertThat(send("POST", "/nutrition/intakes", "{}").statusCode()).isEqualTo(400);
     }
 
     @Test
     void shouldRejectAnIntakeDatedInTheFuture() throws Exception {
         var response = send("POST", "/nutrition/intakes", """
-            {"protein":30,"consumedOn":"2026-08-23"}""");
+            {"calories":450,"protein":30,"consumedOn":"2026-08-23"}""");
 
         assertThat(response.statusCode()).isEqualTo(400);
         assertThat(json(response).get("code")).isEqualTo("Intake.CannotBeDatedInTheFuture");
@@ -229,7 +248,7 @@ class HttpApiIT {
     @Test
     void shouldRejectAWeightThatIsNotBelievable() throws Exception {
         var response = send("POST", "/nutrition/plan", """
-            {"startWeight":"4.0","targetWeight":"78.0","protein":150,"carbs":200,"fat":60}""");
+            {"startWeight":"4.0","targetWeight":"78.0","calories":1940,"protein":150}""");
 
         assertThat(response.statusCode()).isEqualTo(400);
         assertThat(json(response).get("code")).isEqualTo("Nutrition.WeightOutOfRange");
@@ -238,16 +257,16 @@ class HttpApiIT {
     @Test
     void shouldRejectAPlanWithoutAQuota() throws Exception {
         var response = send("POST", "/nutrition/plan", """
-            {"startWeight":"84.0","targetWeight":"78.0"}""");
+            {"startWeight":"84.0","targetWeight":"78.0","calories":0}""");
 
         assertThat(response.statusCode()).isEqualTo(400);
-        assertThat(json(response).get("code")).isEqualTo("Plan.MacrosRequired");
+        assertThat(json(response).get("code")).isEqualTo("Plan.CaloriesRequired");
     }
 
     @Test
     void shouldRejectAWeightThatIsNotANumber() throws Exception {
         var response = send("POST", "/nutrition/plan", """
-            {"startWeight":"ochenta","targetWeight":"78.0","protein":150}""");
+            {"startWeight":"ochenta","targetWeight":"78.0","calories":1940,"protein":150}""");
 
         assertThat(response.statusCode()).isEqualTo(400);
     }
@@ -255,7 +274,7 @@ class HttpApiIT {
     @Test
     void shouldReportNoActivePlanWhenAdjusting() throws Exception {
         var response = send("PUT", "/nutrition/plan", """
-            {"targetWeight":"76.0","protein":160,"carbs":180,"fat":55}""");
+            {"targetWeight":"76.0","calories":1855,"protein":160,"carbs":180,"fat":55}""");
 
         assertThat(response.statusCode()).isEqualTo(404);
         assertThat(json(response).get("code")).isEqualTo("Plan.NoneActive");
@@ -409,7 +428,7 @@ class HttpApiIT {
 
     private static HttpResponse<String> definePlan() throws Exception {
         return send("POST", "/nutrition/plan", """
-            {"startWeight":"84.0","targetWeight":"78.0","protein":150,"carbs":200,"fat":60}""");
+            {"startWeight":"84.0","targetWeight":"78.0","calories":1940,"protein":150,"carbs":200,"fat":60}""");
     }
 
     private static HttpResponse<String> weighIn(String weight, String day) throws Exception {
@@ -418,11 +437,15 @@ class HttpApiIT {
     }
 
     private static void recordIntake(int protein, int carbs, int fat, String day) throws Exception {
+        var calories = 4 * protein + 4 * carbs + 9 * fat;
+
         send("POST", "/nutrition/intakes", day == null
             ? """
-                {"protein":%d,"carbs":%d,"fat":%d}""".formatted(protein, carbs, fat)
+                {"calories":%d,"protein":%d,"carbs":%d,"fat":%d}"""
+                .formatted(calories, protein, carbs, fat)
             : """
-                {"protein":%d,"carbs":%d,"fat":%d,"consumedOn":"%s"}""".formatted(protein, carbs, fat, day));
+                {"calories":%d,"protein":%d,"carbs":%d,"fat":%d,"consumedOn":"%s"}"""
+                .formatted(calories, protein, carbs, fat, day));
     }
 
     private static HttpResponse<String> send(String method, String path, String body) throws Exception {

@@ -78,9 +78,16 @@ public final class Values {
         }).orElse(null);
     }
 
-    public static void rejectCalories(Map<String, Object> body) {
-        if (body.containsKey("calories")) {
-            throw new FormatException("'calories' is derived from the macros and cannot be sent.");
+    public static int calories(Map<String, Object> body) {
+        var value = body.get("calories");
+        if (value == null) {
+            throw new FormatException("'calories' is required.");
+        }
+
+        try {
+            return Integer.parseInt(value.toString().trim());
+        } catch (NumberFormatException e) {
+            throw new FormatException("'calories' must be a whole number of kcal.");
         }
     }
 }

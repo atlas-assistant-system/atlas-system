@@ -50,8 +50,8 @@ public final class NutritionHandlers {
         var body = DefinePlanRequest.from(Json.parse(request.body()));
 
         Result<PlanDto> result = commands.dispatch(new DefinePlanCommand(
-            body.startWeight(), body.targetWeight(), body.protein(), body.carbs(), body.fat(),
-            body.startedOn()));
+            body.startWeight(), body.targetWeight(), body.calories(), body.protein(), body.carbs(),
+            body.fat(), body.startedOn()));
         if (result.isFailure()) {
             return HttpResponse.error(result.error());
         }
@@ -63,7 +63,8 @@ public final class NutritionHandlers {
         var body = AdjustPlanRequest.from(Json.parse(request.body()));
 
         Result<PlanDto> result = commands.dispatch(
-            new AdjustPlanCommand(body.targetWeight(), body.protein(), body.carbs(), body.fat()));
+            new AdjustPlanCommand(
+                body.targetWeight(), body.calories(), body.protein(), body.carbs(), body.fat()));
 
         return planOrError(result);
     }
@@ -87,7 +88,8 @@ public final class NutritionHandlers {
         var body = RecordIntakeRequest.from(Json.parse(request.body()));
 
         Result<IntakeDto> result = commands.dispatch(new RecordIntakeCommand(
-            body.protein(), body.carbs(), body.fat(), body.note(), body.consumedOn()));
+            body.calories(), body.protein(), body.carbs(), body.fat(), body.note(),
+            body.consumedOn()));
         if (result.isFailure()) {
             return HttpResponse.error(result.error());
         }
@@ -101,7 +103,8 @@ public final class NutritionHandlers {
         var body = CorrectIntakeRequest.from(Json.parse(request.body()));
 
         Result<IntakeDto> result = commands.dispatch(new CorrectIntakeCommand(
-            intakeId(request), body.protein(), body.carbs(), body.fat(), body.note()));
+            intakeId(request), body.calories(), body.protein(), body.carbs(), body.fat(),
+            body.note()));
 
         return intakeOrError(result);
     }

@@ -3,7 +3,7 @@
   "info": {
     "title": "Atlas — Nutricion",
     "version": "1.0.0",
-    "description": "Plan de nutricion, consumo diario y evolucion de peso. Los pesos viajan como cadena en kilos (\"78.4\") y los macros como gramos enteros. Las calorias se derivan de los macros y no se aceptan en ninguna peticion."
+    "description": "Plan de nutricion, consumo diario y evolucion de peso. Los pesos viajan como cadena en kilos (\"78.4\"), los macros como gramos enteros y las calorias como kcal enteras. Las calorias se teclean siempre: no se derivan de los macros ni tienen por que cuadrar con ellos."
   },
   "paths": {
     "/nutrition/plan": {
@@ -52,7 +52,7 @@
             }
           },
           "400": {
-            "description": "Peso fuera de rango, cuota vacia o fecha futura"
+            "description": "Peso fuera de rango, cuota de kcal vacia o fecha futura"
           },
           "401": {
             "description": "Sin sesion"
@@ -83,7 +83,7 @@
             }
           },
           "400": {
-            "description": "Peso fuera de rango o cuota vacia"
+            "description": "Peso fuera de rango o cuota de kcal vacia"
           },
           "404": {
             "description": "No hay plan activo"
@@ -181,7 +181,7 @@
             }
           },
           "400": {
-            "description": "Macros vacios, negativos o fecha futura"
+            "description": "Calorias a cero, macros negativos o fecha futura"
           },
           "401": {
             "description": "Sin sesion"
@@ -246,7 +246,7 @@
             }
           },
           "400": {
-            "description": "Macros vacios o negativos"
+            "description": "Calorias a cero o macros negativos"
           },
           "404": {
             "description": "No existe"
@@ -528,7 +528,7 @@
     "schemas": {
       "Macros": {
         "type": "object",
-        "description": "Gramos de cada macro y las calorias que dictan: 4p + 4c + 9f",
+        "description": "Gramos de cada macro. Las calorias van aparte, no salen de aqui",
         "properties": {
           "protein": {
             "type": "integer",
@@ -541,11 +541,6 @@
           "fat": {
             "type": "integer",
             "example": 60
-          },
-          "calories": {
-            "type": "integer",
-            "readOnly": true,
-            "example": 1940
           }
         }
       },
@@ -595,6 +590,10 @@
           "definedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "dailyCalories": {
+            "type": "integer",
+            "example": 2136
           }
         }
       },
@@ -602,7 +601,8 @@
         "type": "object",
         "required": [
           "startWeight",
-          "targetWeight"
+          "targetWeight",
+          "calories"
         ],
         "properties": {
           "startWeight": {
@@ -632,13 +632,18 @@
             "type": "string",
             "format": "date",
             "description": "Por defecto, hoy"
+          },
+          "calories": {
+            "type": "integer",
+            "example": 2136
           }
         }
       },
       "AdjustPlan": {
         "type": "object",
         "required": [
-          "targetWeight"
+          "targetWeight",
+          "calories"
         ],
         "properties": {
           "targetWeight": {
@@ -659,6 +664,10 @@
             "type": "integer",
             "default": 0,
             "example": 55
+          },
+          "calories": {
+            "type": "integer",
+            "example": 2000
           }
         }
       },
@@ -684,12 +693,16 @@
           "recordedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "calories": {
+            "type": "integer",
+            "example": 450
           }
         }
       },
       "RecordIntake": {
         "type": "object",
-        "description": "Un macro ausente vale cero, pero los tres a cero se rechazan",
+        "description": "Las calorias son obligatorias y mayores que cero. Un macro ausente vale cero, asi que se puede apuntar algo cuyas kcal conoces sin desglosar los macros",
         "properties": {
           "protein": {
             "type": "integer",
@@ -715,8 +728,15 @@
             "type": "string",
             "format": "date",
             "description": "Por defecto, hoy"
+          },
+          "calories": {
+            "type": "integer",
+            "example": 450
           }
-        }
+        },
+        "required": [
+          "calories"
+        ]
       },
       "CorrectIntake": {
         "type": "object",
@@ -739,8 +759,15 @@
           "note": {
             "type": "string",
             "maxLength": 140
+          },
+          "calories": {
+            "type": "integer",
+            "example": 480
           }
-        }
+        },
+        "required": [
+          "calories"
+        ]
       },
       "Day": {
         "type": "object",
@@ -749,10 +776,19 @@
             "type": "string",
             "format": "date"
           },
-          "consumed": {
+          "consumedCalories": {
+            "type": "integer",
+            "example": 480
+          },
+          "consumedMacros": {
             "$ref": "#/components/schemas/Macros"
           },
-          "target": {
+          "targetCalories": {
+            "type": "integer",
+            "nullable": true,
+            "example": 2136
+          },
+          "targetMacros": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/Macros"
@@ -760,7 +796,13 @@
             ],
             "nullable": true
           },
-          "remaining": {
+          "remainingCalories": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Negativo si te has pasado",
+            "example": 1656
+          },
+          "remainingMacros": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/Macros"
@@ -771,7 +813,18 @@
           },
           "caloriePercentage": {
             "type": "integer",
-            "example": 50
+            "example": 22
+          },
+          "lowerCalories": {
+            "type": "integer",
+            "example": 1922
+          },
+          "upperCalories": {
+            "type": "integer",
+            "example": 2350
+          },
+          "withinRange": {
+            "type": "boolean"
           },
           "overBudget": {
             "type": "boolean"
@@ -791,12 +844,19 @@
             "type": "string",
             "format": "date"
           },
-          "consumed": {
+          "consumedCalories": {
+            "type": "integer",
+            "example": 480
+          },
+          "consumedMacros": {
             "$ref": "#/components/schemas/Macros"
           },
           "caloriePercentage": {
             "type": "integer",
-            "example": 50
+            "example": 22
+          },
+          "withinRange": {
+            "type": "boolean"
           },
           "overBudget": {
             "type": "boolean"
