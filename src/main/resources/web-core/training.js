@@ -94,6 +94,29 @@
         return exercises.get(exerciseId)?.metric || 'LOAD';
     }
 
+    /**
+     * Que se teclea depende de lo que mida el ejercicio, igual que Metric decide en el
+     * dominio que compara y que suma: el press de banca no tiene segundos ni metros, y
+     * pedirlos era pedir cuatro numeros para rellenar dos.
+     */
+    const FIELDS_OF = {
+        LOAD: ['load', 'reps'],
+        REPS: ['reps'],
+        TIME: ['seconds'],
+        DISTANCE: ['meters'],
+    };
+
+    /** Un campo oculto se vacia: si no se ve, no puede seguir mandando lo de antes. */
+    function showFieldsFor(form, exerciseId) {
+        const shown = FIELDS_OF[metricOf(exerciseId)];
+
+        for (const name of ['load', 'reps', 'seconds', 'meters']) {
+            const field = form.elements[name];
+            field.hidden = !shown.includes(name);
+            if (field.hidden) field.value = '';
+        }
+    }
+
     function nameOf(exerciseId) {
         return exercises.get(exerciseId)?.name || 'Ejercicio';
     }
@@ -158,7 +181,8 @@
         fields.reps.value = source ? source.reps : '';
         fields.seconds.value = source ? source.seconds : '';
         fields.meters.value = source ? source.meters : '';
-        fields.load.focus();
+        showFieldsFor(setForm, set.exerciseId);
+        (fields.load.hidden ? fields[FIELDS_OF[metricOf(set.exerciseId)][0]] : fields.load).focus();
     }
 
     function renderSets(log) {
@@ -268,6 +292,9 @@
 
         setFormExercise.replaceChildren(...options());
         lineForm.elements.exerciseId.replaceChildren(...options());
+
+        showFieldsFor(setForm, setFormExercise.value);
+        showFieldsFor(lineForm, lineForm.elements.exerciseId.value);
     }
 
     function dayLabels(workout) {
@@ -467,6 +494,11 @@
             'workoutArchived', 'workoutStarted', 'setRecorded', 'setRemoved', 'workoutDiscarded']
             .forEach(name => events.addEventListener(name, reload));
     }
+
+    setFormExercise.addEventListener(
+        'change', () => showFieldsFor(setForm, setFormExercise.value));
+    lineForm.elements.exerciseId.addEventListener(
+        'change', event => showFieldsFor(lineForm, event.target.value));
 
     for (const metric of METRICS) {
         const option = document.createElement('option');
