@@ -725,7 +725,7 @@ async function renderYearStrip(anchorDate) {
 function formValues() {
     const date = document.getElementById('add-date').value;
     const time = document.getElementById('add-time').value;
-    const duration = Number(document.getElementById('add-duration').value);
+    const duration = Number(document.getElementById('add-form').elements.duration.value);
 
     if (!date || !time) {
         return null;
@@ -760,7 +760,7 @@ async function updateAddHint() {
     }
 
     const slots = await api('/appointments/free-slots?day=' + values.date
-        + '&from=08:00&to=22:00&minDurationMinutes=' + document.getElementById('add-duration').value);
+        + '&from=08:00&to=22:00&minDurationMinutes=' + document.getElementById('add-form').elements.duration.value);
     if (slots.status !== 200 || slots.body.length === 0) {
         return;
     }
@@ -782,7 +782,7 @@ async function submitAppointment(allowOverlap) {
         return;
     }
 
-    const leadTime = document.getElementById('add-reminder').value;
+    const leadTime = document.getElementById('add-form').elements.reminder.value;
     const response = await send('POST', '/appointments', {
         title: document.getElementById('add-title').value.trim(),
         start: values.start,

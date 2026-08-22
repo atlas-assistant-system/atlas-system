@@ -2,7 +2,7 @@ const AtlasInteraction = (() => {
     const { pointDistance } = AtlasGestures;
 
     const INTERACTIVE = 'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), '
-        + 'select:not(:disabled), .clickable, .day, .item';
+        + 'select:not(:disabled), label:has(input:not(:disabled)), .clickable, .day, .item';
     const VOICE_LANGUAGE = 'es-ES';
     // ponytail: radio e histéresis calibrados a ojo con la mano puesta; son constantes, no verdades.
     const MAGNET_RADIUS = 120;
@@ -228,9 +228,13 @@ const AtlasInteraction = (() => {
             startVoiceInput(null);
             return;
         }
-        if (isTextField(target)) {
-            target.focus({ preventScroll: true });
-            startVoiceInput(target);
+        // Una etiqueta puede envolver el campo: dictar es lo que se espera al tocar el texto.
+        const field = isTextField(target) ? target
+            : target instanceof HTMLLabelElement && isTextField(target.control) ? target.control
+                : null;
+        if (field) {
+            field.focus({ preventScroll: true });
+            startVoiceInput(field);
             return;
         }
         target.focus({ preventScroll: true });

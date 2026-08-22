@@ -1095,3 +1095,48 @@ body.locked #voice-control {
     margin-top: 0.5rem;
     padding: 0 0 0.15rem;
 }
+
+/* Elegir con la mano en el aire: fichas grandes en vez de desplegables y casillas de 16 px. */
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.chips label,
+.routines-weekdays label,
+.home-news-categories label {
+    align-items: center;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    display: flex;
+    font-size: 0.78rem;
+    gap: 0.4rem;
+    min-height: 2.6rem;
+    padding: 0 0.9rem;
+    white-space: nowrap;
+}
+
+.chips input[type="radio"] {
+    height: 0;
+    opacity: 0;
+    position: absolute;
+    width: 0;
+}
+
+.chips label:has(:checked),
+.routines-weekdays label:has(:checked),
+.home-news-categories label:has(:checked) {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: var(--ink);
+    color: var(--ink);
+}
+
+.chips label:has(:focus-visible),
+.routines-weekdays label:has(:focus-visible),
+.home-news-categories label:has(:focus-visible) {
+    outline: 2px solid var(--ink);
+    outline-offset: 0.2rem;
+}

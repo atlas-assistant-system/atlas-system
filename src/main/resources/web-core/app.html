@@ -163,19 +163,19 @@
             <input id="add-title" type="text" placeholder="Qu&eacute; hay que hacer" required maxlength="120">
             <input id="add-date" type="date" required>
             <input id="add-time" type="time" required>
-            <select id="add-duration">
-                <option value="30">30 min</option>
-                <option value="60" selected>1 h</option>
-                <option value="90">1,5 h</option>
-                <option value="120">2 h</option>
-            </select>
-            <select id="add-reminder">
-                <option value="">Sin aviso</option>
-                <option value="10">10 min antes</option>
-                <option value="30" selected>30 min antes</option>
-                <option value="60">1 h antes</option>
-                <option value="1440">1 d&iacute;a antes</option>
-            </select>
+            <div id="add-duration" class="chips" role="radiogroup" aria-label="Duraci&oacute;n">
+                <label><input type="radio" name="duration" value="30"> 30 min</label>
+                <label><input type="radio" name="duration" value="60" checked> 1 h</label>
+                <label><input type="radio" name="duration" value="90"> 1,5 h</label>
+                <label><input type="radio" name="duration" value="120"> 2 h</label>
+            </div>
+            <div id="add-reminder" class="chips" role="radiogroup" aria-label="Aviso">
+                <label><input type="radio" name="reminder" value=""> Sin aviso</label>
+                <label><input type="radio" name="reminder" value="10"> 10 min antes</label>
+                <label><input type="radio" name="reminder" value="30" checked> 30 min antes</label>
+                <label><input type="radio" name="reminder" value="60"> 1 h antes</label>
+                <label><input type="radio" name="reminder" value="1440"> 1 d&iacute;a antes</label>
+            </div>
             <button type="submit">A&ntilde;adir</button>
         </form>
         <p id="add-hint" class="add-hint"></p>
@@ -206,13 +206,11 @@
                     <label>Unidad
                         <input name="unit" maxlength="30" placeholder="veces, km, min">
                     </label>
-                    <label>Periodo
-                        <select name="period">
-                            <option value="DAY">D&iacute;a</option>
-                            <option value="WEEK">Semana</option>
-                            <option value="MONTH">Mes</option>
-                        </select>
-                    </label>
+                    <div class="chips" role="radiogroup" aria-label="Periodo">
+                        <label><input type="radio" name="period" value="DAY" checked> D&iacute;a</label>
+                        <label><input type="radio" name="period" value="WEEK"> Semana</label>
+                        <label><input type="radio" name="period" value="MONTH"> Mes</label>
+                    </div>
                 </div>
                 <fieldset id="routines-weekdays" class="routines-weekdays">
                     <legend>D&iacute;as activos</legend>
@@ -260,15 +258,15 @@
             <ul id="economy-breakdown" class="economy-categories"></ul>
             <p id="economy-breakdown-empty" class="economy-empty">Nada apuntado este mes.</p>
             <form id="economy-budget-form" class="economy-form">
-                <select name="category" aria-label="Categor&iacute;a del presupuesto">
-                    <option value="FOOD">&#127860; Comida</option>
-                    <option value="TRANSPORT">&#128650; Transporte</option>
-                    <option value="HOME">&#127968; Hogar</option>
-                    <option value="LEISURE">&#127916; Ocio</option>
-                    <option value="HEALTH">&#128138; Salud</option>
-                    <option value="SHOPPING">&#128717; Compras</option>
-                    <option value="OTHER">&bull; Otros</option>
-                </select>
+                <div class="chips" role="radiogroup" aria-label="Categor&iacute;a del presupuesto">
+                    <label><input type="radio" name="category" value="FOOD" checked> &#127860; Comida</label>
+                    <label><input type="radio" name="category" value="TRANSPORT"> &#128650; Transporte</label>
+                    <label><input type="radio" name="category" value="HOME"> &#127968; Hogar</label>
+                    <label><input type="radio" name="category" value="LEISURE"> &#127916; Ocio</label>
+                    <label><input type="radio" name="category" value="HEALTH"> &#128138; Salud</label>
+                    <label><input type="radio" name="category" value="SHOPPING"> &#128717; Compras</label>
+                    <label><input type="radio" name="category" value="OTHER"> &bull; Otros</label>
+                </div>
                 <input name="limit" type="text" inputmode="decimal" maxlength="10"
                        placeholder="L&iacute;mite &euro;" aria-label="L&iacute;mite mensual" required>
                 <button type="submit">Fijar presupuesto</button>
@@ -403,7 +401,7 @@
 
             <form id="training-set-form" class="training-form" autocomplete="off" hidden>
                 <div class="training-form-row">
-                    <select id="training-set-exercise" name="exerciseId" aria-label="Ejercicio"></select>
+                    <div id="training-set-exercise" class="chips" role="radiogroup" aria-label="Ejercicio"></div>
                     <input name="load" inputmode="decimal" placeholder="kg" aria-label="Carga en kilos">
                     <input name="reps" inputmode="numeric" placeholder="reps" aria-label="Repeticiones">
                     <input name="seconds" inputmode="numeric" placeholder="seg" aria-label="Segundos">
@@ -421,7 +419,7 @@
             <form id="training-exercise-form" class="training-form" autocomplete="off">
                 <div class="training-form-row">
                     <input name="name" placeholder="Press banca" aria-label="Nombre del ejercicio" required>
-                    <select name="metric" aria-label="Que se mide"></select>
+                    <div id="training-metric" class="chips" role="radiogroup" aria-label="Que se mide"></div>
                 </div>
                 <button type="submit">Anadir ejercicio</button>
                 <p class="training-form-error"></p>
@@ -450,7 +448,7 @@
 
                 <form id="training-line-form" class="training-form" autocomplete="off">
                     <div class="training-form-row">
-                        <select name="exerciseId" aria-label="Ejercicio"></select>
+                        <div id="training-line-exercise" class="chips" role="radiogroup" aria-label="Ejercicio"></div>
                         <input name="sets" inputmode="numeric" placeholder="series" aria-label="Series" required>
                         <input name="reps" inputmode="numeric" placeholder="reps" aria-label="Repeticiones">
                         <input name="load" inputmode="decimal" placeholder="kg" aria-label="Carga en kilos">

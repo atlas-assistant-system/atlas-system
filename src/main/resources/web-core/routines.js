@@ -246,7 +246,7 @@
             await refresh();
         });
     });
-    periodSelect.addEventListener('change', syncPeriodFields);
+    defineForm.addEventListener('change', syncPeriodFields);
     includeArchived.addEventListener('change', () => guard(refreshRoutines));
     syncPeriodFields();
 

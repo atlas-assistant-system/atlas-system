@@ -16,7 +16,32 @@
     const editorPlan = document.getElementById('training-editor-plan');
     const editorEmpty = document.getElementById('training-editor-empty');
     const lineForm = document.getElementById('training-line-form');
+    const lineFormExercise = document.getElementById('training-line-exercise');
+    const metricChips = document.getElementById('training-metric');
     let started = false;
+
+    /**
+     * En el espejo se apunta con la mano: un desplegable nativo abre un popup del sistema
+     * que ni el puntero ni la voz alcanzan, asi que cada eleccion es una fila de fichas.
+     */
+    function chips(name, options, selected) {
+        const active = options.some(option => option.value === selected)
+            ? selected : options[0]?.value;
+        return options.map(option => {
+            const label = document.createElement('label');
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = name;
+            input.value = option.value;
+            input.checked = option.value === active;
+            label.append(input, ' ' + option.label);
+            return label;
+        });
+    }
+
+    function chosenExercise(form) {
+        return form.elements.exerciseId?.value || '';
+    }
 
     /** Solo un entreno abierto a la vez en pantalla; si hay dos hoy, se ve el ultimo. */
     let current = null;
@@ -176,7 +201,7 @@
         const fields = setForm.elements;
         const source = set.actual || set.planned;
         setForm.dataset.setId = set.id;
-        setFormExercise.value = set.exerciseId;
+        setForm.elements.exerciseId.value = set.exerciseId;
         fields.load.value = source ? source.load : '';
         fields.reps.value = source ? source.reps : '';
         fields.seconds.value = source ? source.seconds : '';
@@ -283,18 +308,14 @@
             return item;
         }));
 
-        const options = () => list.map(exercise => {
-            const option = document.createElement('option');
-            option.value = exercise.id;
-            option.textContent = exercise.name;
-            return option;
-        });
+        const chosen = { set: chosenExercise(setForm), line: chosenExercise(lineForm) };
+        setFormExercise.replaceChildren(...chips('exerciseId', list.map(exercise =>
+            ({ value: exercise.id, label: exercise.name })), chosen.set));
+        lineFormExercise.replaceChildren(...chips('exerciseId', list.map(exercise =>
+            ({ value: exercise.id, label: exercise.name })), chosen.line));
 
-        setFormExercise.replaceChildren(...options());
-        lineForm.elements.exerciseId.replaceChildren(...options());
-
-        showFieldsFor(setForm, setFormExercise.value);
-        showFieldsFor(lineForm, lineForm.elements.exerciseId.value);
+        showFieldsFor(setForm, chosenExercise(setForm));
+        showFieldsFor(lineForm, chosenExercise(lineForm));
     }
 
     function dayLabels(workout) {
@@ -495,17 +516,11 @@
             .forEach(name => events.addEventListener(name, reload));
     }
 
-    setFormExercise.addEventListener(
-        'change', () => showFieldsFor(setForm, setFormExercise.value));
-    lineForm.elements.exerciseId.addEventListener(
-        'change', event => showFieldsFor(lineForm, event.target.value));
+    setForm.addEventListener('change', () => showFieldsFor(setForm, chosenExercise(setForm)));
+    lineForm.addEventListener('change', () => showFieldsFor(lineForm, chosenExercise(lineForm)));
 
-    for (const metric of METRICS) {
-        const option = document.createElement('option');
-        option.value = metric.key;
-        option.textContent = metric.label;
-        exerciseForm.elements.metric.append(option);
-    }
+    metricChips.replaceChildren(...chips('metric',
+        METRICS.map(metric => ({ value: metric.key, label: metric.label }))));
 
     window.AtlasTraining = {
         activate() {
