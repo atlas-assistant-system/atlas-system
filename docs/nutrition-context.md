@@ -495,6 +495,11 @@ en `rem`, jerarquía por tamaño y opacidad.
   redefinirlo; el comando archiva el anterior por su cuenta, así que la vista no encadena
   dos llamadas.
 
+**La pestaña cabe sin scroll.** Un espejo con barra de desplazamiento es un espejo que
+pide que te acerques a usarlo, así que el listado del día ocupa las dos filas de al lado
+—es lo único que crece solo— y en pantallas bajas las tres secciones inferiores pasan a
+una sola fila de tres columnas. Es eso o el scroll.
+
 **Sin lista de últimos días.** La tira de la semana ya es el histórico navegable, y una
 segunda lista debajo repetía las mismas cifras sin añadir nada. La consulta `ListDays`
 sigue viva porque es la que alimenta la tira.
