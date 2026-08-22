@@ -150,6 +150,14 @@ public final class AppointmentsApplication {
         return this;
     }
 
+    public SimpleCommandBus commands() {
+        return commands;
+    }
+
+    public SimpleQueryBus queries() {
+        return queries;
+    }
+
     public SseHub hub() {
         return hub;
     }
