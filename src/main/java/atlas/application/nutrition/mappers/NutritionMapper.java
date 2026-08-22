@@ -5,26 +5,19 @@ import atlas.application.nutrition.dto.DaySummaryDto;
 import atlas.application.nutrition.dto.IntakeDto;
 import atlas.application.nutrition.dto.MacrosDto;
 import atlas.application.nutrition.dto.PlanDto;
-import atlas.application.nutrition.dto.ProgressDto;
-import atlas.application.nutrition.dto.WeighInDto;
 import atlas.application.nutrition.ports.DayConsumption;
 import atlas.domain.nutrition.Intake;
 import atlas.domain.nutrition.Plan;
-import atlas.domain.nutrition.WeighIn;
 import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.DayTotals;
 import atlas.domain.nutrition.vos.IntakeNote;
 import atlas.domain.nutrition.vos.Macros;
-import atlas.domain.nutrition.vos.Progress;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
 public final class NutritionMapper {
-
-    private static final int GRAM_SCALE = 3;
 
     private NutritionMapper() {}
 
@@ -56,34 +49,6 @@ public final class NutritionMapper {
 
     public static List<IntakeDto> toDtos(Collection<Intake> intakes) {
         return intakes.stream().map(NutritionMapper::toDto).toList();
-    }
-
-    public static WeighInDto toDto(WeighIn weighIn) {
-        return new WeighInDto(
-            weighIn.id().toString(),
-            weighIn.weight().toKilograms(),
-            weighIn.measuredOn(),
-            weighIn.recordedAt());
-    }
-
-    public static List<WeighInDto> toWeighInDtos(Collection<WeighIn> weighIns) {
-        return weighIns.stream()
-            .sorted(Comparator.comparing(WeighIn::measuredOn))
-            .map(NutritionMapper::toDto)
-            .toList();
-    }
-
-    public static ProgressDto toDto(Progress progress) {
-        return new ProgressDto(
-            progress.start().toKilograms(),
-            progress.current().toKilograms(),
-            progress.target().toKilograms(),
-            progress.goal().name(),
-            progress.goal().label(),
-            kilograms(progress.remainingGrams()),
-            progress.percentage(),
-            progress.reached(),
-            kilograms(progress.trendGramsPerWeek()));
     }
 
     public static MacrosDto toDto(Macros macros) {
@@ -139,7 +104,4 @@ public final class NutritionMapper {
             totals.remainingProtein(), totals.remainingCarbs(), totals.remainingFat());
     }
 
-    private static BigDecimal kilograms(int grams) {
-        return BigDecimal.valueOf(grams, GRAM_SCALE);
-    }
 }

@@ -19,7 +19,8 @@ public final class NutritionTestDatabase {
             "V003__create_intakes.sql", "V004__index_intakes_by_date.sql",
             "V005__create_sequences.sql", "V006__create_weigh_ins.sql",
             "V007__add_calories_to_intakes.sql", "V008__backfill_intake_calories.sql",
-            "V009__add_calories_to_plans.sql", "V010__backfill_plan_calories.sql"));
+            "V009__add_calories_to_plans.sql", "V010__backfill_plan_calories.sql",
+            "V011__drop_weigh_ins.sql"));
 
         return connection;
     }

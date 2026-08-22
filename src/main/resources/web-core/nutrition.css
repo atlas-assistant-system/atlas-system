@@ -397,68 +397,6 @@
     opacity: 1;
 }
 
-.nutrition-weight {
-    grid-column: 1 / -1;
-}
-
-.nutrition-weight-headline {
-    margin: 0;
-    font-size: 3.2rem;
-    font-weight: 200;
-    letter-spacing: -0.03em;
-    line-height: 1;
-}
-
-.nutrition-weight-headline.reached {
-    font-size: 2.2rem;
-    opacity: 0.75;
-}
-
-.nutrition-weight-detail {
-    margin: 0.8rem 0 0;
-    font-size: 1.05rem;
-    opacity: 0.55;
-}
-
-.nutrition-weight-detail span + span {
-    margin-left: 1.8rem;
-}
-
-.nutrition-chart {
-    margin-top: 1.8rem;
-}
-
-.nutrition-chart svg {
-    display: block;
-    height: 11rem;
-    width: 100%;
-}
-
-.nutrition-chart-line {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.75);
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 2;
-    vector-effect: non-scaling-stroke;
-}
-
-.nutrition-chart-start,
-.nutrition-chart-target {
-    stroke: rgba(255, 255, 255, 0.2);
-    stroke-width: 1;
-    vector-effect: non-scaling-stroke;
-}
-
-.nutrition-chart-target {
-    stroke-dasharray: 4 4;
-    stroke: rgba(255, 255, 255, 0.35);
-}
-
-.nutrition-chart-last {
-    fill: rgba(255, 255, 255, 0.95);
-}
-
 @media (max-width: 60rem) {
     .nutrition-layout {
         grid-template-columns: minmax(0, 1fr);
@@ -467,9 +405,5 @@
 
     .nutrition-headline {
         font-size: 3.2rem;
-    }
-
-    .nutrition-weight-headline {
-        font-size: 2.6rem;
     }
 }

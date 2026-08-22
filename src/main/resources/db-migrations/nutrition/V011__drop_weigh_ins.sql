@@ -1,0 +1,1 @@
+DROP TABLE weigh_ins

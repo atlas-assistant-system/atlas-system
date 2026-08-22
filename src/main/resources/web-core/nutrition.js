@@ -18,18 +18,9 @@
     const summaryGoal = document.getElementById('nutrition-goal');
     const summaryEaten = document.getElementById('nutrition-eaten');
     const summaryQuota = document.getElementById('nutrition-quota');
-    const summaryWeight = document.getElementById('nutrition-home-weight');
-    const weightHeadline = document.getElementById('nutrition-weight-headline');
-    const weightNow = document.getElementById('nutrition-weight-now');
-    const weightTarget = document.getElementById('nutrition-weight-target');
-    const weightTrend = document.getElementById('nutrition-weight-trend');
-    const weightEmpty = document.getElementById('nutrition-weight-empty');
-    const weighInForm = document.getElementById('nutrition-weighin-form');
-    const chart = document.getElementById('nutrition-chart');
     let started = false;
     let selected = null;
 
-    const CHART = { width: 640, height: 180, padding: 14 };
     const GAUGE = {
         width: 320, height: 96, from: [16, 78], peak: [160, 10], to: [304, 78],
         headroom: 1.18,
@@ -81,15 +72,6 @@
 
     function grams(value) {
         return Number(value) || 0;
-    }
-
-    function kilos(value) {
-        return Number(value).toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' kg';
-    }
-
-    function signedKilos(value) {
-        const number = Number(value);
-        return (number > 0 ? '+' : '') + kilos(number);
     }
 
     function kcal(value) {
@@ -273,73 +255,6 @@
     }
 
     /**
-     * La serie se dibuja a mano en SVG. La escala vertical la fijan la propia serie y las dos
-     * lineas de referencia, para que partida y objetivo siempre queden dentro del cuadro.
-     */
-    function renderChart(series, progress) {
-        chart.replaceChildren();
-        if (!progress || series.length === 0) return;
-
-        const start = Number(progress.startWeight);
-        const target = Number(progress.targetWeight);
-        const values = series.map(reading => Number(reading.weight));
-        const low = Math.min(start, target, ...values);
-        const high = Math.max(start, target, ...values);
-        const span = high - low || 1;
-
-        const { width, height, padding } = CHART;
-        const usable = height - 2 * padding;
-        const y = value => padding + usable * (high - value) / span;
-        const x = index => series.length === 1
-            ? width / 2
-            : padding + (width - 2 * padding) * index / (series.length - 1);
-
-        const canvas = svg('svg', {
-            viewBox: `0 0 ${width} ${height}`,
-            preserveAspectRatio: 'none',
-            role: 'img',
-            'aria-label': `Evolucion del peso, de ${kilos(values[0])} a ${kilos(values.at(-1))}`,
-        });
-
-        canvas.append(
-            svg('line', { class: 'nutrition-chart-start', x1: 0, x2: width, y1: y(start), y2: y(start) }),
-            svg('line', { class: 'nutrition-chart-target', x1: 0, x2: width, y1: y(target), y2: y(target) }),
-            svg('polyline', {
-                class: 'nutrition-chart-line',
-                points: values.map((value, index) => `${x(index)},${y(value)}`).join(' '),
-            }),
-            svg('circle', {
-                class: 'nutrition-chart-last',
-                cx: x(values.length - 1), cy: y(values.at(-1)), r: 3.5,
-            }));
-
-        chart.append(canvas);
-    }
-
-    function renderProgress(progress, series) {
-        weightEmpty.hidden = Boolean(progress);
-        renderChart(series, progress);
-
-        if (!progress) {
-            weightHeadline.textContent = '—';
-            weightNow.textContent = '—';
-            weightTarget.textContent = '—';
-            weightTrend.textContent = '';
-            return;
-        }
-
-        weightHeadline.textContent = progress.reached
-            ? 'Objetivo alcanzado'
-            : kilos(Math.abs(progress.remaining));
-        weightHeadline.classList.toggle('reached', progress.reached);
-        weightNow.textContent = kilos(progress.currentWeight);
-        weightTarget.textContent = kilos(progress.targetWeight);
-        weightTrend.textContent = Number(progress.trendPerWeek) === 0
-            ? ''
-            : signedKilos(progress.trendPerWeek) + ' por semana';
-    }
-
-    /**
      * El arco va de cero al limite superior del rango, con dos marcas en el rango mismo. La
      * escala la fija el limite y no lo consumido, para que pasarse se vea como pasarse.
      */
@@ -433,14 +348,6 @@
         renderPlan(await readOptional('/nutrition/plan'));
     }
 
-    async function refreshWeight() {
-        const [progress, series] = await Promise.all([
-            readOptional('/nutrition/progress'),
-            read('/nutrition/weigh-ins'),
-        ]);
-        renderProgress(progress, series);
-    }
-
     async function refreshDays() {
         const days = await read('/nutrition/days');
         replace(dayList, days.map(dayRow));
@@ -449,7 +356,7 @@
 
     async function refresh() {
         await refreshDay();
-        await Promise.all([renderWeek(), refreshPlan(), refreshDays(), refreshWeight()]);
+        await Promise.all([renderWeek(), refreshPlan(), refreshDays()]);
     }
 
     async function refreshSummary() {
@@ -468,14 +375,6 @@
             summaryGoal.textContent = day.targetCalories === null
                 ? 'Sin plan'
                 : (day.overBudget ? 'De más hoy' : 'Te quedan hoy');
-        }
-        if (summaryWeight) {
-            const progress = await readOptional('/nutrition/progress');
-            summaryWeight.textContent = progress
-                ? (progress.reached
-                    ? 'Peso objetivo alcanzado'
-                    : kilos(Math.abs(progress.remaining)) + ' para el objetivo')
-                : '';
         }
     }
 
@@ -525,10 +424,6 @@
         fat: grams(fields.fat.value),
     }));
 
-    onSubmit(weighInForm, fields => write('POST', '/nutrition/weigh-ins', {
-        weight: weight(fields.weight.value),
-    }));
-
     function listen() {
         if (started) return;
         started = true;
@@ -539,8 +434,7 @@
             guard(refreshSummary);
         };
         ['planDefined', 'planAdjusted', 'planArchived',
-            'intakeRecorded', 'intakeCorrected', 'intakeDeleted',
-            'weighInRecorded', 'weighInCorrected', 'weighInDeleted']
+            'intakeRecorded', 'intakeCorrected', 'intakeDeleted']
             .forEach(name => events.addEventListener(name, reload));
     }
 

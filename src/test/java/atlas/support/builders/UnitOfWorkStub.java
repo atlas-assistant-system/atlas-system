@@ -11,7 +11,6 @@ import atlas.application.economy.ports.SavingsGoalRepository;
 import atlas.application.nutrition.ports.IntakeRepository;
 import atlas.application.nutrition.ports.NutritionUnitOfWork;
 import atlas.application.nutrition.ports.PlanRepository;
-import atlas.application.nutrition.ports.WeighInRepository;
 import atlas.application.routines.ports.RoutineEntryRepository;
 import atlas.application.routines.ports.RoutineRepository;
 import atlas.application.routines.ports.RoutineUnitOfWork;
@@ -53,11 +52,6 @@ public final class UnitOfWorkStub {
     public static void withIntakes(NutritionUnitOfWork unitOfWork, IntakeRepository intakes) {
         run(unitOfWork);
         when(unitOfWork.intakes()).thenReturn(intakes);
-    }
-
-    public static void withWeighIns(NutritionUnitOfWork unitOfWork, WeighInRepository weighIns) {
-        run(unitOfWork);
-        when(unitOfWork.weighIns()).thenReturn(weighIns);
     }
 
     public static void with(RoutineUnitOfWork unitOfWork, RoutineRepository routines) {

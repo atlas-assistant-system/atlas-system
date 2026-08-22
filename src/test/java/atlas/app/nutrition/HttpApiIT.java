@@ -54,10 +54,6 @@ class HttpApiIT {
         for (var intake : jsonList(send("GET", "/nutrition/intakes?from=2000-01-01", null))) {
             send("DELETE", "/nutrition/intakes/" + intake.get("id"), null);
         }
-
-        for (var weighIn : jsonList(send("GET", "/nutrition/weigh-ins?from=2000-01-01", null))) {
-            send("DELETE", "/nutrition/weigh-ins/" + weighIn.get("id"), null);
-        }
     }
 
     @Test
@@ -303,123 +299,6 @@ class HttpApiIT {
     }
 
     @Test
-    void shouldWalkTheWholeLifeOfAWeighIn() throws Exception {
-        var created = send("POST", "/nutrition/weigh-ins", """
-            {"weight":"82.4","measuredOn":"2026-08-21"}""");
-        assertThat(created.statusCode()).isEqualTo(201);
-
-        var weighIn = json(created);
-        var id = (String) weighIn.get("id");
-        assertThat(id).matches("W\\d{8}");
-        assertThat(weighIn.get("weight")).isEqualTo("82.4");
-        assertThat(weighIn.get("measuredOn")).isEqualTo("2026-08-21");
-
-        var corrected = json(send("PUT", "/nutrition/weigh-ins/" + id, """
-            {"weight":"82.1"}"""));
-        assertThat(corrected.get("weight")).isEqualTo("82.1");
-        assertThat(corrected.get("measuredOn")).isEqualTo("2026-08-21");
-
-        assertThat(send("DELETE", "/nutrition/weigh-ins/" + id, null).statusCode()).isEqualTo(204);
-        assertThat(jsonList(send("GET", "/nutrition/weigh-ins", null))).isEmpty();
-    }
-
-    @Test
-    void shouldCorrectTheReadingOfTheDayInsteadOfAddingASecondOne() throws Exception {
-        var first = (String) json(weighIn("84.0", "2026-08-22")).get("id");
-        var second = json(weighIn("83.5", "2026-08-22"));
-
-        assertThat(second.get("id")).isEqualTo(first);
-        assertThat(second.get("weight")).isEqualTo("83.5");
-        assertThat(jsonList(send("GET", "/nutrition/weigh-ins", null))).hasSize(1);
-    }
-
-    @Test
-    void shouldDateTheReadingTodayWhenNoDateIsGiven() throws Exception {
-        assertThat(json(send("POST", "/nutrition/weigh-ins", """
-            {"weight":"82.4"}""")).get("measuredOn")).isEqualTo("2026-08-22");
-    }
-
-    @Test
-    void shouldReturnTheSeriesOldestFirst() throws Exception {
-        weighIn("84.0", "2026-08-10");
-        weighIn("82.4", "2026-08-22");
-        weighIn("83.1", "2026-08-16");
-
-        assertThat(jsonList(send("GET", "/nutrition/weigh-ins", null)))
-            .extracting(reading -> reading.get("measuredOn"))
-            .containsExactly("2026-08-10", "2026-08-16", "2026-08-22");
-    }
-
-    @Test
-    void shouldReportTheProgressAgainstThePlan() throws Exception {
-        definePlan();
-        weighIn("81.0", "2026-08-22");
-
-        var progress = json(send("GET", "/nutrition/progress", null));
-
-        assertThat(progress.get("startWeight")).isEqualTo("84");
-        assertThat(progress.get("currentWeight")).isEqualTo("81");
-        assertThat(progress.get("targetWeight")).isEqualTo("78");
-        assertThat(progress.get("goal")).isEqualTo("LOSE");
-        assertThat(progress.get("remaining")).isEqualTo("-3");
-        assertThat(progress.get("percentage")).isEqualTo(50);
-        assertThat(progress.get("reached")).isEqualTo(false);
-    }
-
-    @Test
-    void shouldMeasureTheTrendAcrossTheTwoLastWeeks() throws Exception {
-        definePlan();
-        weighIn("84.0", "2026-08-09");
-        weighIn("83.0", "2026-08-17");
-
-        assertThat(json(send("GET", "/nutrition/progress", null)).get("trendPerWeek")).isEqualTo("-1");
-    }
-
-    @Test
-    void shouldFallBackToTheStartingWeightWithoutAnyReading() throws Exception {
-        definePlan();
-
-        var progress = json(send("GET", "/nutrition/progress", null));
-
-        assertThat(progress.get("currentWeight")).isEqualTo("84");
-        assertThat(progress.get("percentage")).isEqualTo(0);
-    }
-
-    @Test
-    void shouldReportNoActivePlanWhenAskingForProgress() throws Exception {
-        var response = send("GET", "/nutrition/progress", null);
-
-        assertThat(response.statusCode()).isEqualTo(404);
-        assertThat(json(response).get("code")).isEqualTo("Plan.NoneActive");
-    }
-
-    @Test
-    void shouldRejectAReadingThatIsNotBelievable() throws Exception {
-        var response = send("POST", "/nutrition/weigh-ins", """
-            {"weight":"900.0"}""");
-
-        assertThat(response.statusCode()).isEqualTo(400);
-        assertThat(json(response).get("code")).isEqualTo("Nutrition.WeightOutOfRange");
-    }
-
-    @Test
-    void shouldRejectAReadingDatedInTheFuture() throws Exception {
-        var response = send("POST", "/nutrition/weigh-ins", """
-            {"weight":"82.4","measuredOn":"2026-08-23"}""");
-
-        assertThat(response.statusCode()).isEqualTo(400);
-        assertThat(json(response).get("code")).isEqualTo("WeighIn.CannotBeDatedInTheFuture");
-    }
-
-    @Test
-    void shouldReportAnUnknownReadingAsNotFound() throws Exception {
-        var response = send("DELETE", "/nutrition/weigh-ins/W00009999", null);
-
-        assertThat(response.statusCode()).isEqualTo(404);
-        assertThat(json(response).get("code")).isEqualTo("WeighIn.NotFound");
-    }
-
-    @Test
     void shouldServeItsDocsBelowTheModulePath() throws Exception {
         assertThat(send("GET", "/", null).statusCode()).isEqualTo(404);
         assertThat(send("GET", "/nutrition/docs", null).body()).contains("swagger");
@@ -429,11 +308,6 @@ class HttpApiIT {
     private static HttpResponse<String> definePlan() throws Exception {
         return send("POST", "/nutrition/plan", """
             {"startWeight":"84.0","targetWeight":"78.0","calories":1940,"protein":150,"carbs":200,"fat":60}""");
-    }
-
-    private static HttpResponse<String> weighIn(String weight, String day) throws Exception {
-        return send("POST", "/nutrition/weigh-ins", """
-            {"weight":"%s","measuredOn":"%s"}""".formatted(weight, day));
     }
 
     private static void recordIntake(int protein, int carbs, int fat, String day) throws Exception {

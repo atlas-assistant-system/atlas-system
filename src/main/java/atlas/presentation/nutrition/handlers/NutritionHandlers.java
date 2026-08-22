@@ -3,33 +3,25 @@ package atlas.presentation.nutrition.handlers;
 import atlas.application.nutrition.commands.adjustplan.AdjustPlanCommand;
 import atlas.application.nutrition.commands.archiveplan.ArchivePlanCommand;
 import atlas.application.nutrition.commands.correctintake.CorrectIntakeCommand;
-import atlas.application.nutrition.commands.correctweighin.CorrectWeighInCommand;
 import atlas.application.nutrition.commands.defineplan.DefinePlanCommand;
 import atlas.application.nutrition.commands.deleteintake.DeleteIntakeCommand;
-import atlas.application.nutrition.commands.deleteweighin.DeleteWeighInCommand;
 import atlas.application.nutrition.commands.recordintake.RecordIntakeCommand;
-import atlas.application.nutrition.commands.recordweighin.RecordWeighInCommand;
 import atlas.application.nutrition.dto.IntakeDto;
 import atlas.application.nutrition.dto.PlanDto;
-import atlas.application.nutrition.dto.WeighInDto;
 import atlas.application.nutrition.queries.getactiveplan.GetActivePlanQuery;
 import atlas.application.nutrition.queries.getday.GetDayQuery;
 import atlas.application.nutrition.queries.getintake.GetIntakeQuery;
-import atlas.application.nutrition.queries.getprogress.GetProgressQuery;
 import atlas.application.nutrition.queries.listdays.ListDaysQuery;
 import atlas.application.nutrition.queries.listintakes.ListIntakesQuery;
-import atlas.application.nutrition.queries.listweighins.ListWeighInsQuery;
 import atlas.application.sharedkernel.cqrs.CommandBus;
 import atlas.application.sharedkernel.cqrs.QueryBus;
 import atlas.domain.nutrition.IntakeId;
-import atlas.domain.nutrition.WeighInId;
 import atlas.domain.sharedkernel.results.Result;
 import atlas.presentation.common.web.Json;
 import atlas.presentation.nutrition.requests.AdjustPlanRequest;
 import atlas.presentation.nutrition.requests.CorrectIntakeRequest;
 import atlas.presentation.nutrition.requests.DefinePlanRequest;
 import atlas.presentation.nutrition.requests.RecordIntakeRequest;
-import atlas.presentation.nutrition.requests.WeighInRequest;
 import atlas.presentation.nutrition.responses.NutritionResponses;
 import atlas.presentation.nutrition.web.Values;
 import atlas.presentation.sharedkernel.http.HttpRequest;
@@ -160,63 +152,6 @@ public final class NutritionHandlers {
         }
 
         return HttpResponse.ok(Json.write(NutritionResponses.days(result.value())));
-    }
-
-    public HttpResponse recordWeighIn(HttpRequest request) {
-        var body = WeighInRequest.from(Json.parse(request.body()));
-
-        Result<WeighInDto> result = commands.dispatch(
-            new RecordWeighInCommand(body.weight(), body.measuredOn()));
-        if (result.isFailure()) {
-            return HttpResponse.error(result.error());
-        }
-
-        return HttpResponse.created(
-            "/nutrition/weigh-ins/" + result.value().id(),
-            Json.write(NutritionResponses.weighIn(result.value())));
-    }
-
-    public HttpResponse correctWeighIn(HttpRequest request) {
-        var body = WeighInRequest.from(Json.parse(request.body()));
-
-        Result<WeighInDto> result = commands.dispatch(
-            new CorrectWeighInCommand(weighInId(request), body.weight()));
-        if (result.isFailure()) {
-            return HttpResponse.error(result.error());
-        }
-
-        return HttpResponse.ok(Json.write(NutritionResponses.weighIn(result.value())));
-    }
-
-    public HttpResponse deleteWeighIn(HttpRequest request) {
-        Result<Void> result = commands.dispatch(new DeleteWeighInCommand(weighInId(request)));
-        if (result.isFailure()) {
-            return HttpResponse.error(result.error());
-        }
-
-        return HttpResponse.noContent();
-    }
-
-    public HttpResponse weighIns(HttpRequest request) {
-        var result = queries.dispatch(new ListWeighInsQuery(from(request), to(request)));
-        if (result.isFailure()) {
-            return HttpResponse.error(result.error());
-        }
-
-        return HttpResponse.ok(Json.write(NutritionResponses.weighIns(result.value())));
-    }
-
-    public HttpResponse progress(HttpRequest request) {
-        var result = queries.dispatch(new GetProgressQuery());
-        if (result.isFailure()) {
-            return HttpResponse.error(result.error());
-        }
-
-        return HttpResponse.ok(Json.write(NutritionResponses.progress(result.value())));
-    }
-
-    private static WeighInId weighInId(HttpRequest request) {
-        return WeighInId.parse(request.pathParam("id"));
     }
 
     private static HttpResponse planOrError(Result<PlanDto> result) {

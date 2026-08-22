@@ -3,7 +3,6 @@ package atlas.infrastructure.nutrition.persistence;
 import atlas.application.nutrition.ports.IntakeRepository;
 import atlas.application.nutrition.ports.NutritionUnitOfWork;
 import atlas.application.nutrition.ports.PlanRepository;
-import atlas.application.nutrition.ports.WeighInRepository;
 import atlas.application.sharedkernel.events.EventDelivery;
 import atlas.application.sharedkernel.unitofwork.AbstractUnitOfWork;
 import atlas.infrastructure.sharedkernel.SequenceGenerator;
@@ -16,7 +15,6 @@ public final class SqliteNutritionUnitOfWork extends AbstractUnitOfWork implemen
     private final Connection connection;
     private final SqlitePlanRepository plans;
     private final SqliteIntakeRepository intakes;
-    private final SqliteWeighInRepository weighIns;
 
     public SqliteNutritionUnitOfWork(
         Connection connection, EventDelivery delivery, SequenceGenerator sequences) {
@@ -24,7 +22,6 @@ public final class SqliteNutritionUnitOfWork extends AbstractUnitOfWork implemen
         this.connection = connection;
         this.plans = new SqlitePlanRepository(connection, sequences);
         this.intakes = new SqliteIntakeRepository(connection, sequences);
-        this.weighIns = new SqliteWeighInRepository(connection, sequences);
     }
 
     @Override
@@ -35,11 +32,6 @@ public final class SqliteNutritionUnitOfWork extends AbstractUnitOfWork implemen
     @Override
     public IntakeRepository intakes() {
         return intakes;
-    }
-
-    @Override
-    public WeighInRepository weighIns() {
-        return weighIns;
     }
 
     @Override

@@ -7,6 +7,4 @@ public interface NutritionUnitOfWork extends UnitOfWork {
     PlanRepository plans();
 
     IntakeRepository intakes();
-
-    WeighInRepository weighIns();
 }

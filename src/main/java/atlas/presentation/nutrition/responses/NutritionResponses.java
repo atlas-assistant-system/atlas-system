@@ -5,8 +5,6 @@ import atlas.application.nutrition.dto.DaySummaryDto;
 import atlas.application.nutrition.dto.IntakeDto;
 import atlas.application.nutrition.dto.MacrosDto;
 import atlas.application.nutrition.dto.PlanDto;
-import atlas.application.nutrition.dto.ProgressDto;
-import atlas.application.nutrition.dto.WeighInDto;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -69,35 +67,6 @@ public final class NutritionResponses {
 
     public static List<Map<String, Object>> days(List<DaySummaryDto> days) {
         return days.stream().map(NutritionResponses::daySummary).toList();
-    }
-
-    public static Map<String, Object> weighIn(WeighInDto dto) {
-        var body = new LinkedHashMap<String, Object>();
-        body.put("id", dto.id());
-        body.put("weight", kilograms(dto.weight()));
-        body.put("measuredOn", dto.measuredOn().toString());
-        body.put("recordedAt", dto.recordedAt().toString());
-
-        return body;
-    }
-
-    public static List<Map<String, Object>> weighIns(List<WeighInDto> weighIns) {
-        return weighIns.stream().map(NutritionResponses::weighIn).toList();
-    }
-
-    public static Map<String, Object> progress(ProgressDto dto) {
-        var body = new LinkedHashMap<String, Object>();
-        body.put("startWeight", kilograms(dto.startWeight()));
-        body.put("currentWeight", kilograms(dto.currentWeight()));
-        body.put("targetWeight", kilograms(dto.targetWeight()));
-        body.put("goal", dto.goal());
-        body.put("goalLabel", dto.goalLabel());
-        body.put("remaining", kilograms(dto.remaining()));
-        body.put("percentage", dto.percentage());
-        body.put("reached", dto.reached());
-        body.put("trendPerWeek", kilograms(dto.trendPerWeek()));
-
-        return body;
     }
 
     private static Map<String, Object> daySummary(DaySummaryDto dto) {

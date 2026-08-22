@@ -97,8 +97,6 @@ window.AtlasErrorMessages = {
     'Intake.CannotBeDatedInTheFuture': 'No puedes apuntar algo que aún no te has comido.',
     'Intake.NoteTooLong': 'La nota es demasiado larga.',
     'Intake.NotFound': 'Ese registro ya no existe.',
-    'WeighIn.CannotBeDatedInTheFuture': 'No puedes apuntar una pesada que aún no te has hecho.',
-    'WeighIn.NotFound': 'Esa pesada ya no existe.',
     'Home.LocationNameRequired': 'Introduce una ubicación.',
     'Home.LocationNameTooLong': 'El nombre de la ubicación es demasiado largo.',
     'Home.InvalidCoordinates': 'No se han podido validar las coordenadas de esa ubicación.',

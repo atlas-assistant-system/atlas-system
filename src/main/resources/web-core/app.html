@@ -112,8 +112,7 @@
             <p class="label">Nutrici&oacute;n</p>
             <p id="nutrition-remaining" class="home-headline">&mdash;</p>
             <p id="nutrition-goal" class="home-detail"></p>
-            <p id="nutrition-home-weight" class="home-detail"></p>
-            <ul class="plain-list">
+                <ul class="plain-list">
                 <li>Consumido <span id="nutrition-eaten">&mdash;</span></li>
                 <li>Cuota <span id="nutrition-quota">&mdash;</span></li>
             </ul>
@@ -378,28 +377,6 @@
                     </label>
                 </div>
                 <button type="submit">Fijar plan</button>
-                <p class="nutrition-form-error" aria-live="polite"></p>
-            </form>
-        </section>
-
-        <section class="nutrition-section nutrition-weight">
-            <p class="label">Peso</p>
-            <p id="nutrition-weight-headline" class="nutrition-weight-headline">&mdash;</p>
-            <p class="nutrition-weight-detail">
-                <span>Ahora <b id="nutrition-weight-now">&mdash;</b></span>
-                <span>Objetivo <b id="nutrition-weight-target">&mdash;</b></span>
-                <span id="nutrition-weight-trend"></span>
-            </p>
-            <div id="nutrition-chart" class="nutrition-chart"></div>
-            <p id="nutrition-weight-empty" class="nutrition-empty" hidden>
-                Define un plan para seguir tu peso.
-            </p>
-            <form id="nutrition-weighin-form" class="nutrition-form" autocomplete="off">
-                <label>Peso de hoy
-                    <input name="weight" type="text" inputmode="decimal" maxlength="6"
-                           placeholder="82.4" required>
-                </label>
-                <button type="submit">Apuntar pesada</button>
                 <p class="nutrition-form-error" aria-live="polite"></p>
             </form>
         </section>

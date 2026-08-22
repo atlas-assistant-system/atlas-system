@@ -7,9 +7,6 @@ import atlas.domain.nutrition.events.IntakeRecordedEvent;
 import atlas.domain.nutrition.events.PlanAdjustedEvent;
 import atlas.domain.nutrition.events.PlanArchivedEvent;
 import atlas.domain.nutrition.events.PlanDefinedEvent;
-import atlas.domain.nutrition.events.WeighInCorrectedEvent;
-import atlas.domain.nutrition.events.WeighInDeletedEvent;
-import atlas.domain.nutrition.events.WeighInRecordedEvent;
 import atlas.presentation.common.web.Json;
 import atlas.presentation.sharedkernel.sse.SseEvent;
 import atlas.presentation.sharedkernel.sse.SseHub;
@@ -37,15 +34,6 @@ public final class NutritionEventsBroadcaster {
 
         events.subscribe(IntakeDeletedEvent.class,
             event -> broadcast(hub, "intakeDeleted", "intakeId", event.intakeId().toString()));
-
-        events.subscribe(WeighInRecordedEvent.class,
-            event -> broadcast(hub, "weighInRecorded", "weighInId", event.weighInId().toString()));
-
-        events.subscribe(WeighInCorrectedEvent.class,
-            event -> broadcast(hub, "weighInCorrected", "weighInId", event.weighInId().toString()));
-
-        events.subscribe(WeighInDeletedEvent.class,
-            event -> broadcast(hub, "weighInDeleted", "weighInId", event.weighInId().toString()));
     }
 
     private static void broadcast(SseHub hub, String name, String field, String id) {
