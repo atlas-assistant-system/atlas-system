@@ -31,7 +31,8 @@ public final class SqliteIntakeRepository extends AbstractSqlRepository<Intake, 
 
     @Override
     protected List<String> columns() {
-        return List.of("id", "protein_g", "carbs_g", "fat_g", "note", "consumed_on", "recorded_at");
+        return List.of(
+            "id", "calories", "protein_g", "carbs_g", "fat_g", "note", "consumed_on", "recorded_at");
     }
 
     @Override

@@ -48,8 +48,8 @@ public final class SqlitePlanRepository extends AbstractSqlRepository<Plan, Plan
     @Override
     protected List<String> columns() {
         return List.of(
-            "id", "start_weight_g", "target_weight_g", "protein_g", "carbs_g", "fat_g",
-            "status", "started_on", "defined_at");
+            "id", "start_weight_g", "target_weight_g", "daily_calories",
+            "protein_g", "carbs_g", "fat_g", "status", "started_on", "defined_at");
     }
 
     @Override

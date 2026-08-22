@@ -3,6 +3,7 @@ package atlas.infrastructure.nutrition.persistence.mappers;
 import atlas.domain.nutrition.Plan;
 import atlas.domain.nutrition.PlanId;
 import atlas.domain.nutrition.enums.PlanStatus;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.nutrition.vos.Weight;
 import atlas.domain.sharedkernel.results.Result;
@@ -22,6 +23,7 @@ public final class PlanRows {
             PlanId.of(row.getLong("id")),
             weight(row.getInt("start_weight_g"), "plans.start_weight_g"),
             weight(row.getInt("target_weight_g"), "plans.target_weight_g"),
+            require(Calories.create(row.getInt("daily_calories")), "plans.daily_calories"),
             macros(row),
             PlanStatus.valueOf(row.getString("status")),
             LocalDate.parse(row.getString("started_on")),
@@ -34,12 +36,13 @@ public final class PlanRows {
         statement.setLong(1, plan.id().value());
         statement.setInt(2, plan.startWeight().grams());
         statement.setInt(3, plan.targetWeight().grams());
-        statement.setInt(4, macros.protein());
-        statement.setInt(5, macros.carbs());
-        statement.setInt(6, macros.fat());
-        statement.setString(7, plan.status().name());
-        statement.setString(8, plan.startedOn().toString());
-        statement.setString(9, plan.definedAt().toString());
+        statement.setInt(4, plan.dailyCalories().kcal());
+        statement.setInt(5, macros.protein());
+        statement.setInt(6, macros.carbs());
+        statement.setInt(7, macros.fat());
+        statement.setString(8, plan.status().name());
+        statement.setString(9, plan.startedOn().toString());
+        statement.setString(10, plan.definedAt().toString());
     }
 
     private static Weight weight(int grams, String column) {

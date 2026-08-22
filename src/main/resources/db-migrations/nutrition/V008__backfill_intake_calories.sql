@@ -1,0 +1,1 @@
+UPDATE intakes SET calories = 4 * protein_g + 4 * carbs_g + 9 * fat_g WHERE calories = 0

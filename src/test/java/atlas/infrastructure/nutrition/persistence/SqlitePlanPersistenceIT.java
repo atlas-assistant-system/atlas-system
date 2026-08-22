@@ -10,6 +10,7 @@ import atlas.domain.nutrition.Plan;
 import atlas.domain.nutrition.PlanId;
 import atlas.domain.nutrition.enums.Goal;
 import atlas.domain.nutrition.enums.PlanStatus;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.nutrition.vos.Weight;
 import atlas.infrastructure.common.SqliteSequenceGenerator;
@@ -70,7 +71,7 @@ class SqlitePlanPersistenceIT {
     }
 
     @Test
-    void shouldDeriveTheGoalAndTheCaloriesOnTheWayBackOut() {
+    void shouldDeriveTheGoalAndReadBackTheCalories() {
         define(84_000, 78_000, new Macros(150, 200, 60), JULY_23);
 
         var found = readModel.findActive().orElseThrow();
@@ -80,12 +81,12 @@ class SqlitePlanPersistenceIT {
     }
 
     @Test
-    void shouldNotStoreTheGoalOrTheCalories() throws SQLException {
+    void shouldNotStoreTheDerivedGoal() throws SQLException {
         define(84_000, 78_000, new Macros(150, 200, 60), JULY_23);
 
         assertThat(columnsOfPlans())
-            .doesNotContain("goal", "calories", "daily_calories")
-            .contains("protein_g", "carbs_g", "fat_g");
+            .doesNotContain("goal")
+            .contains("daily_calories", "protein_g", "carbs_g", "fat_g");
     }
 
     @Test
@@ -99,7 +100,7 @@ class SqlitePlanPersistenceIT {
 
         unitOfWork.run(() -> {
             var plan = unitOfWork.plans().findActive().orElseThrow();
-            plan.adjust(new Macros(160, 180, 55), new Weight(76_000), NOW);
+            plan.adjust(new Calories(1_855), new Macros(160, 180, 55), new Weight(76_000), NOW);
             unitOfWork.plans().update(plan);
         });
 
@@ -153,8 +154,9 @@ class SqlitePlanPersistenceIT {
         unitOfWork.run(() -> {
             var plans = unitOfWork.plans();
             var plan = Plan.define(
-                plans.nextId(), new Weight(startGrams), new Weight(targetGrams), macros,
-                startedOn, AUGUST_22, NOW);
+                plans.nextId(), new Weight(startGrams), new Weight(targetGrams),
+                new Calories(4 * macros.protein() + 4 * macros.carbs() + 9 * macros.fat()),
+                macros, startedOn, AUGUST_22, NOW);
             plans.create(plan.value());
         });
     }

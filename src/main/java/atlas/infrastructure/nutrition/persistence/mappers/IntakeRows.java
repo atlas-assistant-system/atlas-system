@@ -2,6 +2,7 @@ package atlas.infrastructure.nutrition.persistence.mappers;
 
 import atlas.domain.nutrition.Intake;
 import atlas.domain.nutrition.IntakeId;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.IntakeNote;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.domain.sharedkernel.results.Result;
@@ -19,10 +20,15 @@ public final class IntakeRows {
     public static Intake toIntake(ResultSet row) throws SQLException {
         return Intake.rehydrate(
             IntakeId.of(row.getLong("id")),
+            calories(row),
             macros(row),
             require(IntakeNote.create(row.getString("note")), "intakes.note"),
             LocalDate.parse(row.getString("consumed_on")),
             Instant.parse(row.getString("recorded_at")));
+    }
+
+    public static Calories calories(ResultSet row) throws SQLException {
+        return require(Calories.create(row.getInt("calories")), "intakes.calories");
     }
 
     public static Macros macros(ResultSet row) throws SQLException {
@@ -35,12 +41,13 @@ public final class IntakeRows {
         var macros = intake.macros();
 
         statement.setLong(1, intake.id().value());
-        statement.setInt(2, macros.protein());
-        statement.setInt(3, macros.carbs());
-        statement.setInt(4, macros.fat());
-        statement.setString(5, intake.note().map(IntakeNote::value).orElse(null));
-        statement.setString(6, intake.consumedOn().toString());
-        statement.setString(7, intake.recordedAt().toString());
+        statement.setInt(2, intake.calories().kcal());
+        statement.setInt(3, macros.protein());
+        statement.setInt(4, macros.carbs());
+        statement.setInt(5, macros.fat());
+        statement.setString(6, intake.note().map(IntakeNote::value).orElse(null));
+        statement.setString(7, intake.consumedOn().toString());
+        statement.setString(8, intake.recordedAt().toString());
     }
 
     private static <T> T require(Result<T> result, String column) {

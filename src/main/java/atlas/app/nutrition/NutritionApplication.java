@@ -112,7 +112,9 @@ public final class NutritionApplication {
             NutritionApplication.class, "/db-migrations/nutrition",
             "V001__create_plans.sql", "V002__index_single_active_plan.sql",
             "V003__create_intakes.sql", "V004__index_intakes_by_date.sql",
-            "V005__create_sequences.sql", "V006__create_weigh_ins.sql"));
+            "V005__create_sequences.sql", "V006__create_weigh_ins.sql",
+            "V007__add_calories_to_intakes.sql", "V008__backfill_intake_calories.sql",
+            "V009__add_calories_to_plans.sql", "V010__backfill_plan_calories.sql"));
 
         var events = new SimpleDomainEventPublisher();
         var commands = new SimpleCommandBus();

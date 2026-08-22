@@ -27,6 +27,7 @@ public final class SqliteIntakeReadModel implements IntakeReadModel {
 
     private static final String CONSUMPTION_BY_DAY = """
         SELECT consumed_on,
+               SUM(calories)  AS calories,
                SUM(protein_g) AS protein_g,
                SUM(carbs_g)   AS carbs_g,
                SUM(fat_g)     AS fat_g
@@ -64,7 +65,10 @@ public final class SqliteIntakeReadModel implements IntakeReadModel {
         return SqlQuery.list(connection, CONSUMPTION_BY_DAY, statement -> {
             statement.setString(1, from.toString());
             statement.setString(2, to.toString());
-        }, row -> new DayConsumption(LocalDate.parse(row.getString("consumed_on")), IntakeRows.macros(row)));
+        }, row -> new DayConsumption(
+            LocalDate.parse(row.getString("consumed_on")),
+            IntakeRows.calories(row),
+            IntakeRows.macros(row)));
     }
 
     private List<Intake> query(String sql, StatementBinder binder) {

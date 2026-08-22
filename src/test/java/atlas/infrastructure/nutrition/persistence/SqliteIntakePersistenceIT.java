@@ -8,6 +8,7 @@ import atlas.application.sharedkernel.events.PendingEventDispatcher;
 import atlas.application.sharedkernel.events.SimpleDomainEventPublisher;
 import atlas.domain.nutrition.Intake;
 import atlas.domain.nutrition.IntakeId;
+import atlas.domain.nutrition.vos.Calories;
 import atlas.domain.nutrition.vos.IntakeNote;
 import atlas.domain.nutrition.vos.Macros;
 import atlas.infrastructure.common.SqliteSequenceGenerator;
@@ -74,7 +75,7 @@ class SqliteIntakePersistenceIT {
     }
 
     @Test
-    void shouldDeriveTheCaloriesOnTheWayBackOut() {
+    void shouldReadBackTheCaloriesItWasGiven() {
         var id = record(new Macros(30, 60, 10), null, AUGUST_22);
 
         assertThat(readModel.find(id).orElseThrow().calories().kcal()).isEqualTo(450);
@@ -140,10 +141,10 @@ class SqliteIntakePersistenceIT {
         record(new Macros(17, 3, 9), null, AUGUST_22);
 
         var byHand = readModel.findOn(AUGUST_22).stream()
-            .map(Intake::macros)
-            .reduce(Macros.NONE, Macros::plus);
+            .map(Intake::calories)
+            .reduce(Calories.NONE, Calories::plus);
 
-        assertThat(macrosOn(readModel.consumptionBetween(AUGUST_22, AUGUST_22), AUGUST_22))
+        assertThat(caloriesOn(readModel.consumptionBetween(AUGUST_22, AUGUST_22), AUGUST_22))
             .isEqualTo(byHand);
     }
 
@@ -159,7 +160,7 @@ class SqliteIntakePersistenceIT {
         unitOfWork.run(() -> {
             var intakes = unitOfWork.intakes();
             var intake = intakes.get(id).orElseThrow();
-            intake.correct(new Macros(35, 55, 12), Optional.empty(), NOW);
+            intake.correct(new Calories(480), new Macros(35, 55, 12), Optional.empty(), NOW);
             intakes.update(intake);
         });
 
@@ -183,6 +184,14 @@ class SqliteIntakePersistenceIT {
         assertThat(readModel.find(id)).isEmpty();
     }
 
+    private static Calories caloriesOn(List<DayConsumption> consumption, LocalDate date) {
+        return consumption.stream()
+            .filter(day -> day.date().equals(date))
+            .map(DayConsumption::calories)
+            .findFirst()
+            .orElseThrow();
+    }
+
     private static Macros macrosOn(List<DayConsumption> consumption, LocalDate date) {
         return consumption.stream()
             .filter(day -> day.date().equals(date))
@@ -195,7 +204,9 @@ class SqliteIntakePersistenceIT {
         return unitOfWork.execute(() -> {
             var intakes = unitOfWork.intakes();
             var intake = Intake.record(
-                intakes.nextId(), macros, IntakeNote.create(note).value(), consumedOn, AUGUST_22, NOW)
+                intakes.nextId(),
+                new Calories(4 * macros.protein() + 4 * macros.carbs() + 9 * macros.fat()),
+                macros, IntakeNote.create(note).value(), consumedOn, AUGUST_22, NOW)
                 .value();
             intakes.create(intake);
 
