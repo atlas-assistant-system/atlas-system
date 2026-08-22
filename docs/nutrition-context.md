@@ -37,13 +37,22 @@ la pestaña **Nutrición** tiene formularios, con el mismo patrón de escritura 
 comandos, así que un Atajo de iOS que registre la cena desde el móvil funciona sin trabajo
 extra. La vista escucha su SSE y se refresca sola, como la de `economy`.
 
-**Las calorías se derivan de los macros, no se declaran.** `4·proteína + 4·carbos +
-9·grasa`, una regla y un sitio: `Macros.calories()`. Guardar las dos cosas permite que
-discrepen —una etiqueta redondea, el usuario teclea mal— y entonces hay que decidir cuál
-gana en cada suma. Es el mismo razonamiento que hace que `economy` no persista `kind`.
-Consecuencia asumida: para registrar algo hay que saber sus macros, no basta con la
-cifra de calorías. Si eso resulta molesto en uso real, el arreglo es un campo
-`unattributedCalories` en `Macros`, no dos fuentes de verdad.
+**Las calorías se teclean, no se derivan.** Ni en el consumo ni en el plan: son un dato
+propio, al lado de los macros y sin obligación de cuadrar con ellos.
+
+El diseño original hacía lo contrario —`4·proteína + 4·carbos + 9·grasa`, una regla y un
+sitio— y se cambió a propósito. El argumento que lo tumbó es el uso real: **lo que sabes de
+lo que te comes suele ser la cifra de la etiqueta**, no el desglose; el alcohol no es
+ninguno de los tres macros; y dos etiquetas con los mismos gramos declaran kcal distintas
+por el redondeo y la fibra. Derivarlas obligaba a inventarse los macros para poder apuntar
+algo, que es peor que aceptar dos números.
+
+Lo que se pierde: calorías y macros **pueden discrepar**, y nadie los concilia. Es
+deliberado — mandan las calorías tecleadas en todo lo que las use (totales del día,
+histórico, rango). Los macros son informativos y se suman por separado.
+
+Un consumo exige **calorías mayores que cero**; los macros pueden ir a cero. Así
+`{"calories":150,"note":"una cerveza"}` es un registro válido.
 
 **Sin alimentos, sin comidas con nombre.** No hay `Food`, ni `Meal`, ni desayuno/comida/
 cena como entidades. Una entrada de consumo es una nota libre opcional y unos macros. Ese
@@ -142,32 +151,36 @@ barato que un caso de uso para corregirlo.
 public record Macros(int protein, int carbs, int fat) implements ValueObject {
     public static Result<Macros> create(int protein, int carbs, int fat)   // todos >= 0
     public Macros plus(Macros other)
-    public Calories calories()          // 4p + 4c + 9f
     public boolean isZero()
 }
 ```
 
-Gramos enteros, mayores o iguales que cero. **Los tres pueden ser cero a la vez**: un día sin
-registros consume cero, y eso es un valor perfectamente válido. Que un consumo *concreto* no
-pueda ser cero es una regla de `Intake`, no del valor — ponerla en el VO dejaría sin tipo al
-día vacío. `plus` es lo que usa el read model conceptualmente; en SQLite es un `SUM` por
+Gramos enteros, mayores o iguales que cero, y **los tres pueden ser cero a la vez**: un día sin
+registros consume cero, y apuntar solo las kcal de algo también. `Macros` ya no sabe nada de
+calorías. `plus` es lo que usa el read model conceptualmente; en SQLite es un `SUM` por
 columna.
 
 ### `Calories`
 
 ```java
 public record Calories(int kcal) implements ValueObject {
+    public static Result<Calories> create(int kcal)  // >= 0
+    public Calories plus(Calories other)
     public int remainingFor(Calories target)         // con signo: negativo si te pasaste
     public int percentageOf(Calories total)
+    public Calories lowerBound()                     // el objetivo menos un 10%
+    public Calories upperBound()                     // el objetivo mas un 10%
+    public boolean covers(Calories consumed)         // dentro del rango
 }
 ```
 
-**No se persiste en ninguna tabla y no se acepta por la API.** Se deriva siempre de
-`Macros.calories()`. Existe como tipo para que el resto del sistema no maneje `int` sueltos y
-para llevar el `percentageOf` que la UI necesita, calculado una vez y no en cada vista.
+**Se persiste y se acepta por la API**, porque es un dato que tecleas. Tiene factoría
+`create(...)` con `Result`, como cualquier VO que recibe algo de fuera.
 
-Es un VO **derivado**, así que se construye con `new` y no tiene factoría `create(...)`: no hay
-nada que validar que no haya validado ya `Macros`. Es el mismo patrón que `Pace` en `economy`.
+Además del `percentageOf` que la UI necesita, lleva el **rango de tolerancia** del objetivo:
+`lowerBound()` y `upperBound()` son el ±10% y `covers(...)` dice si un consumo cae dentro. Es
+lo que pintan las dos marcas del arco y lo que colorea los puntos de la semana, y por eso es
+una regla del dominio y no una cuenta del JS.
 
 ### `Goal`
 
@@ -371,13 +384,14 @@ Los pesos viajan **como cadena en kilos** (`"78.4"`) y los macros como enteros e
 siguiendo el precedente del importe en euros de `economy`. Al salir se les quitan los ceros
 sobrantes: 84 000 g es `"84"`, no `"84.000"`.
 
-`calories` aparece en toda respuesta que lleve macros, siempre derivada, **nunca aceptada en una
-petición**: mandarla en un `POST` es un 400, no un valor que gane sobre los macros. Lo impone
-`Values.rejectCalories` en los cuatro requests, y hay un test de API que lo comprueba.
+`calories` es **obligatoria y mayor que cero** al registrar un consumo y al fijar un plan, y
+viaja separada de los macros en toda respuesta (`consumedCalories` / `consumedMacros`, nunca
+un `calories` dentro del objeto de macros). Un test de API comprueba que las calorías tecleadas
+se devuelven tal cual aunque no cuadren con los gramos.
 
-**Un macro ausente vale cero**, así que `{"carbs":25}` es una petición válida y `{}` no lo es
-—los tres a cero los rechaza `Intake`—. Es la decisión que hace cómodo apuntar algo que solo
-tiene un macro sin tener que mandar los otros dos a mano.
+**Un macro ausente vale cero**, así que `{"calories":150,"note":"una cerveza"}` es una petición
+válida y `{}` no lo es. Es la decisión que hace cómodo apuntar algo cuyas kcal conoces sin
+desglosar lo que no sabes.
 
 Los errores se traducen con la tabla de [error-conventions.md](error-conventions.md), y
 sus textos visibles van a `web-shared/error-messages.js` — `ErrorMessagesTest` falla si un
@@ -435,11 +449,14 @@ CREATE TABLE intakes (
 );
 ```
 
-**Ni `goal` ni `calories` tienen columna**: los deriva `Goal.of(...)` y `Macros.calories()`
-al leer. El índice parcial `plans_single_active` deja que **la base de datos sostenga la
-invariante de un solo plan activo**, no solo el handler: si algún día entra un segundo
-camino de escritura, falla ahí en vez de dejar dos planes vivos y una UI que elige uno al
-azar.
+**`goal` no tiene columna**: lo deriva `Goal.of(...)` al leer. Las calorías **sí la tienen**
+(`intakes.calories` y `plans.daily_calories`, añadidas en `V007`–`V010`), porque desde el
+cambio son un dato tecleado y no una cuenta. Las migraciones de relleno reconstruyen el valor
+de las filas antiguas con `4p+4c+9f`, que es lo que valían cuando se derivaban.
+
+El índice parcial `plans_single_active` deja que **la base de datos sostenga la invariante de un
+solo plan activo**, no solo el handler: si algún día entra un segundo camino de escritura, falla
+ahí en vez de dejar dos planes vivos y una UI que elige uno al azar.
 
 `SqliteIntakeReadModel` hace las agregaciones en SQL (`SUM` por columna, `GROUP BY
 consumed_on`). Un test lo cose con el otro camino: sumar las filas del día a mano con
@@ -645,10 +662,10 @@ calcularlos fuera.
 todas las consultas. Ninguna de las cuatro preguntas del principio lo necesita; la nota
 libre ya sirve para acordarse de qué era.
 
-**Registrar solo calorías sin macros.** Es la contrapartida de derivarlas. El arreglo, si
-hace falta, es un cuarto componente `unattributedCalories` dentro de `Macros` —que además
-resuelve el alcohol, que no es ninguno de los tres macros— y no una columna de calorías
-que compita con los gramos.
+**Conciliar calorías y macros.** Desde que las calorías se teclean, los dos números pueden
+discrepar y el sistema no avisa ni corrige. Podría hacerlo —marcar en la vista cuándo la
+diferencia pasa de un umbral— pero eso es una alerta nueva con su umbral que discutir, y hoy
+no la pide nadie.
 
 **Ejercicio, calorías quemadas, agua y micronutrientes.**
 

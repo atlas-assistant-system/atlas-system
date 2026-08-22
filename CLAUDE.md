@@ -90,10 +90,11 @@ físico— y su propio bus de comandos y consultas.
   capas completas, se monta en `/nutrition` tras la guardia de sesión de `presence`, y su SSE en
   `/events/nutrition`. **Aquí sí se escribe desde el espejo**, al revés que en `economy`: nada de
   esto nace fuera —tú decides las calorías y tú te pesas—, así que la pestaña tiene formularios y
-  la API queda abierta igualmente para un Atajo de iOS. **Las calorías se derivan de los macros**
-  (`4p+4c+9f` en `Macros.calories()`), no se persisten ni se aceptan en una petición: mandarlas es
-  un 400. Lo mismo con el objetivo, que sale de `Goal.of(pesoInicial, pesoObjetivo)` y no es un
-  campo elegible. Solo hay un plan activo a la vez, y quien lo sostiene es un índice parcial de
+  la API queda abierta igualmente para un Atajo de iOS. **Las calorías se teclean, no se derivan**
+  —ni en el consumo ni en el plan—: lo que sabes de lo que comes es la cifra de la etiqueta, no el
+  desglose, y el alcohol no es ninguno de los tres macros. Pueden discrepar de los macros y nadie
+  los concilia: mandan las tecleadas. El objetivo sí sigue derivado, de
+  `Goal.of(pesoInicial, pesoObjetivo)`, y no es un campo elegible. Solo hay un plan activo a la vez, y quien lo sostiene es un índice parcial de
   SQLite, no solo el handler; lo mismo con "una pesada por día", que es un `UNIQUE` de la tabla.
   El **ciclo 2** añade `WeighIn`, el progreso contra el plan y la **gráfica de peso en SVG a
   mano** —sin Chart.js: la escala la fijan la serie y las dos líneas de referencia juntas—.
