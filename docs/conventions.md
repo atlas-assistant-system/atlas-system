@@ -134,15 +134,21 @@ sin arrastrar la clase contenedora, y el fichero crece hasta que nadie sabe qué
 dentro. Anidar tampoco ahorra nada: el fichero extra es gratis y el nombre queda a la
 vista en el árbol de paquetes.
 
-Vale para todas las capas y también para los tests: los builders, fixtures y datos de
-prueba van en su propio fichero, no en una clase interna del test.
+Vale para todas las capas y también para los tests: los dobles, fixtures, agregados de
+mentira y eventos de prueba van en su propio fichero del mismo paquete, no en una clase
+interna del test. Si el fixture usaba un campo del test (una conexión, un `journal`, un
+`publisher`), pasa a recibirlo por constructor.
 
-Excepción única: los tipos *sellados* cuyas variantes son la definición del propio tipo
-y no existen fuera de él (`Result` en el kernel es el caso). Ahí el anidamiento es la
-forma de decir "estas son todas las variantes que hay".
+Dos excepciones, y solo dos:
 
-> Hoy quedan ~20 tipos anidados de antes de fijar esta regla. Se van sacando a su
-> fichero cuando se toque el código que los contiene; no hay migración en bloque.
+- Los tipos *sellados* cuyas variantes son la definición del propio tipo y no existen
+  fuera de él (`Result` en el kernel). Ahí el anidamiento es la forma de decir "estas son
+  todas las variantes que hay".
+- Las clases `@Nested` de JUnit, que agrupan escenarios dentro de un test. JUnit exige
+  que sean clases internas no estáticas: sacarlas a su fichero las convierte en otro test
+  y se pierde el agrupamiento.
+
+Las clases anónimas y las lambdas no son declaraciones de tipo anidadas: siguen valiendo.
 
 ## Mensajes de commit
 
