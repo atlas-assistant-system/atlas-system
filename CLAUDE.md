@@ -109,6 +109,13 @@ físico— y su propio bus de comandos y consultas.
   ya es una `Routine` con `Schedule.over(WEEK)` y `Target(4, "sesiones")`, con su racha.
   `training` responde *qué hiciste y con cuánto peso*; `routines`, *si lo hiciste*. Los dos
   contextos no se conocen.
+  **Una plantilla sí lleva sus días** —"Empuje los lunes y los jueves", un `Set<DayOfWeek>`
+  pelado, sin periodo ni ventana— porque eso es *qué toca*, no *si lo hiciste*: el espejo
+  pone primero y marcado el botón de la rutina de hoy y ahí acaba. Sin rachas, sin cuotas y
+  sin la noción de haber fallado un lunes; eso sigue siendo cosa de `routines`.
+  Desde la pestaña se crea la rutina, se le marcan los días y se edita su plan línea a
+  línea (`Press banca — 4 × 70 kg × 12`); añadir o quitar una línea reenvía el plan entero,
+  porque `setPlan` lo fija de una pieza.
   **Una serie se mide de cuatro formas y solo cuatro** —carga en gramos, reps, segundos,
   metros— en un `Effort` plano, y `Metric` (smart enum: `LOAD`, `REPS`, `TIME`, `DISTANCE`)
   es la **única** definición de qué compara la mejor marca y qué suma el volumen, para que
@@ -124,7 +131,7 @@ físico— y su propio bus de comandos y consultas.
   El **ciclo 2** (progresión: mejor marca, histórico por ejercicio y volumen) está diseñado
   en `docs/training-context.md` y sin implementar; no añade dominio, son dos consultas
   sobre `Metric`.
-- **1796 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
+- **1807 tests en verde**, incluidos los de integración contra SQLite real y las reglas de
   ArchUnit.
 - **Mutation testing con PIT** sobre `atlas.domain.*` (excluido el kernel), umbral del 90%: hoy
   el dominio está al 95%, `economy` al 97%, `nutrition` entre el 94% y el 100% y `training`

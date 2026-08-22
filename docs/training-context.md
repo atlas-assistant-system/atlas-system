@@ -212,6 +212,7 @@ La entidad guarda estado y tiene identidad; los dos VOs son datos de paso entre 
 Result<Workout> define(WorkoutId id, WorkoutName name, Instant now)
 Result<Void>    rename(WorkoutName newName, Instant now)
 Result<Void>    setPlan(List<PlannedLine> lines, Instant now)   // reemplaza el plan entero
+Result<Void>    scheduleOn(Set<DayOfWeek> weekdays, Instant now) // "Empuje los lunes"
 Result<Void>    archive(Instant now)
 List<PlannedSet> expand()                                        // 4×8 → cuatro PlannedSet
 ```
@@ -222,6 +223,18 @@ casos de test para lo que en la pantalla es un único gesto: abres la plantilla,
 la guardas. La posición sale del orden de la lista que llega, así que reordenar es gratis y
 no necesita comando propio.
 
+**`scheduleOn` es todo lo que la plantilla sabe del calendario.** "Empuje el lunes" se
+teclea una vez y a partir de ahí el espejo sabe qué ofrecerte cada lunes; los días se
+reemplazan enteros, igual que el plan, porque en pantalla es marcar y desmarcar. Un
+conjunto vacío deja la plantilla disponible pero sin día asignado.
+
+Esto **no contradice** que el cumplimiento viva en `routines`: los días son una *etiqueta
+de qué toca*, no un registro de *si lo hiciste*. `training` sigue sin tener rachas, ni
+cuotas, ni la noción de haber fallado un lunes. Que lo hicieras lo sabe una `Routine` con
+`Schedule.over(WEEK)` y `Target(4, "sesiones")`, y los dos contextos siguen sin conocerse.
+Por eso los días son un `Set<DayOfWeek>` pelado y no un `Schedule`: sin periodo, sin días
+del mes y sin ventana, porque nada de eso significa nada aquí.
+
 - Se permite repetir el mismo ejercicio en una plantilla: press banca al principio y al
   final del día es un patrón real.
 - Un `Workout` archivado no admite cambios, como `Plan` en `nutrition`.
@@ -230,7 +243,7 @@ no necesita comando propio.
   la regla que traduce plan a ejecución.
 
 Eventos: `WorkoutDefinedEvent`, `WorkoutRenamedEvent`, `WorkoutPlanChangedEvent`,
-`WorkoutArchivedEvent`.
+`WorkoutScheduledEvent`, `WorkoutArchivedEvent`.
 
 ### `WorkoutLog` y `SetLog`
 
@@ -441,8 +454,14 @@ scroll**.
   del ciclo 2 que aparece durante el entreno, y es la que hace que no tengas que recordar
   nada.
 - **Selector de plantilla** cuando no hay entreno abierto hoy, más un "entreno libre".
+  **La rutina asignada a hoy va primera y marcada**: el lunes, "Empuje" es el primer botón.
+  Sigue siendo un botón y no una imposición — entrenar otra cosa un lunes es normal.
 - **Catálogo y plantillas** en una vista secundaria: se tocan poco y no compiten por el
   sitio con lo de hoy.
+- **El editor de una rutina** se abre tocándola en la lista: sus siete días como
+  interruptores y sus líneas (`Press banca — 4 × 70 kg × 12`), con un formulario de una
+  fila para añadir la siguiente. Añadir y quitar reenvían el plan entero, porque el plan se
+  fija de una pieza (`setPlan`) y en pantalla el gesto es uno.
 
 La vista se refresca sola oyendo `/events/training`, así que registrar una serie desde el
 móvil se ve en el espejo sin recargar.
