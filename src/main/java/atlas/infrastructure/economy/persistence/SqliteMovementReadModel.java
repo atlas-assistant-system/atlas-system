@@ -1,5 +1,7 @@
 package atlas.infrastructure.economy.persistence;
 
+import atlas.application.economy.ports.Balance;
+import atlas.application.economy.ports.CategorySpend;
 import atlas.application.economy.ports.MovementReadModel;
 import atlas.domain.economy.Movement;
 import atlas.domain.economy.MovementId;
@@ -7,8 +9,8 @@ import atlas.domain.economy.enums.Category;
 import atlas.infrastructure.economy.persistence.mappers.MovementRows;
 import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import atlas.infrastructure.sharedkernel.persistence.RowMapper;
+import atlas.infrastructure.sharedkernel.persistence.StatementBinder;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -89,14 +91,14 @@ public final class SqliteMovementReadModel implements MovementReadModel {
             row -> new CategorySpend(Category.valueOf(row.getString("category")), row.getLong("cents")));
     }
 
-    private static Binder between(LocalDate from, LocalDate to) {
+    private static StatementBinder between(LocalDate from, LocalDate to) {
         return statement -> {
             statement.setString(1, from.toString());
             statement.setString(2, to.toString());
         };
     }
 
-    private <T> List<T> query(String sql, Binder binder, RowMapper<T> mapper) {
+    private <T> List<T> query(String sql, StatementBinder binder, RowMapper<T> mapper) {
         try (var statement = connection.prepareStatement(sql)) {
             binder.bind(statement);
 
@@ -112,11 +114,5 @@ public final class SqliteMovementReadModel implements MovementReadModel {
         } catch (SQLException e) {
             throw new PersistenceException("Query failed: " + sql, e);
         }
-    }
-
-    @FunctionalInterface
-    private interface Binder {
-
-        void bind(PreparedStatement statement) throws SQLException;
     }
 }

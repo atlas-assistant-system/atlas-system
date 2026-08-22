@@ -7,8 +7,8 @@ import atlas.domain.routines.RoutineId;
 import atlas.infrastructure.routines.persistence.mappers.RoutineRows;
 import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
 import atlas.infrastructure.sharedkernel.persistence.RowMapper;
+import atlas.infrastructure.sharedkernel.persistence.StatementBinder;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -71,7 +71,7 @@ public final class SqliteRoutineReadModel implements RoutineReadModel {
         return query(ENTRIES_OF, statement -> statement.setLong(1, routineId.value()), RoutineRows::toEntry);
     }
 
-    private <T> List<T> query(String sql, Binder binder, RowMapper<T> mapper) {
+    private <T> List<T> query(String sql, StatementBinder binder, RowMapper<T> mapper) {
         try (var statement = connection.prepareStatement(sql)) {
             binder.bind(statement);
 
@@ -87,11 +87,5 @@ public final class SqliteRoutineReadModel implements RoutineReadModel {
         } catch (SQLException e) {
             throw new PersistenceException("Query failed: " + sql, e);
         }
-    }
-
-    @FunctionalInterface
-    private interface Binder {
-
-        void bind(PreparedStatement statement) throws SQLException;
     }
 }

@@ -15,6 +15,7 @@ import atlas.domain.appointments.vos.BookedSlot;
 import atlas.domain.appointments.vos.ReminderLeadTime;
 import atlas.domain.appointments.vos.TimeSlot;
 import atlas.infrastructure.sharedkernel.persistence.PersistenceException;
+import atlas.infrastructure.sharedkernel.persistence.StatementBinder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -194,7 +195,7 @@ public final class SqliteAppointmentReadModel implements AppointmentReadModel {
         }
     }
 
-    private List<AppointmentSummary> querySummaries(String sql, Binder binder) {
+    private List<AppointmentSummary> querySummaries(String sql, StatementBinder binder) {
         try (var statement = connection.prepareStatement(sql)) {
             binder.bind(statement);
 
@@ -215,7 +216,7 @@ public final class SqliteAppointmentReadModel implements AppointmentReadModel {
         }
     }
 
-    private long count(String sql, Binder binder) {
+    private long count(String sql, StatementBinder binder) {
         try (var statement = connection.prepareStatement(sql)) {
             binder.bind(statement);
 
@@ -238,10 +239,5 @@ public final class SqliteAppointmentReadModel implements AppointmentReadModel {
 
     private static String statusFilter(boolean includeCancelled) {
         return includeCancelled ? "" : " AND status = '" + AppointmentStatus.SCHEDULED.name() + "'";
-    }
-
-    private interface Binder {
-
-        void bind(PreparedStatement statement) throws SQLException;
     }
 }
