@@ -251,6 +251,18 @@ function trackPresence(result) {
     }
 }
 
+// Un espejo y nada mas. Solo con sesion abierta: bloqueado ya esta casi vacio y ahi el puno
+// significa otra cosa. Se entra con el puno o diciendo "modo espejo", se sale con lo mismo o
+// con la palma abierta, que ya es el gesto de cancelar.
+function setMirrorMode(active) {
+    if (active && !state.authenticated) {
+        return;
+    }
+    state.mirrorMode = active;
+    document.body.classList.toggle('mirror-only', active);
+    document.getElementById('mirror-mode').setAttribute('aria-pressed', String(active));
+}
+
 function detectHands() {
     if (!state.cameraReady) {
         return;
@@ -1163,6 +1175,9 @@ function setAuthenticated(authenticated) {
     document.body.classList.toggle('locked', !authenticated);
 
     if (!authenticated) {
+        // Sin sesion el puno vuelve a ser el desafio de vida, asi que nadie podria salir del
+        // modo espejo: se sale solo al caducar.
+        setMirrorMode(false);
         if (!state.authBusy) {
             state.faceCenter = null;
         }
@@ -1579,12 +1594,17 @@ function switchPeriod(period) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('mirror-mode')
+        .addEventListener('click', () => setMirrorMode(!state.mirrorMode));
     AtlasInteraction.bind({
         video: document.getElementById('mirror'),
         shiftView: offset => switchView(VIEWS[Math.max(0,
             Math.min(VIEWS.length - 1, VIEWS.indexOf(state.view) + offset))]),
+        toggleMirror: () => setMirrorMode(!state.mirrorMode),
         onCancel: () => {
-            if (!document.getElementById('panel').hidden) {
+            if (state.mirrorMode) {
+                setMirrorMode(false);
+            } else if (!document.getElementById('panel').hidden) {
                 closePanel();
             } else if (state.view !== 'inicio') {
                 switchView('inicio');

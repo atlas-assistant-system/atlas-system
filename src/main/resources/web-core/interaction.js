@@ -214,6 +214,10 @@ const AtlasInteraction = (() => {
             }
             return;
         }
+        if (type === 'FIST') {
+            config.toggleMirror();
+            return;
+        }
         if (type === 'THUMBS_UP') {
             const form = document.activeElement && document.activeElement.closest('form');
             if (form) {

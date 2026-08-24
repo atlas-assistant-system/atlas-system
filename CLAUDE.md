@@ -67,6 +67,9 @@ físico— y su propio bus de comandos y consultas.
   detección baja a 2 fps; cualquier rostro la despierta. No hace falta sensor PIR porque la
   cámara ya está mirando, y basta con vigilarlo en el estado bloqueado —la sesión caduca
   sola al marcharte, así que ahí es donde el espejo pasa las horas vacías.
+  **Modo espejo**: el puño cerrado —o decir "modo espejo"— quita todo y deja solo el reflejo;
+  se sale con el mismo puño o con la palma abierta, que ya era cancelar. Solo con sesión
+  abierta, porque bloqueado el puño es el desafío de vida; al caducar la sesión se sale solo.
 - **`appointments` migrado** — citas, recordatorios y calendario. Se monta en `/appointments`,
   conserva sus rutas auxiliares de recordatorios y documentación, y su SSE va en `/events`. Su
   API está detrás de la guardia de sesión de `presence`.

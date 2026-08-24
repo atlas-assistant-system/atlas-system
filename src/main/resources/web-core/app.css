@@ -45,6 +45,12 @@ body.asleep::after {
     opacity: 1;
 }
 
+/* Modo espejo: un espejo y nada mas. Se queda el video y el aviso de voz, que es lo unico
+   que puede decirte que te ha oido. */
+body.mirror-only > *:not(#mirror):not(#interaction-status) {
+    display: none !important;
+}
+
 #mirror {
     position: fixed;
     inset: 0;
@@ -137,7 +143,8 @@ body.asleep::after {
     opacity: 1;
 }
 
-#voice-control {
+#voice-control,
+#mirror-mode {
     position: fixed;
     right: 2rem;
     bottom: 5.2rem;
@@ -150,6 +157,10 @@ body.asleep::after {
     letter-spacing: 0.16em;
     padding: 0.65rem 0.9rem;
     text-transform: uppercase;
+}
+
+#mirror-mode {
+    bottom: 8.4rem;
 }
 
 #voice-control.listening {
@@ -457,7 +468,8 @@ body.locked #view-agenda,
 body.locked #view-rutinas,
 body.locked #panel,
 body.locked #toasts,
-body.locked #voice-control {
+body.locked #voice-control,
+body.locked #mirror-mode {
     display: none !important;
 }
 
