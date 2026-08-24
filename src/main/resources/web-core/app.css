@@ -28,6 +28,23 @@ body {
     display: none !important;
 }
 
+/* Pantalla dormida: nadie delante. Un velo negro sobre todo, sin tocar la camara, que es lo
+   unico que puede despertarla. El panel esta encendido 24/7 y de noche alumbra el pasillo. */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+    z-index: 50;
+}
+
+body.asleep::after {
+    opacity: 1;
+}
+
 #mirror {
     position: fixed;
     inset: 0;

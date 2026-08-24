@@ -16,6 +16,9 @@ const state = {
     recognition: null,
     recognitionVersion: 0,
     faceCenter: null,
+    lastFaceAt: 0,
+    asleep: false,
+    mirrorMode: false,
     handRecognizer: null,
     handResult: null,
     handResultVersion: 0,
@@ -33,6 +36,8 @@ const MONTH_INITIALS = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', '
 const VIEWS = ['inicio', 'agenda', 'rutinas', 'economia', 'nutricion', 'entrenamiento'];
 const MODEL_VERSION = 'human-faceres-3.3.6';
 const MIN_CONFIDENCE = 0.6;
+const SLEEP_AFTER_MS = 90_000;
+const SLEEP_SCAN_MS = 500;
 const {
     pointCoordinates, jointAngle, fingerIsExtended, isPinch,
     isDirectionalPose, isPointingPose, isOpenPalmPose, staticDirection,
@@ -221,11 +226,29 @@ async function detectFaces() {
             state.recognition = await state.human.detect(video);
             state.recognitionVersion++;
             renderAuthenticationStatus();
+            trackPresence(state.recognition);
         }
     } catch (_) {
         document.getElementById('access-message').textContent = 'No se pudo procesar la imagen.';
     }
+    if (state.asleep) {
+        await sleep(SLEEP_SCAN_MS);
+    }
     requestAnimationFrame(detectFaces);
+}
+
+// La sesion caduca sola al marcharte, asi que el estado bloqueado es donde el espejo pasa las
+// horas vacias: mirar el rostro aqui basta para dormir la pantalla. Cualquier rostro despierta,
+// sin exigir calidad: equivocarse durmiendo cuesta mas que equivocarse despertando.
+function trackPresence(result) {
+    if (result?.face?.length) {
+        state.lastFaceAt = performance.now();
+    }
+    const asleep = performance.now() - state.lastFaceAt >= SLEEP_AFTER_MS;
+    if (asleep !== state.asleep) {
+        state.asleep = asleep;
+        document.body.classList.toggle('asleep', asleep);
+    }
 }
 
 function detectHands() {
