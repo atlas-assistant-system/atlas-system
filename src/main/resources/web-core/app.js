@@ -432,6 +432,8 @@ const SKY = {
     95: 'Tormenta', 96: 'Tormenta con granizo', 99: 'Tormenta con granizo',
 };
 
+const RAIN_CHANCE = 50;
+const RAIN_WINDOW_HOURS = 12;
 const WEATHER_REFRESH = 900000;
 const NEWS_REFRESH = 1800000;
 
@@ -451,7 +453,8 @@ async function refreshWeather() {
         + '?latitude=' + place.latitude + '&longitude=' + place.longitude
         + '&current=temperature_2m,weather_code'
         + '&daily=temperature_2m_max,temperature_2m_min'
-        + '&timezone=auto&forecast_days=1';
+        + '&hourly=precipitation_probability,weather_code'
+        + '&timezone=auto&forecast_days=2';
 
     try {
         const response = await fetch(url);
@@ -464,9 +467,44 @@ async function refreshWeather() {
         const sky = SKY[data.current.weather_code];
         const range = degrees(data.daily.temperature_2m_max[0]) + ' / ' + degrees(data.daily.temperature_2m_min[0]);
         document.getElementById('weather-detail').textContent = (sky ? sky + ' · ' : '') + range + ' · ' + place.name;
+        renderNextRain(nextRain(data.hourly, new Date()));
         block.hidden = false;
     } catch (_) {
         block.hidden = true;
+    }
+}
+
+// En un espejo no cabe una tabla de 24 horas y nadie la leeria: lo unico que cambia lo que
+// haces al salir es cuando vuelve a llover. Open-Meteo devuelve las horas en la zona del
+// sitio (timezone=auto) y con el mismo formato que isoDateTime, asi que comparar cadenas basta.
+function nextRain(hourly, now) {
+    const from = isoDateTime(now);
+    const start = hourly?.time?.findIndex(time => time > from) ?? -1;
+    if (start < 0) {
+        return null;
+    }
+
+    const until = Math.min(start + RAIN_WINDOW_HOURS, hourly.time.length);
+    for (let hour = start; hour < until; hour++) {
+        if (hourly.precipitation_probability[hour] >= RAIN_CHANCE) {
+            return {
+                at: hourly.time[hour].slice(11, 16),
+                chance: hourly.precipitation_probability[hour],
+                code: hourly.weather_code[hour],
+            };
+        }
+    }
+
+    return null;
+}
+
+function renderNextRain(rain) {
+    const node = document.getElementById('weather-next');
+    node.hidden = !rain;
+    if (rain) {
+        const wet = ['rain', 'snow', 'thunder'].includes(SKY_ICON_FOR[rain.code]);
+        node.textContent = (wet ? SKY[rain.code] : 'Lluvia') + ' a las ' + rain.at
+            + ' · ' + rain.chance + '%';
     }
 }
 

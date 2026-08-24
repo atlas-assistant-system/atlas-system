@@ -298,6 +298,12 @@ nav {
     margin-top: 0.8rem;
 }
 
+/* Va despues de .weather-detail a proposito: misma especificidad, gana el ultimo. */
+.weather-next {
+    color: var(--ink);
+    margin-top: 0.35rem;
+}
+
 .access-lock {
     position: absolute;
     left: 3.5rem;

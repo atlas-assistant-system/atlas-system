@@ -75,6 +75,10 @@ físico— y su propio bus de comandos y consultas.
   (`web-core/quotes.js`, servido en `/assets/quotes.js`): 65 frases de dominio público
   indexadas por los días transcurridos en hora local, no al azar — si dependiera del azar,
   recargar daría otra y dejaría de ser la frase del día.
+  El clima añade **una sola línea de previsión**: la próxima hora con ≥50% de probabilidad
+  dentro de las 12 siguientes ("Lluvia a las 18:00 · 70%"), o nada. No hay tabla por horas
+  —en un espejo no se lee—: lo único que cambia lo que haces al salir es cuándo vuelve a
+  llover.
 - **`appointments` migrado** — citas, recordatorios y calendario. Se monta en `/appointments`,
   conserva sus rutas auxiliares de recordatorios y documentación, y su SSE va en `/events`. Su
   API está detrás de la guardia de sesión de `presence`.
