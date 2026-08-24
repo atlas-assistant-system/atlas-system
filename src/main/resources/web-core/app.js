@@ -12,6 +12,7 @@ const state = {
     cameraReady: false,
     home: null,
     homeProfileId: null,
+    profileName: null,
     human: null,
     recognition: null,
     recognitionVersion: 0,
@@ -514,7 +515,20 @@ function tickClock() {
     document.getElementById('clock-date').textContent = capitalize(new Intl.DateTimeFormat('es-ES', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone,
     }).format(now));
+    document.getElementById('greeting').textContent = greeting(now, timeZone);
+    document.getElementById('quote').textContent = AtlasQuotes.today(now);
     renderNextCountdown();
+}
+
+// El espejo ya sabe quien eres; sin nombre saluda igual, a la habitacion.
+function greeting(now, timeZone) {
+    const hour = Number(new Intl.DateTimeFormat('es-ES', {
+        hour: 'numeric', hourCycle: 'h23', timeZone,
+    }).format(now));
+    const moment = hour < 6 || hour >= 21 ? 'Buenas noches'
+        : hour < 14 ? 'Buenos días' : 'Buenas tardes';
+
+    return state.profileName ? moment + ', ' + state.profileName : moment;
 }
 
 async function refreshInicio() {
@@ -1192,6 +1206,7 @@ function setAuthenticated(authenticated) {
         document.getElementById('toasts').replaceChildren();
         state.home = null;
         state.homeProfileId = null;
+        state.profileName = null;
         document.getElementById('weather').hidden = true;
         document.getElementById('news').hidden = true;
         state.next = null;
@@ -1246,6 +1261,8 @@ async function refreshHomeProfile(profileId) {
     const response = await api('/home/profiles/' + encodeURIComponent(profileId));
     state.homeProfileId = profileId;
     state.home = response.status === 200 ? response.body : null;
+    const profile = await api('/profiles/' + encodeURIComponent(profileId));
+    state.profileName = profile.status === 200 ? profile.body.displayName : null;
     tickClock();
     await Promise.all([refreshWeather(), refreshNews()]);
     if (response.status === 404) {

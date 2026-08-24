@@ -11,6 +11,7 @@ public final class UiHandlers {
     private static final String STYLES = StaticResources.read("/web-core/app.css");
     private static final String SCRIPT = StaticResources.read("/web-core/app.js");
     private static final String INTERACTION_SCRIPT = StaticResources.read("/web-core/interaction.js");
+    private static final String QUOTES_SCRIPT = StaticResources.read("/web-core/quotes.js");
     private static final String INTERACTION_SELF_TEST = StaticResources.read("/web-core/interaction.html");
     private static final String ROUTINES_STYLES = StaticResources.read("/web-core/routines.css");
     private static final String ROUTINES_SCRIPT = StaticResources.read("/web-core/routines.js");
@@ -41,6 +42,10 @@ public final class UiHandlers {
 
     public static HttpResponse interactionSelfTest(HttpRequest request) {
         return new HttpResponse(200, "text/html; charset=utf-8", INTERACTION_SELF_TEST, Map.of());
+    }
+
+    public static HttpResponse quotesScript(HttpRequest request) {
+        return new HttpResponse(200, "text/javascript; charset=utf-8", QUOTES_SCRIPT, Map.of());
     }
 
     public static HttpResponse routinesStyles(HttpRequest request) {

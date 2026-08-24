@@ -263,6 +263,33 @@ nav {
     stroke-linejoin: round;
 }
 
+/* Fuera del bloque del reloj a proposito: la columna izquierda se coloca con desplazamientos
+   fijos (.access-lock, .home-blocks), asi que todo lo que crezca ahi arriba empuja al resto. */
+.greeting-block {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(46rem, calc(100vw - 7rem));
+    text-align: center;
+    pointer-events: none;
+}
+
+.greeting {
+    color: var(--ink);
+    font-size: 2.2rem;
+    font-weight: 300;
+    letter-spacing: 0.01em;
+}
+
+.quote {
+    color: var(--ink-dim);
+    font-size: 1.15rem;
+    font-style: italic;
+    font-weight: 400;
+    margin-top: 0.9rem;
+}
+
 .clock-date,
 .weather-detail {
     color: var(--ink-dim);

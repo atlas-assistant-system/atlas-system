@@ -1,0 +1,80 @@
+// Una frase al día, elegida por la fecha y no al azar: si dependiera del azar, recargar la
+// página te daría otra, y entonces no sería la frase del día. Solo dominio público.
+const AtlasQuotes = (() => {
+    const QUOTES = [
+        'No es que tengamos poco tiempo, es que perdemos mucho. — Séneca',
+        'Ningún hombre se baña dos veces en el mismo río. — Heráclito',
+        'Solo sé que no sé nada. — Sócrates',
+        'La felicidad depende de nosotros mismos. — Aristóteles',
+        'El que sabe que tiene suficiente es rico. — Lao Tse',
+        'No te pregunto cómo te ha ido, sino cómo has actuado. — Epicteto',
+        'Lo que haces cada día importa más que lo que haces de vez en cuando.',
+        'Al despertar, piensa qué privilegio es estar vivo. — Marco Aurelio',
+        'La vida es larga si sabes usarla. — Séneca',
+        'Somos lo que hacemos repetidamente. — Aristóteles',
+        'No pretendas que las cosas ocurran como quieres; quiérelas como ocurren. — Epicteto',
+        'La mayor riqueza es vivir contento con poco. — Platón',
+        'Elige no sentirte dañado y no te sentirás dañado. — Marco Aurelio',
+        'Empieza donde estás, con lo que tienes.',
+        'Nada es suficiente para quien lo suficiente es poco. — Epicuro',
+        'Un viaje de mil millas empieza con un solo paso. — Lao Tse',
+        'No importa lo despacio que vayas mientras no te detengas. — Confucio',
+        'Piensa en lo que tienes; recuerda cómo lo deseabas. — Marco Aurelio',
+        'Cada uno es hijo de sus obras. — Cervantes',
+        'La perfección se alcanza cuando no queda nada que quitar.',
+        'Aprende a preguntarte por qué haces lo que haces.',
+        'El obstáculo en el camino se convierte en el camino. — Marco Aurelio',
+        'Lo que se hace por costumbre se hace sin darse cuenta.',
+        'Vive de manera que puedas contarlo sin adornos.',
+        'Toda la desdicha viene de no saber estarse quieto en una habitación. — Pascal',
+        'El corazón tiene razones que la razón no entiende. — Pascal',
+        'La duda es el principio de la sabiduría. — Descartes',
+        'La libertad es el conocimiento de la necesidad. — Spinoza',
+        'No reír ni llorar, sino comprender. — Spinoza',
+        'Obra de tal modo que tu conducta pueda ser una ley. — Kant',
+        'El hombre solo se educa por la educación. — Kant',
+        'La salud es lo primero; casi todo lo demás viene después. — Schopenhauer',
+        'Quien tiene un porqué soporta casi cualquier cómo. — Nietzsche',
+        'Conviértete en quien eres. — Nietzsche',
+        'La vida se entiende hacia atrás, pero se vive hacia adelante. — Kierkegaard',
+        'Simplifica, simplifica. — Thoreau',
+        'La riqueza es la capacidad de disfrutar plenamente de la vida. — Thoreau',
+        'No sigas el camino: ve por donde no hay camino y deja huella. — Emerson',
+        'Lo que hay detrás de nosotros es poca cosa comparado con lo que llevamos dentro. — Emerson',
+        'Sobre el escenario más alto del mundo seguimos sentados sobre nuestro trasero. — Montaigne',
+        'Mi oficio y mi arte es vivir. — Montaigne',
+        'La mayor parte de nuestras desgracias son más soportables que sus comentarios.',
+        'Nada se posee de verdad hasta que se sabe perder.',
+        'Busco dentro: dentro está la fuente del bien. — Marco Aurelio',
+        'Haz cada cosa como si fuera la última. — Marco Aurelio',
+        'Vive según la naturaleza, no según la opinión. — Séneca',
+        'Mientras se aplaza, la vida pasa. — Séneca',
+        'Nadie es tan viejo que no crea poder vivir un año más. — Cicerón',
+        'Un cuarto lleno de libros y un jardín: no hace falta más. — Cicerón',
+        'La medida del hombre se ve en lo que hace con el poder. — Pítaco',
+        'Conócete a ti mismo. — Inscripción de Delfos',
+        'Nada en exceso. — Inscripción de Delfos',
+        'Lo que no te mata te hace más fuerte. — Nietzsche',
+        'La paciencia es amarga, pero su fruto es dulce. — Rousseau',
+        'La costumbre es una segunda naturaleza. — Agustín de Hipona',
+        'Ama y haz lo que quieras. — Agustín de Hipona',
+        'El sabio no dice todo lo que piensa, pero piensa todo lo que dice. — Gracián',
+        'Lo bueno, si breve, dos veces bueno. — Gracián',
+        'No hay camino para la paz: la paz es el camino.',
+        'El sueño de la razón produce monstruos. — Goya',
+        'Procura no ser un hombre de éxito, sino de valor.',
+        'Solo se ve bien con el corazón; lo esencial es invisible a los ojos.',
+        'La duda de hoy es la certeza de mañana. — Unamuno',
+        'Ganarás la luz si sigues caminando. — Unamuno',
+        'Todo fluye. — Heráclito',
+    ];
+
+    // Días desde la época contados en local: la frase cambia a medianoche de aquí, no de UTC.
+    function today(now = new Date()) {
+        const day = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000;
+
+        return QUOTES[day % QUOTES.length];
+    }
+
+    return { today, QUOTES };
+})();

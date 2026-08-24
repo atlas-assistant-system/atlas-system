@@ -21,6 +21,7 @@ public final class CoreApplication {
                 .get("/assets/app.css", UiHandlers::styles)
                 .get("/assets/app.js", UiHandlers::script)
                 .get("/assets/interaction.js", UiHandlers::interactionScript)
+                .get("/assets/quotes.js", UiHandlers::quotesScript)
                 .get("/selftest/interaction", UiHandlers::interactionSelfTest)
                 .get("/assets/routines.css", UiHandlers::routinesStyles)
                 .get("/assets/routines.js", UiHandlers::routinesScript)

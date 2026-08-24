@@ -70,6 +70,11 @@ físico— y su propio bus de comandos y consultas.
   **Modo espejo**: el puño cerrado —o decir "modo espejo"— quita todo y deja solo el reflejo;
   se sale con el mismo puño o con la palma abierta, que ya era cancelar. Solo con sesión
   abierta, porque bloqueado el puño es el desafío de vida; al caducar la sesión se sale solo.
+  Bajo el reloj **saluda por tu nombre** (`GET /profiles/{id}`, que solo pide sesión activa);
+  sin sesión saluda igual, a la habitación, sin nombre. Debajo, **una frase al día**
+  (`web-core/quotes.js`, servido en `/assets/quotes.js`): 65 frases de dominio público
+  indexadas por los días transcurridos en hora local, no al azar — si dependiera del azar,
+  recargar daría otra y dejaría de ser la frase del día.
 - **`appointments` migrado** — citas, recordatorios y calendario. Se monta en `/appointments`,
   conserva sus rutas auxiliares de recordatorios y documentación, y su SSE va en `/events`. Su
   API está detrás de la guardia de sesión de `presence`.
