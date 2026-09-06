@@ -48,7 +48,8 @@ import java.util.logging.Logger;
  * Deja el espejo con algo que enseñar recién instalado: el catálogo de ejercicios con las tres
  * rutinas de la semana, cuatro hábitos, un plan de nutrición y la agenda de las próximas semanas.
  *
- * <p>Cada contexto se siembra solo si está vacío, así que repetirlo no duplica nada. Con
+ * <p>
+ * Cada contexto se siembra solo si está vacío, así que repetirlo no duplica nada. Con
  * {@code --reset} se tira lo que hubiera antes y se siembra de cero. {@code economy} y
  * {@code presence} no se tocan: el primero tiene su propio {@code gradle seedEconomy} y el
  * segundo guarda tu cara.
