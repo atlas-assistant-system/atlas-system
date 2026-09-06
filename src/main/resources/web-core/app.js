@@ -512,6 +512,39 @@ function renderNextRain(rain) {
     }
 }
 
+// Una columna por tema. Cada una se llena sola hasta el borde de abajo, asi que ya no hay que
+// intercalar ni repartir nada: son cajas independientes.
+function newsGroups(items) {
+    const byCategory = new Map();
+    for (const item of items) {
+        byCategory.set(item.category, (byCategory.get(item.category) || []).concat(item));
+    }
+
+    return byCategory;
+}
+
+// Llenar el hueco exacto: se pintan todos y se quita el ultimo mientras desborde. Medir es mas
+// fiable que un numero fijo, porque un titular ocupa una linea o dos segun lo largo que sea.
+function trimToFit(list) {
+    while (list.lastElementChild && list.scrollHeight > list.clientHeight) {
+        list.lastElementChild.remove();
+    }
+}
+
+function newsEntry(item) {
+    const link = el('a');
+    link.href = item.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.append(
+        el('span', 'news-meta', formatNewsDate(item.publishedAt)),
+        el('span', 'news-title', item.title));
+    const entry = el('li', 'news-item');
+    entry.appendChild(link);
+
+    return entry;
+}
+
 async function refreshNews() {
     const block = document.getElementById('news');
     const categories = state.home?.newsCategories;
@@ -526,19 +559,17 @@ async function refreshNews() {
         }
         const list = document.getElementById('news-list');
         list.replaceChildren();
-        for (const item of response.body) {
-            const link = el('a');
-            link.href = item.url;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.append(
-                el('span', 'news-meta', item.category + ' · ' + formatNewsDate(item.publishedAt)),
-                el('span', 'news-title', item.title));
-            const entry = el('li', 'news-item');
-            entry.appendChild(link);
-            list.appendChild(entry);
+        const columns = [];
+        for (const [category, entries] of newsGroups(response.body)) {
+            const items = el('ul', 'news-items');
+            entries.forEach(item => items.appendChild(newsEntry(item)));
+            const group = el('li', 'news-group');
+            group.append(el('p', 'news-heading', category), items);
+            list.appendChild(group);
+            columns.push(items);
         }
         block.hidden = false;
+        columns.forEach(trimToFit);
     } catch (_) {
         block.hidden = true;
     }

@@ -15,10 +15,25 @@ class NewsHandlersTest {
     }
 
     @Test
-    void extractsTheFirstIssueFromAnArchive() {
-        var html = "<a href=\"/dev/2026-08-19\"><div class=\"issue\">Java &amp; AI</div></a>";
+    void extractsEveryIssueFromAnArchiveNewestFirst() {
+        var html = "<a href=\"/dev/2026-08-19\"><div class=\"issue\">Java &amp; AI</div></a>"
+            + "<a href=\"/dev/2026-08-18\"><div class=\"issue\">Rust <b>1.9</b></div></a>";
 
-        assertThat(NewsHandlers.extractArchiveTitle("dev", html)).isEqualTo("Java & AI");
+        var issues = NewsHandlers.archiveIssues(NewsCategory.DEVELOPMENT, html);
+
+        assertThat(issues).extracting(NewsItem::title).containsExactly("Java & AI", "Rust 1.9");
+        assertThat(issues).extracting(NewsItem::publishedAt)
+            .containsExactly("2026-08-19", "2026-08-18");
+        assertThat(issues.getFirst().url()).isEqualTo("https://tldr.tech/dev/2026-08-19");
+    }
+
+    @Test
+    void ignoresAnArchiveEntryWithoutATitle() {
+        var html = "<a href=\"/dev/2026-08-19\"><div class=\"issue\"></div></a>"
+            + "<a href=\"/dev/2026-08-18\"><div class=\"issue\">Rust 1.9</div></a>";
+
+        assertThat(NewsHandlers.archiveIssues(NewsCategory.DEVELOPMENT, html))
+            .extracting(NewsItem::title).containsExactly("Rust 1.9");
     }
 
     @Test

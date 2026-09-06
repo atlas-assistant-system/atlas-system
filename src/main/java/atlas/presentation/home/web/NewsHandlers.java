@@ -21,6 +21,7 @@ public final class NewsHandlers {
     private static final Duration CACHE_TIME = Duration.ofMinutes(30);
     private static final Pattern TITLE = Pattern.compile("<meta property=\"og:title\" content=\"([^\"]+)\"");
     private static final List<NewsCategory> SOURCES = List.of(NewsCategory.values());
+    private static final int ISSUES_PER_CATEGORY = 8;
 
     private static List<NewsItem> cached = List.of();
     private static Instant expiresAt = Instant.EPOCH;
@@ -31,7 +32,7 @@ public final class NewsHandlers {
         if (Instant.now().isAfter(expiresAt)) {
             var items = new ArrayList<NewsItem>();
             for (var category : SOURCES) {
-                fetch(category).ifPresent(items::add);
+                items.addAll(fetch(category));
             }
             if (!items.isEmpty()) {
                 cached = List.copyOf(items);
@@ -53,13 +54,31 @@ public final class NewsHandlers {
         return match.find() ? decode(match.group(1)) : "";
     }
 
-    static String extractArchiveTitle(String slug, String html) {
+    /**
+     * Las ediciones del archivo, de la más reciente a la más antigua. La pantalla necesita varias
+     * por tema para llenar la columna: con dos temas elegidos caben muchas más de cada uno que con
+     * seis, y una sola por tema dejaba el hueco a medias.
+     */
+    static List<NewsItem> archiveIssues(NewsCategory category, String html) {
         var pattern = Pattern.compile(
-            "<a href=\"/" + Pattern.quote(slug) + "/(\\d{4}-\\d{2}-\\d{2})\"><div[^>]*>(.*?)</div></a>",
+            "<a href=\"/" + Pattern.quote(category.slug())
+                + "/(\\d{4}-\\d{2}-\\d{2})\"><div[^>]*>(.*?)</div></a>",
             Pattern.DOTALL);
         var match = pattern.matcher(html);
+        var issues = new ArrayList<NewsItem>();
+        while (match.find() && issues.size() < ISSUES_PER_CATEGORY) {
+            var title = decode(match.group(2).replaceAll("<[^>]+>", ""));
+            if (!title.isBlank()) {
+                issues.add(issue(category, title, match.group(1)));
+            }
+        }
 
-        return match.find() ? decode(match.group(2).replaceAll("<[^>]+>", "")) : "";
+        return List.copyOf(issues);
+    }
+
+    private static NewsItem issue(NewsCategory category, String title, String publishedAt) {
+        return new NewsItem(
+            category, title, "https://tldr.tech/" + category.slug() + "/" + publishedAt, publishedAt);
     }
 
     private static String decode(String value) {
@@ -70,7 +89,20 @@ public final class NewsHandlers {
             .replace("&#39;", "'");
     }
 
-    private static Optional<NewsItem> fetch(NewsCategory category) {
+    /** La edición viva primero y detrás las del archivo, sin repetir la del mismo día. */
+    private static List<NewsItem> fetch(NewsCategory category) {
+        var issues = new ArrayList<NewsItem>();
+        latestIssue(category).ifPresent(issues::add);
+        for (var older : archive(category)) {
+            if (issues.stream().noneMatch(kept -> kept.publishedAt().equals(older.publishedAt()))) {
+                issues.add(older);
+            }
+        }
+
+        return issues;
+    }
+
+    private static Optional<NewsItem> latestIssue(NewsCategory category) {
         try {
             var connection = open("https://tldr.tech/api/latest/" + category.slug());
             try (var input = connection.getInputStream()) {
@@ -86,33 +118,23 @@ public final class NewsHandlers {
                 connection.disconnect();
             }
         } catch (IOException exception) {
-            return fetchArchive(category);
+            // No pasa nada: el archivo se pide igual justo despues y trae tambien la de hoy.
+            return Optional.empty();
         }
     }
 
-    private static Optional<NewsItem> fetchArchive(NewsCategory category) {
+    private static List<NewsItem> archive(NewsCategory category) {
         try {
             var connection = open("https://tldr.tech/" + category.slug() + "/archives");
             try (var input = connection.getInputStream()) {
                 var html = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-                var title = extractArchiveTitle(category.slug(), html);
-                var pattern = Pattern.compile(
-                    "href=\"/" + Pattern.quote(category.slug()) + "/(\\d{4}-\\d{2}-\\d{2})\"");
-                var date = pattern.matcher(html);
-                if (title.isBlank() || !date.find()) {
-                    return Optional.empty();
-                }
-                var publishedAt = date.group(1);
 
-                return Optional.of(new NewsItem(
-                    category, title,
-                    "https://tldr.tech/" + category.slug() + "/" + publishedAt,
-                    publishedAt));
+                return archiveIssues(category, html);
             } finally {
                 connection.disconnect();
             }
         } catch (IOException exception) {
-            return Optional.empty();
+            return List.of();
         }
     }
 
