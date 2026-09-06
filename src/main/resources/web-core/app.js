@@ -231,7 +231,10 @@ async function detectFaces() {
     } catch (_) {
         document.getElementById('access-message').textContent = 'No se pudo procesar la imagen.';
     }
-    if (state.asleep) {
+    // Autenticado este bucle no hace nada: el `detect` de arriba solo corre bloqueado. Girar a
+    // 60 fps para no hacer nada quemaba un tick por frame toda la sesion; a 2 fps se entera
+    // igual de rapido de que la sesion ha caido.
+    if (state.authenticated || state.asleep) {
         await sleep(SLEEP_SCAN_MS);
     }
     requestAnimationFrame(detectFaces);
@@ -259,7 +262,7 @@ function setMirrorMode(active) {
     document.getElementById('mirror-mode').setAttribute('aria-pressed', String(active));
 }
 
-function detectHands() {
+async function detectHands() {
     if (!state.cameraReady) {
         return;
     }
@@ -273,6 +276,12 @@ function detectHands() {
         }
     } catch (_) {
         state.handResult = null;
+    }
+    // Dormido tambien: el velo negro apagaba el bucle de rostros pero MediaPipe seguia
+    // inferenciando la mano a la tasa del video, que es la mitad cara. Delante de un espejo
+    // vacio no hay ninguna mano que reconocer.
+    if (state.asleep) {
+        await sleep(SLEEP_SCAN_MS);
     }
     requestAnimationFrame(detectHands);
 }
