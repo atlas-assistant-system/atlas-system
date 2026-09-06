@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import atlas.domain.sharedkernel.exceptions.GuardException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
@@ -81,6 +82,17 @@ class StartupBannerTest {
         assertThat(content.getFirst()).matches("=+");
         assertThat(content.getLast()).matches("=+");
         assertThat(content.getFirst()).isEqualTo(content.getLast());
+    }
+
+    @Test
+    void shouldLeaveABlankRowOnEachSideOfTheEntries() {
+        var banner = StartupBanner.named("A").withoutColor().with("Port", "8080").render();
+
+        var rows = List.of(banner.split(Pattern.quote(System.lineSeparator()), -1));
+        var entry = rows.indexOf("  Port  8080");
+
+        assertThat(rows.get(entry - 1)).isEmpty();
+        assertThat(rows.get(entry + 1)).isEmpty();
     }
 
     @Test
