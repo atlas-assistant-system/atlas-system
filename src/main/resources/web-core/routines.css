@@ -1,14 +1,21 @@
-.routines-view {
-    max-width: 76rem;
-    margin: 0 auto;
-    padding-top: 2.5rem;
-    overflow-y: auto;
-}
-
+/*
+ * Lo de hoy manda y va a todo el ancho: "que me queda por hacer" es la pregunta con la que
+ * uno se para delante del espejo. Definir una rutina y repasar el catalogo son cosas de un
+ * domingo, asi que se reparten las dos columnas de abajo.
+ */
 .routines-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 0.85fr);
-    gap: 5.5rem;
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 1fr);
+    gap: 2.5rem 3rem;
+}
+
+.routines-today {
+    grid-column: 1 / -1;
+}
+
+/* Las de hoy se leen de pie: nombre grande y cuota al lado, no en la otra punta. */
+.routines-today .routines-card-name {
+    font-size: 1.6rem;
 }
 
 .routines-section {
@@ -21,8 +28,7 @@
 }
 
 .routines-library {
-    grid-column: 1 / -1;
-    margin-top: 4.5rem;
+    min-width: 0;
 }
 
 .routines-heading {
@@ -49,7 +55,7 @@
 }
 
 .routines-status[data-kind="error"] {
-    color: #ffd0d0;
+    color: var(--danger);
 }
 
 .routines-cards {
@@ -60,11 +66,25 @@
 
 .routines-card {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     flex-wrap: wrap;
-    gap: 1.6rem;
-    padding: 1.5rem 0;
+    gap: 1rem 2rem;
+    padding: 1.2rem 0;
     border-bottom: 1px solid var(--hairline);
+}
+
+/* Nombre y cuota juntos: "Leer · 1/2" es una sola frase y antes estaba partida de punta a
+   punta de la tarjeta, con las acciones en medio. */
+.routines-card-head {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+/* Con "Hoy" a todo el ancho, un `space-between` mandaba la cuota a 800 px del nombre y
+   volvia a partir la frase. La columna tiene un tope y las acciones se quedan a la derecha. */
+.routines-today .routines-card-main {
+    flex: 0 1 40rem;
 }
 
 .routines-card.archived {
@@ -89,19 +109,25 @@
     text-decoration: line-through;
 }
 
-.routines-card-meta,
-.routines-streak {
+.routines-card-meta {
     color: var(--ink-faint);
     font-size: 0.85rem;
     line-height: 1.5;
 }
 
+/* La racha es el motivo por el que uno vuelve mañana; estaba pintada como metadato. */
+.routines-streak {
+    color: var(--ink-dim);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
 .routines-card-actions {
     display: flex;
-    align-items: baseline;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 1.6rem;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 0.7rem;
 }
 
 .routines-quota {
@@ -114,24 +140,6 @@
 
 .routines-quota.met {
     color: var(--ink-faint);
-}
-
-.routines-bar {
-    flex: 1 1 100%;
-    height: 2px;
-    margin-top: 0.4rem;
-    overflow: hidden;
-    background: var(--hairline);
-}
-
-.routines-bar > span {
-    display: block;
-    height: 100%;
-    background: var(--ink);
-}
-
-.routines-bar.met > span {
-    background: var(--ink-faint);
 }
 
 .routines-form {
@@ -237,24 +245,31 @@
 }
 
 .routines-danger:hover {
-    color: #ffd0d0;
-    border-bottom-color: #ffd0d0;
+    color: var(--danger);
+    border-bottom-color: var(--danger);
 }
 
-.routines-empty {
-    color: var(--ink-faint);
-    font-size: 0.86rem;
-    line-height: 1.5;
-    margin: 1.6rem 0;
+/* Una letra dentro de una pildora queda descentrada: para un toggle de "L" el circulo es
+   la forma, y ademas es un objetivo de tamaño fijo para apuntar con la mano. */
+.routines-weekdays label {
+    border-radius: 50%;
+    gap: 0;
+    justify-content: center;
+    min-width: 2.6rem;
+    padding: 0;
+}
+
+/* La casilla sobra: la propia ficha ya dice si esta marcada, igual que las radio de .chips. */
+.routines-weekdays input[type="checkbox"] {
+    height: 0;
+    opacity: 0;
+    position: absolute;
+    width: 0;
 }
 
 @media (max-width: 48rem) {
     .routines-layout,
     .routines-form-row {
         grid-template-columns: 1fr;
-    }
-
-    .routines-library {
-        grid-column: auto;
     }
 }

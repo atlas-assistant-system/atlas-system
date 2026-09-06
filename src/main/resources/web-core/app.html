@@ -42,27 +42,25 @@
 </nav>
 
 <main id="view-inicio" class="view">
-    <section id="weather" class="weather" hidden>
-        <p class="label">Tiempo</p>
-        <p class="weather-now">
-            <span id="weather-icon" class="weather-icon" hidden></span>
-            <span id="weather-now">--&deg;</span>
-        </p>
-        <p id="weather-detail" class="weather-detail"></p>
-        <p id="weather-next" class="weather-detail weather-next" hidden></p>
-    </section>
+    <header class="top-row">
+        <section class="clock-block">
+            <p class="label">Hora</p>
+            <p id="clock" class="clock">--:--</p>
+            <p id="clock-date" class="clock-date"></p>
+        </section>
 
-    <section class="clock-block">
-        <p class="label">Hora</p>
-        <p id="clock" class="clock">--:--</p>
-        <p id="clock-date" class="clock-date"></p>
-    </section>
+        <section id="weather" class="weather" hidden>
+            <p class="label">Tiempo</p>
+            <p class="weather-now">
+                <span id="weather-icon" class="weather-icon" hidden></span>
+                <span id="weather-now">--&deg;</span>
+            </p>
+            <p id="weather-detail" class="weather-detail"></p>
+            <p id="weather-next" class="weather-detail weather-next" hidden></p>
+        </section>
+    </header>
 
-    <section class="greeting-block">
-        <p id="greeting" class="greeting"></p>
-        <p id="quote" class="quote"></p>
-    </section>
-
+    <div class="content-row">
     <section id="access-lock" class="access-lock">
         <p class="label">Acceso bloqueado</p>
         <p id="access-message" aria-live="polite">Preparando el reconocimiento facial&hellip;</p>
@@ -82,8 +80,10 @@
                 <input id="home-location" maxlength="120" autocomplete="address-level2"
                        placeholder="Ciudad, pa&iacute;s">
             </div>
+            <details class="settings">
+                <summary>Noticias TLDR</summary>
             <fieldset id="home-news-categories" class="home-news-categories">
-                <legend>Noticias TLDR</legend>
+                <legend class="visually-hidden">Categor&iacute;as</legend>
                 <label><input type="checkbox" value="TECHNOLOGY"> Tecnolog&iacute;a</label>
                 <label><input type="checkbox" value="AI" checked> IA</label>
                 <label><input type="checkbox" value="DEVELOPMENT" checked> Desarrollo</label>
@@ -93,6 +93,7 @@
                 <label><input type="checkbox" value="IT"> IT</label>
                 <label><input type="checkbox" value="HARDWARE"> Hardware</label>
             </fieldset>
+            </details>
             <button id="enroll" class="auth-action" type="button" disabled>Comenzar onboarding</button>
             <ol class="enrollment-steps" aria-label="Progreso del onboarding biom&eacute;trico">
                 <li>Frente</li>
@@ -124,9 +125,9 @@
             <p class="label">Nutrici&oacute;n</p>
             <p id="nutrition-remaining" class="home-headline">&mdash;</p>
             <p id="nutrition-goal" class="home-detail"></p>
-                <ul class="plain-list">
-                <li>Consumido <span id="nutrition-eaten">&mdash;</span></li>
-                <li>Cuota <span id="nutrition-quota">&mdash;</span></li>
+            <ul class="plain-list">
+                <li>Consumido <span id="nutrition-eaten">&mdash;</span>
+                    &middot; Cuota <span id="nutrition-quota">&mdash;</span></li>
             </ul>
         </section>
 
@@ -135,15 +136,21 @@
             <p id="today-balance" class="home-headline">&mdash;</p>
             <p id="today-period" class="home-detail"></p>
             <ul class="plain-list">
-                <li>Gastado <span id="today-spent">&mdash;</span></li>
-                <li>Ingresado <span id="today-income">&mdash;</span></li>
+                <li>Gastado <span id="today-spent">&mdash;</span>
+                    &middot; Ingresado <span id="today-income">&mdash;</span></li>
             </ul>
         </section>
     </div>
 
     <section id="news" class="news-block" hidden>
-        <p class="label">Noticias · TLDR</p>
+        <p class="label">Noticias &middot; TLDR</p>
         <ul id="news-list" class="news-list"></ul>
+    </section>
+    </div>
+
+    <section class="greeting-block">
+        <p id="greeting" class="greeting"></p>
+        <p id="quote" class="quote"></p>
     </section>
 </main>
 
@@ -153,8 +160,8 @@
         <h1 id="month-title"></h1>
         <button id="month-next" class="month-arrow" aria-label="Siguiente">&#8250;</button>
         <div class="period-switch">
-            <button class="period-link active" data-period="MONTH">Mes</button>
-            <button class="period-link" data-period="WEEK">Semana</button>
+            <button class="period-link" data-period="MONTH">Mes</button>
+            <button class="period-link active" data-period="WEEK">Semana</button>
         </div>
     </header>
 
@@ -171,20 +178,23 @@
             <input id="add-title" type="text" placeholder="Qu&eacute; hay que hacer" required maxlength="120">
             <input id="add-date" type="date" required>
             <input id="add-time" type="time" required>
-            <div id="add-duration" class="chips" role="radiogroup" aria-label="Duraci&oacute;n">
-                <label><input type="radio" name="duration" value="30"> 30 min</label>
-                <label><input type="radio" name="duration" value="60" checked> 1 h</label>
-                <label><input type="radio" name="duration" value="90"> 1,5 h</label>
-                <label><input type="radio" name="duration" value="120"> 2 h</label>
-            </div>
-            <div id="add-reminder" class="chips" role="radiogroup" aria-label="Aviso">
-                <label><input type="radio" name="reminder" value=""> Sin aviso</label>
-                <label><input type="radio" name="reminder" value="10"> 10 min antes</label>
-                <label><input type="radio" name="reminder" value="30" checked> 30 min antes</label>
-                <label><input type="radio" name="reminder" value="60"> 1 h antes</label>
-                <label><input type="radio" name="reminder" value="1440"> 1 d&iacute;a antes</label>
-            </div>
             <button type="submit">A&ntilde;adir</button>
+            <details class="settings">
+                <summary>1 h &middot; aviso 30 min antes</summary>
+                <div id="add-duration" class="chips" role="radiogroup" aria-label="Duraci&oacute;n">
+                    <label><input type="radio" name="duration" value="30"> 30 min</label>
+                    <label><input type="radio" name="duration" value="60" checked> 1 h</label>
+                    <label><input type="radio" name="duration" value="90"> 1,5 h</label>
+                    <label><input type="radio" name="duration" value="120"> 2 h</label>
+                </div>
+                <div id="add-reminder" class="chips" role="radiogroup" aria-label="Aviso">
+                    <label><input type="radio" name="reminder" value=""> Sin aviso</label>
+                    <label><input type="radio" name="reminder" value="10"> 10 min antes</label>
+                    <label><input type="radio" name="reminder" value="30" checked> 30 min antes</label>
+                    <label><input type="radio" name="reminder" value="60"> 1 h antes</label>
+                    <label><input type="radio" name="reminder" value="1440"> 1 d&iacute;a antes</label>
+                </div>
+            </details>
         </form>
         <p id="add-hint" class="add-hint"></p>
         <p id="add-feedback" class="add-feedback" hidden></p>
@@ -195,7 +205,7 @@
     <p id="routines-status" class="routines-status" role="status" hidden></p>
 
     <div class="routines-layout">
-        <section class="routines-section">
+        <section class="routines-section routines-today">
             <p class="label">Hoy</p>
             <ul id="routines-today-list" class="routines-cards"></ul>
             <p id="routines-today-empty" class="routines-empty">No hay rutinas previstas para hoy.</p>
@@ -261,46 +271,52 @@
             </p>
         </section>
 
+        <section id="economy-goals-section" class="economy-section economy-goals-section">
+            <p class="label">Objetivos</p>
+            <ul id="economy-goals" class="economy-goals"></ul>
+            <p id="economy-goals-empty" class="economy-empty">Sin objetivos de ahorro.</p>
+            <details class="settings">
+                <summary>Fijar un objetivo</summary>
+                <form id="economy-goal-form" class="economy-form">
+                    <input name="name" type="text" maxlength="60" placeholder="Objetivo"
+                           aria-label="Nombre del objetivo" required>
+                    <input name="target" type="text" inputmode="decimal" maxlength="10"
+                           placeholder="Importe &euro;" aria-label="Importe objetivo" required>
+                    <input name="deadline" type="date" aria-label="Fecha l&iacute;mite" required>
+                    <button type="submit">Fijar objetivo</button>
+                    <p class="economy-form-error" aria-live="polite"></p>
+                </form>
+            </details>
+        </section>
+
         <section class="economy-section">
             <p class="label">En qu&eacute; se va</p>
             <ul id="economy-breakdown" class="economy-categories"></ul>
             <p id="economy-breakdown-empty" class="economy-empty">Nada apuntado este mes.</p>
-            <form id="economy-budget-form" class="economy-form">
-                <div class="chips" role="radiogroup" aria-label="Categor&iacute;a del presupuesto">
-                    <label><input type="radio" name="category" value="FOOD" checked> &#127860; Comida</label>
-                    <label><input type="radio" name="category" value="TRANSPORT"> &#128650; Transporte</label>
-                    <label><input type="radio" name="category" value="HOME"> &#127968; Hogar</label>
-                    <label><input type="radio" name="category" value="LEISURE"> &#127916; Ocio</label>
-                    <label><input type="radio" name="category" value="HEALTH"> &#128138; Salud</label>
-                    <label><input type="radio" name="category" value="SHOPPING"> &#128717; Compras</label>
-                    <label><input type="radio" name="category" value="OTHER"> &bull; Otros</label>
-                </div>
-                <input name="limit" type="text" inputmode="decimal" maxlength="10"
-                       placeholder="L&iacute;mite &euro;" aria-label="L&iacute;mite mensual" required>
-                <button type="submit">Fijar presupuesto</button>
-                <p class="economy-form-error" aria-live="polite"></p>
-            </form>
+            <details class="settings">
+                <summary>Fijar un presupuesto</summary>
+                <form id="economy-budget-form" class="economy-form">
+                    <div class="chips" role="radiogroup" aria-label="Categor&iacute;a del presupuesto">
+                        <label><input type="radio" name="category" value="FOOD" checked> &#127860; Comida</label>
+                        <label><input type="radio" name="category" value="TRANSPORT"> &#128650; Transporte</label>
+                        <label><input type="radio" name="category" value="HOME"> &#127968; Hogar</label>
+                        <label><input type="radio" name="category" value="LEISURE"> &#127916; Ocio</label>
+                        <label><input type="radio" name="category" value="HEALTH"> &#128138; Salud</label>
+                        <label><input type="radio" name="category" value="SHOPPING"> &#128717; Compras</label>
+                        <label><input type="radio" name="category" value="OTHER"> &bull; Otros</label>
+                    </div>
+                    <input name="limit" type="text" inputmode="decimal" maxlength="10"
+                           placeholder="L&iacute;mite &euro;" aria-label="L&iacute;mite mensual" required>
+                    <button type="submit">Fijar presupuesto</button>
+                    <p class="economy-form-error" aria-live="polite"></p>
+                </form>
+            </details>
         </section>
 
         <section class="economy-section">
             <p class="label">&Uacute;ltimos movimientos</p>
             <ul id="economy-movements" class="economy-movements"></ul>
             <p id="economy-movements-empty" class="economy-empty">Nada apuntado todav&iacute;a.</p>
-        </section>
-
-        <section id="economy-goals-section" class="economy-section economy-goals-section">
-            <p class="label">Objetivos</p>
-            <ul id="economy-goals" class="economy-goals"></ul>
-            <p id="economy-goals-empty" class="economy-empty">Sin objetivos de ahorro.</p>
-            <form id="economy-goal-form" class="economy-form">
-                <input name="name" type="text" maxlength="60" placeholder="Objetivo"
-                       aria-label="Nombre del objetivo" required>
-                <input name="target" type="text" inputmode="decimal" maxlength="10"
-                       placeholder="Importe &euro;" aria-label="Importe objetivo" required>
-                <input name="deadline" type="date" aria-label="Fecha l&iacute;mite" required>
-                <button type="submit">Fijar objetivo</button>
-                <p class="economy-form-error" aria-live="polite"></p>
-            </form>
         </section>
     </div>
 </main>
@@ -310,10 +326,13 @@
         <section class="nutrition-section nutrition-today">
             <ol id="nutrition-week" class="nutrition-week"></ol>
 
-            <p id="nutrition-headline" class="nutrition-headline">&mdash;</p>
-            <p class="nutrition-headline-unit">kcal</p>
-
-            <div id="nutrition-gauge" class="nutrition-gauge"></div>
+            <div class="nutrition-dial">
+                <div class="nutrition-readout">
+                    <p id="nutrition-headline" class="nutrition-headline">&mdash;</p>
+                    <p class="nutrition-headline-unit">kcal</p>
+                </div>
+                <div id="nutrition-gauge" class="nutrition-gauge"></div>
+            </div>
 
             <ul id="nutrition-macros" class="nutrition-macros"></ul>
 
@@ -360,7 +379,9 @@
         <section class="nutrition-section">
             <p class="label">Plan</p>
             <p id="nutrition-plan-summary" class="nutrition-plan-summary">&mdash;</p>
-            <form id="nutrition-plan-form" class="nutrition-form" autocomplete="off">
+            <details class="settings">
+                <summary>Cambiar el plan</summary>
+                <form id="nutrition-plan-form" class="nutrition-form" autocomplete="off">
                 <div class="nutrition-form-row">
                     <label>Peso actual
                         <input name="startWeight" type="text" inputmode="decimal" maxlength="6"
@@ -388,7 +409,8 @@
                 </div>
                 <button type="submit">Fijar plan</button>
                 <p class="nutrition-form-error" aria-live="polite"></p>
-            </form>
+                </form>
+            </details>
         </section>
     </div>
 </main>
@@ -404,7 +426,7 @@
 
             <ol id="training-sets" class="training-sets"></ol>
             <p id="training-sets-empty" class="training-empty" hidden>
-                Todavia no hay ninguna serie. Anade la primera abajo.
+                Todav&iacute;a no hay ninguna serie. A&ntilde;ade la primera abajo.
             </p>
 
             <form id="training-set-form" class="training-form" autocomplete="off" hidden>
@@ -420,53 +442,59 @@
             </form>
         </section>
 
+        <!-- El catalogo y las plantillas no se tocan durante un entreno: se configuran un
+             domingo. Plegados, la columna deja de ser cuatro formularios apilados. -->
         <section class="training-section">
-            <p class="label">Ejercicios</p>
-            <ul id="training-exercises" class="training-list"></ul>
+            <details class="settings">
+                <summary>Ejercicios y rutinas</summary>
 
-            <form id="training-exercise-form" class="training-form" autocomplete="off">
-                <div class="training-form-row">
-                    <input name="name" placeholder="Press banca" aria-label="Nombre del ejercicio" required>
-                    <div id="training-metric" class="chips" role="radiogroup" aria-label="Que se mide"></div>
-                </div>
-                <button type="submit">Anadir ejercicio</button>
-                <p class="training-form-error"></p>
-            </form>
+                <p class="label">Ejercicios</p>
+                <ul id="training-exercises" class="training-list"></ul>
 
-            <p class="label">Rutinas</p>
-            <ul id="training-workouts" class="training-list"></ul>
-
-            <form id="training-workout-form" class="training-form" autocomplete="off">
-                <div class="training-form-row">
-                    <input name="name" placeholder="Empuje" aria-label="Nombre de la rutina" required>
-                </div>
-                <button type="submit">Anadir rutina</button>
-                <p class="training-form-error"></p>
-            </form>
-
-            <div id="training-editor" class="training-editor" hidden>
-                <p class="label"><span id="training-editor-name"></span></p>
-
-                <div id="training-editor-days" class="training-days"></div>
-
-                <ul id="training-editor-plan" class="training-list"></ul>
-                <p id="training-editor-empty" class="training-empty" hidden>
-                    Esta rutina no tiene ejercicios todavia.
-                </p>
-
-                <form id="training-line-form" class="training-form" autocomplete="off">
+                <form id="training-exercise-form" class="training-form" autocomplete="off">
                     <div class="training-form-row">
-                        <div id="training-line-exercise" class="chips" role="radiogroup" aria-label="Ejercicio"></div>
-                        <input name="sets" inputmode="numeric" placeholder="series" aria-label="Series" required>
-                        <input name="reps" inputmode="numeric" placeholder="reps" aria-label="Repeticiones">
-                        <input name="load" inputmode="decimal" placeholder="kg" aria-label="Carga en kilos">
-                        <input name="seconds" inputmode="numeric" placeholder="seg" aria-label="Segundos">
-                        <input name="meters" inputmode="numeric" placeholder="m" aria-label="Metros">
+                        <input name="name" placeholder="Press banca" aria-label="Nombre del ejercicio" required>
+                        <div id="training-metric" class="chips" role="radiogroup" aria-label="Qu&eacute; se mide"></div>
                     </div>
-                    <button type="submit">Anadir al plan</button>
+                    <button type="submit">A&ntilde;adir ejercicio</button>
                     <p class="training-form-error"></p>
                 </form>
-            </div>
+
+                <p class="label">Rutinas</p>
+                <ul id="training-workouts" class="training-list"></ul>
+
+                <form id="training-workout-form" class="training-form" autocomplete="off">
+                    <div class="training-form-row">
+                        <input name="name" placeholder="Empuje" aria-label="Nombre de la rutina" required>
+                    </div>
+                    <button type="submit">A&ntilde;adir rutina</button>
+                    <p class="training-form-error"></p>
+                </form>
+
+                <div id="training-editor" class="training-editor" hidden>
+                    <p class="label"><span id="training-editor-name"></span></p>
+
+                    <div id="training-editor-days" class="training-days"></div>
+
+                    <ul id="training-editor-plan" class="training-list"></ul>
+                    <p id="training-editor-empty" class="training-empty" hidden>
+                        Esta rutina no tiene ejercicios todav&iacute;a.
+                    </p>
+
+                    <form id="training-line-form" class="training-form" autocomplete="off">
+                        <div class="training-form-row">
+                            <div id="training-line-exercise" class="chips" role="radiogroup" aria-label="Ejercicio"></div>
+                            <input name="sets" inputmode="numeric" placeholder="series" aria-label="Series" required>
+                            <input name="reps" inputmode="numeric" placeholder="reps" aria-label="Repeticiones">
+                            <input name="load" inputmode="decimal" placeholder="kg" aria-label="Carga en kilos">
+                            <input name="seconds" inputmode="numeric" placeholder="seg" aria-label="Segundos">
+                            <input name="meters" inputmode="numeric" placeholder="m" aria-label="Metros">
+                        </div>
+                        <button type="submit">A&ntilde;adir al plan</button>
+                        <p class="training-form-error"></p>
+                    </form>
+                </div>
+            </details>
         </section>
     </div>
 </main>

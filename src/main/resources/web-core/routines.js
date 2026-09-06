@@ -87,11 +87,17 @@
         const meta = document.createElement('span');
         meta.className = 'routines-card-meta';
         meta.textContent = PERIOD_LABELS[entry.routine.period] || entry.routine.period;
-        main.append(name, meta);
-
         const quota = document.createElement('span');
         quota.className = entry.progress.met ? 'routines-quota met' : 'routines-quota';
         quota.textContent = quotaText(entry.progress);
+
+        // "Leer · 1/2" es una frase: el nombre y la cuota juntos, y la barra justo debajo.
+        // Antes la cuota estaba en la otra punta de la tarjeta y la barra caia la ultima.
+        const head = document.createElement('div');
+        head.className = 'routines-card-head';
+        head.append(name, quota);
+        main.append(head, meta, progressBar(entry.progress));
+
         const streak = document.createElement('span');
         streak.className = 'routines-streak';
         streak.textContent = '···';
@@ -109,7 +115,10 @@
             notify('Desmarcado');
             await refresh();
         });
-        item.append(main, quota, streak, mark, clear, progressBar(entry.progress));
+        const actions = document.createElement('div');
+        actions.className = 'routines-card-actions';
+        actions.append(streak, mark, clear);
+        item.append(main, actions);
         return item;
     }
 

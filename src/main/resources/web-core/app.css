@@ -6,10 +6,25 @@
 
 :root {
     --ink: #ffffff;
+    /* Un unico ancho para todas las secciones: los cuatro bloques y la columna de noticias. */
+    --section: 21rem;
     --ink-dim: #ccd3da;
     --ink-faint: #8b939b;
     --hairline: rgba(255, 255, 255, 0.26);
     --halo: 0 1px 2px rgba(0, 0, 0, 0.95), 0 2px 12px rgba(0, 0, 0, 0.75);
+    /* Zona segura: el marco fisico del espejo se come el borde de la pantalla. */
+    --bezel: 3.5rem;
+
+    /* Un unico acento y significa una sola cosa: te has pasado, mirame. Nutricion excedida,
+       presupuesto superado. Todo lo demas se dice con blanco y con peso, que es el idioma
+       de un espejo. Tres acentos (amarillo, verde, blanco) eran tres idiomas. */
+    --accent: #f2c94c;
+    /* Un unico rojo. Antes habia tres: #ffd0d0, #ff8080 y #eb5757, uno por contexto. */
+    --danger: #ff9b9b;
+    /* Filete de fila dentro de una lista: mas tenue que --hairline, que separa secciones. */
+    --rule: rgba(255, 255, 255, 0.1);
+    --field-bg: rgba(0, 0, 0, 0.35);
+    --radius: 0.4rem;
 }
 
 html, body {
@@ -210,35 +225,106 @@ nav {
 
 .view {
     height: calc(100vh - 4.6rem);
-    padding: 1rem 3.5rem 2.5rem;
+    padding: 1rem var(--bezel) 2rem;
 }
 
+/* Bloqueado no hay pestañas, así que el reloj se quedaba pegado al borde de arriba con solo
+   1rem y con el mismo hueco justo que usa la vista llena de datos. Aquí sobra sitio: sube el
+   margen superior y respiran el reloj y el panel de acceso. */
+body.locked .view {
+    height: 100vh;
+    padding-top: var(--bezel);
+}
+
+body.locked #view-inicio {
+    gap: 2.5rem;
+}
+
+/* Filete bajo cada titulo de seccion, como el `header` de MagicMirror: separa sin meter una
+   caja, que sobre un fondo de camara es lo unico que aguanta. */
 .label {
     font-size: 0.68rem;
     font-weight: 600;
     letter-spacing: 0.4em;
     text-transform: uppercase;
     color: var(--ink-dim);
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 0.4rem;
     margin-bottom: 0.6rem;
 }
 
-.weather {
-    position: absolute;
-    top: 1rem;
-    right: 3.5rem;
-    text-align: right;
+/* Inicio se apila en tres filas y nada conoce la altura de lo que tiene encima: la fila de
+   contenido se come lo que sobra y el saludo y las noticias quedan pegados abajo. Antes cada
+   bloque se colgaba de un `top` escrito a mano y bastaba una linea de mas para solaparlos. */
+#view-inicio {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
+.top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+/*
+ * Tres columnas declaradas y la del medio es el reflejo. Antes era un `space-between` entre
+ * los bloques y las noticias: el hueco central era lo que sobrase despues de repartir, y podia
+ * ser 30rem o 4. En un espejo el hueco donde te ves es el elemento mas importante de la
+ * composicion, asi que tiene ancho minimo propio y las noticias encogen antes que el.
+ */
+.content-row {
+    display: grid;
+    grid-template-columns: auto minmax(20rem, 1fr) auto;
+    flex: 1;
+    gap: 2rem;
+    min-height: 0;
+}
+
+.access-lock,
+.home-blocks {
+    grid-column: 1;
+}
+
+.news-block {
+    grid-column: 3;
+}
+
+/* Con tope: el geocodificador devuelve cosas como "Las Palmas de Gran Canaria, Comunidad
+   Autonoma de Canarias, Espana" y sin limite el bloque se comia media fila superior. */
+.weather {
+    text-align: right;
+    max-width: min(36rem, 40vw);
+}
+
+/* Nunca en dos lineas: una palabra huerfana debajo canta mas que un nombre recortado. Con el
+   municipio solo cabe entero; los puntos suspensivos son el ultimo recurso. */
+.weather-detail {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Bajado de 11vw: a 1600 px el reloj medía 176 px de alto él solo y se comía la fila de
+   contenido, que es la que tiene que estirarse. Sigue leyéndose desde la otra punta. */
 .clock,
 .weather-now {
-    font-size: clamp(4rem, 11vw, 10rem);
     font-weight: 300;
     line-height: 1;
     letter-spacing: 0.02em;
     font-variant-numeric: tabular-nums;
 }
 
+.clock {
+    font-size: clamp(3.5rem, 8vw, 6.5rem);
+}
+
+/* Mas pequeña que el reloj: nadie decide nada mirando "18°". Lo que cambia lo que haces al
+   salir es la linea de abajo, cuando vuelve a llover, y esa es la que tiene que pesar. */
 .weather-now {
+    font-size: clamp(2.4rem, 4.5vw, 3.6rem);
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -263,13 +349,10 @@ nav {
     stroke-linejoin: round;
 }
 
-/* Fuera del bloque del reloj a proposito: la columna izquierda se coloca con desplazamientos
-   fijos (.access-lock, .home-blocks), asi que todo lo que crezca ahi arriba empuja al resto. */
+/* Tercio inferior, no el centro: el centro es donde te reflejas. Es donde MagicMirror pone
+   `compliments` y donde el proyecto de Evan Cohen deja el hueco a proposito. */
 .greeting-block {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    align-self: center;
     width: min(46rem, calc(100vw - 7rem));
     text-align: center;
     pointer-events: none;
@@ -301,15 +384,14 @@ nav {
 /* Va despues de .weather-detail a proposito: misma especificidad, gana el ultimo. */
 .weather-next {
     color: var(--ink);
-    margin-top: 0.35rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
 }
 
 .access-lock {
-    position: absolute;
-    left: 3.5rem;
-    top: 17rem;
     width: min(31rem, calc(100vw - 7rem));
-    max-height: calc(100vh - 19rem);
+    max-height: 100%;
     overflow-y: auto;
     padding-right: 1rem;
     text-shadow: var(--halo);
@@ -369,7 +451,7 @@ nav {
 }
 
 .auth-feedback.error {
-    color: #ffd0d0 !important;
+    color: var(--danger) !important;
 }
 
 .enrollment {
@@ -403,13 +485,13 @@ nav {
     margin: 1rem 0;
 }
 
-.home-news-categories legend {
-    color: var(--ink-dim);
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.3em;
-    margin-bottom: 0.55rem;
-    text-transform: uppercase;
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .home-news-categories label {
@@ -497,8 +579,13 @@ body:not(.locked) .access-lock,
 body.locked nav,
 body.locked .home-blocks,
 body.locked .news-block,
+/* Las tres nuevas pestañas faltaban aqui: `switchView` no hace nada sin sesion, asi que si
+   la sesion caducaba estando en Economia, el saldo se quedaba en pantalla sobre el bloqueo. */
 body.locked #view-agenda,
 body.locked #view-rutinas,
+body.locked #view-economia,
+body.locked #view-nutricion,
+body.locked #view-entrenamiento,
 body.locked #panel,
 body.locked #toasts,
 body.locked #voice-control,
@@ -506,15 +593,22 @@ body.locked #mirror-mode {
     display: none !important;
 }
 
+/* Los cuatro juntos a la izquierda, en dos columnas del mismo ancho que las noticias. En una
+   sola columna no caben en la altura que queda, y con scroll no valen. */
+/* Por filas y no por columnas: llenando por columnas las parejas quedaban Agenda/Nutrición y
+   Rutinas/Economía, que es como las lee el ojo. Ahora cada fila es una pareja de verdad:
+   Agenda con Rutinas arriba, Nutrición con Economía debajo. */
 .home-blocks {
-    position: absolute;
-    top: 18.5rem;
-    left: 3.5rem;
-    max-width: 34rem;
-}
-
-.home-block + .home-block {
-    margin-top: 2.5rem;
+    display: grid;
+    grid-template-columns: var(--section) var(--section);
+    /* Pegadas arriba: repartirlas por el alto separaba las dos parejas con un vacío que las
+       hacía parecer cosas distintas. El hueco que sobra abajo es reflejo, no un error. */
+    align-content: start;
+    gap: 1.6rem 1rem;
+    /* Válvula: las listas del día son de largo variable. Si un día no caben, el pilar se
+       desplaza; lo que no puede pasar es que se meta encima de la franja de noticias. */
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .home-block .plain-list {
@@ -525,6 +619,25 @@ body.locked #mirror-mode {
     font-size: clamp(1.6rem, 3vw, 2.6rem);
     font-weight: 300;
     line-height: 1.1;
+}
+
+/*
+ * Los cuatro bloques pesaban lo mismo siempre, tuvieras una cita en quince minutos o el dia
+ * vacio. Un espejo tiene que destacar la excepcion, no mantener cuatro paneles constantes.
+ * Sin color ni caja: el filete del titulo se enciende y el titular sube un escalon.
+ */
+.home-block[data-urgent] > .label {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+}
+
+.home-block[data-urgent] .home-headline {
+    font-weight: 400;
+}
+
+/* Pasarse de calorias o estar en numeros rojos: el unico acento del sistema. */
+.home-headline.negative {
+    color: var(--accent);
 }
 
 .home-detail {
@@ -550,26 +663,83 @@ body.locked #mirror-mode {
     color: var(--ink-faint);
 }
 
+/* Con viñeta solo las dos que son de verdad una lista. Nutrición y Economía comparten la
+   clase pero son una línea suelta, y una viñeta suelta no enumera nada. */
+#today-list,
+#today-routines {
+    list-style: disc;
+    padding-left: 1.1rem;
+}
+
+#today-list li::marker,
+#today-routines li::marker {
+    color: var(--ink-faint);
+}
+
+/* "Nada para hoy" no es una entrada: con viñeta parecería que hay una. */
+#today-list .muted,
+#today-routines .muted {
+    list-style: none;
+    margin-left: -1.1rem;
+}
+
+/* Columna derecha, del mismo ancho que un bloque. El centro sigue libre entre las dos. */
+/* Una columna por tema, cada una del ancho de un bloque. Sin encoger: con flex-shrink por
+   defecto el contenedor se las comia y dejaban de medir lo mismo que los bloques. */
 .news-block {
-    position: absolute;
-    top: 18.5rem;
-    right: 3.5rem;
-    bottom: 2.5rem;
-    width: min(45rem, 50vw);
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    min-height: 0;
+    max-width: calc(var(--section) * 3 + 4rem);
 }
 
 .news-list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.8rem 1.5rem;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, var(--section));
+    gap: 0 2rem;
+    flex: 1;
+    min-height: 0;
+    list-style: none;
+}
+
+.news-group {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Recortada por altura a proposito: el JS quita el ultimo titular de cada columna mientras
+   desborde, asi que las dos llegan al borde de abajo y ni un pixel mas. */
+.news-items {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
     list-style: none;
 }
 
 .news-item {
-    border-top: 1px solid var(--hairline);
     min-width: 0;
-    padding-top: 0.65rem;
+    border-top: 1px solid var(--hairline);
+    padding: 0.6rem 0;
+}
+
+.news-heading {
+    color: var(--ink-faint);
+    flex: none;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.2rem;
+}
+
+/* Sin filete propio: debajo de un titulo ya hay una raya y dos juntas se ven como una doble. */
+.news-item:first-child {
+    border-top: none;
 }
 
 .news-item a {
@@ -588,8 +758,12 @@ body.locked #mirror-mode {
     text-transform: uppercase;
 }
 
+/* Dos lineas por titular: en una franja, el que se desborde empuja la altura de la fila. */
 .news-title {
-    display: block;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
     font-size: 0.9rem;
     font-weight: 500;
     line-height: 1.35;
@@ -635,11 +809,27 @@ body.locked #mirror-mode {
     padding-bottom: 0.5rem;
 }
 
+/*
+ * La rejilla se come lo que sobra, como la fila de contenido de Inicio. Antes colgaba de un
+ * `calc(100% - 17.5rem)` que era la suma a ojo de la cabecera, la tira de meses, los dias de
+ * la semana y el compositor: cualquier cambio ahi arriba la descuadraba en silencio. Y habia
+ * dos declaraciones de esa altura, la primera muerta.
+ */
+#view-agenda {
+    display: flex;
+    flex-direction: column;
+}
+
+.month-grid,
+.week-grid {
+    flex: 1;
+    min-height: 0;
+}
+
 .month-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     grid-auto-rows: minmax(5.2rem, auto);
-    height: calc(100% - 14rem);
     overflow-y: auto;
 }
 
@@ -655,6 +845,11 @@ body.locked #mirror-mode {
     font-weight: 600;
     color: var(--ink-dim);
     margin-bottom: 0.25rem;
+}
+
+/* Negrita en el numero no se ve a dos metros; una columna encendida si. */
+.day.today {
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .day.today .num {
@@ -686,22 +881,43 @@ body.locked #mirror-mode {
 }
 
 .composer {
-    position: absolute;
-    bottom: 1.8rem;
-    left: 50%;
-    transform: translateX(-50%);
+    align-self: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    flex: none;
     gap: 0.6rem;
+    padding-top: 1.4rem;
     width: min(64rem, 92vw);
 }
 
 #add-form {
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    flex-wrap: wrap;
+    gap: 0.8rem 1.2rem;
     width: 100%;
+}
+
+/*
+ * Nueve fichas de duracion y aviso siempre en pantalla ocupaban mas superficie que una semana
+ * entera del calendario, para un formulario que se usa dos veces al dia. Se despliegan.
+ */
+#add-form .settings {
+    border: none;
+    flex-basis: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#add-form .settings > summary {
+    letter-spacing: 0.3em;
+    min-height: 0;
+    padding: 0;
+}
+
+#add-form .settings .chips {
+    margin-top: 0.6rem;
 }
 
 #add-form input,
@@ -880,14 +1096,9 @@ body.locked #mirror-mode {
     border-bottom: 2px solid var(--ink);
 }
 
-.month-grid {
-    height: calc(100% - 17.5rem);
-}
-
 .week-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    height: calc(100% - 17.5rem);
     overflow-y: auto;
 }
 
@@ -896,6 +1107,12 @@ body.locked #mirror-mode {
     padding: 0.45rem 0.5rem 0.3rem 0;
     font-size: 0.86rem;
     min-width: 0;
+}
+
+/* En la semana sobra alto: el titulo cabe entero y no hace falta recortarlo. */
+.week-grid .item {
+    white-space: normal;
+    text-overflow: clip;
 }
 
 .week-grid .num {
@@ -1201,4 +1418,217 @@ body.locked #mirror-mode {
 .home-news-categories label:has(:focus-visible) {
     outline: 2px solid var(--ink);
     outline-offset: 0.2rem;
+}
+
+/* ============================================================================
+ * Capa compartida entre pestañas.
+ *
+ * Economia, Nutricion y Entrenamiento habian crecido cada una con su propia paleta, su
+ * propio rojo de error, su propia barra de progreso y su propio boton de quitar. Eran
+ * cinco dialectos del mismo idioma. Lo que se repite vive aqui y cada `<contexto>.css`
+ * se queda solo con su layout.
+ * ========================================================================== */
+
+.routines-view,
+.economy-view,
+.nutrition-view,
+.training-view {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding-top: 0.6rem;
+    overflow-y: auto;
+}
+
+/* Un solo tipo de barra. Antes habia tres (routines 2px, economy 2/4px, nutrition 2/4px) y
+   la de rutinas era tan fina que no se veia de pie delante del espejo. */
+.routines-bar,
+.economy-bar,
+.nutrition-bar {
+    height: 3px;
+    margin-top: 0.5rem;
+    overflow: hidden;
+    background: var(--rule);
+}
+
+.routines-bar > span,
+.economy-bar > span,
+.nutrition-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--ink);
+}
+
+.routines-bar.met > span {
+    background: var(--ink-faint);
+}
+
+.economy-bar[data-status="EXCEEDED"] > span,
+.nutrition-bar[data-status="EXCEEDED"] > span {
+    background: var(--accent);
+}
+
+.economy-bar[data-status="AT_RISK"] > span {
+    background: var(--ink-dim);
+}
+
+/* Campos y botones de las pestañas que se escriben. Un solo fondo, un solo radio. */
+.economy-form input,
+.economy-form select,
+.nutrition-form input,
+.training-form input,
+.training-form select {
+    background: var(--field-bg);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    color: inherit;
+    font: inherit;
+    font-size: 0.95rem;
+    min-width: 0;
+    padding: 0.45rem 0.55rem;
+    color-scheme: dark;
+}
+
+.economy-form input:focus,
+.economy-form select:focus,
+.nutrition-form input:focus,
+.training-form input:focus,
+.training-form select:focus {
+    outline: none;
+    border-color: var(--ink);
+}
+
+.economy-form button,
+.nutrition-form button,
+.training-form button,
+.training-start button {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    border-radius: var(--radius);
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.45rem 1rem;
+}
+
+.economy-form button:hover,
+.nutrition-form button:hover,
+.training-form button:hover,
+.training-start button:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.economy-form-error,
+.nutrition-form-error,
+.training-form-error {
+    color: var(--danger);
+    flex-basis: 100%;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.economy-form-error:empty,
+.nutrition-form-error:empty,
+.training-form-error:empty {
+    display: none;
+}
+
+.routines-empty,
+.economy-empty,
+.nutrition-empty,
+.training-empty {
+    color: var(--ink-faint);
+    font-size: 1.05rem;
+    line-height: 1.5;
+    margin: 1rem 0;
+}
+
+.economy-remove,
+.nutrition-remove,
+.training-remove {
+    background: none;
+    border: none;
+    color: var(--ink-dim);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 0.2rem;
+}
+
+.economy-remove:hover,
+.nutrition-remove:hover,
+.training-remove:hover {
+    color: var(--ink);
+}
+
+/* Fila de una lista: movimientos, consumos, series, ejercicios. El mismo filete en las
+   cuatro; antes eran rgba(255,255,255,.05), .06 y .07 escritos a mano. */
+.economy-movement,
+.nutrition-intake,
+.training-set,
+.training-item {
+    border-bottom: 1px solid var(--rule);
+}
+
+/*
+ * Lo que se configura una vez cada varios meses no puede ocupar media pestaña siempre. Un
+ * `<details>` nativo lo pliega sin una linea de JS: el plan de nutricion, el presupuesto,
+ * el catalogo de ejercicios. Se abre tocando el titulo, que es un objetivo grande.
+ */
+.settings {
+    border-top: 1px solid var(--hairline);
+    margin-top: 1.6rem;
+    padding-top: 0.9rem;
+}
+
+/* Si no hay nada encima, el filete no separa nada: es una raya suelta en el aire. */
+.settings:first-child {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.settings > summary {
+    color: var(--ink-dim);
+    cursor: pointer;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.4em;
+    list-style: none;
+    min-height: 2.2rem;
+    padding: 0.4rem 0;
+    text-transform: uppercase;
+}
+
+.settings > summary::-webkit-details-marker {
+    display: none;
+}
+
+.settings > summary::after {
+    content: ' +';
+    color: var(--ink-faint);
+}
+
+.settings[open] > summary::after {
+    content: ' –';
+}
+
+.settings > summary:hover {
+    color: var(--ink);
+}
+
+/*
+ * Donde estoy. Con gesto y con voz importa mas que en una web normal, y hasta ahora solo
+ * las fichas lo decian: los botones no tenian ningun estilo de foco.
+ */
+:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 0.2rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 1ms !important;
+        transition-duration: 1ms !important;
+    }
 }

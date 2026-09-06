@@ -1,6 +1,9 @@
 const state = {
     view: 'inicio',
-    period: 'MONTH',
+    // La semana por defecto: en la rejilla del mes cada cita cabe en una linea recortada que
+    // a dos metros no se lee. La semana tiene sitio de sobra en vertical y es el horizonte
+    // con el que uno se para delante del espejo. El mes sigue a un toque.
+    period: 'WEEK',
     anchor: todayIso(),
     previousAnchor: null,
     nextAnchor: null,
@@ -470,7 +473,11 @@ async function refreshWeather() {
         renderSkyIcon(data.current.weather_code);
         const sky = SKY[data.current.weather_code];
         const range = degrees(data.daily.temperature_2m_max[0]) + ' / ' + degrees(data.daily.temperature_2m_min[0]);
-        document.getElementById('weather-detail').textContent = (sky ? sky + ' · ' : '') + range + ' · ' + place.name;
+        // Solo el municipio: el geocodificador añade provincia, comunidad y país detrás, y eso
+        // no cabe de ninguna manera. Lo que quede se corta con puntos suspensivos, nunca salta
+        // de línea (ver .weather-detail).
+        const town = place.name.split(',')[0].trim();
+        document.getElementById('weather-detail').textContent = (sky ? sky + ' · ' : '') + range + ' · ' + town;
         renderNextRain(nextRain(data.hourly, new Date()));
         block.hidden = false;
     } catch (_) {
@@ -1755,6 +1762,24 @@ document.addEventListener('DOMContentLoaded', () => {
     for (const id of ['add-date', 'add-time', 'add-duration']) {
         document.getElementById(id).addEventListener('change', scheduleAddHint);
     }
+
+    // Duracion y aviso van plegados: el titulo del desplegable dice lo que hay elegido, que
+    // si no, cerrado, mentiria en cuanto se cambiara cualquiera de los dos.
+    const addForm = document.getElementById('add-form');
+    const renderComposerSummary = () => {
+        const chosen = name => addForm.querySelector(
+            '[name="' + name + '"]:checked');
+        const reminder = chosen('reminder');
+        addForm.querySelector('.settings > summary').textContent =
+            chosen('duration').parentElement.textContent.trim()
+            + ' · ' + (reminder.value
+                ? 'aviso ' + reminder.parentElement.textContent.trim().toLowerCase()
+                : 'sin aviso');
+    };
+    // `reset()` no dispara `change`, y el formulario se resetea despues de cada cita.
+    addForm.addEventListener('change', renderComposerSummary);
+    addForm.addEventListener('reset', () => setTimeout(renderComposerSummary));
+    renderComposerSummary();
 
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {

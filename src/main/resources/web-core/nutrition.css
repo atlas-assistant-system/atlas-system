@@ -1,14 +1,11 @@
-.nutrition-view {
-    --nutrition-accent: #f2c94c;
-}
-
-.nutrition-view {
-    max-width: 76rem;
-    margin: 0 auto;
-    padding-top: 0.6rem;
-    overflow-y: auto;
-}
-
+/*
+ * Nutricion. La cifra y el arco decian lo mismo apilados uno debajo del otro, en una columna
+ * estrecha dentro de un contenedor ancho: se van en fila y la pestaña recupera altura.
+ *
+ * El acento significa "te has pasado" y nada mas. Antes el titular se ponia amarillo al
+ * excederse mientras el arco se ponia blanco: dos elementos superpuestos diciendo lo
+ * contrario.
+ */
 .nutrition-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr);
@@ -33,10 +30,22 @@
     grid-row: span 2;
 }
 
+.nutrition-dial {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 3rem;
+    justify-content: center;
+}
+
+.nutrition-readout {
+    text-align: center;
+}
+
 .nutrition-date {
-    margin: 1rem 0 0;
+    margin: 0.8rem 0 0;
+    color: var(--ink-faint);
     font-size: 1rem;
-    opacity: 0.35;
     text-align: center;
 }
 
@@ -46,25 +55,24 @@
     font-weight: 300;
     letter-spacing: -0.02em;
     line-height: 1;
-    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
 .nutrition-headline[data-status="EXCEEDED"] {
-    color: var(--nutrition-accent);
+    color: var(--accent);
 }
 
 .nutrition-headline-unit {
-    margin: 0.4rem 0 0;
+    margin: 0.3rem 0 0;
+    color: var(--ink-faint);
     font-size: 1rem;
-    opacity: 0.4;
-    text-align: center;
 }
 
 .nutrition-week {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     list-style: none;
-    margin: 0 0 1.6rem;
+    margin: 0 0 1.4rem;
     padding: 0;
 }
 
@@ -83,13 +91,13 @@
 }
 
 .nutrition-week-button:disabled {
+    color: var(--ink-faint);
     cursor: default;
-    opacity: 0.35;
 }
 
 .nutrition-week-label {
+    color: var(--ink-faint);
     font-size: 0.85rem;
-    opacity: 0.45;
 }
 
 .nutrition-week-number {
@@ -100,19 +108,16 @@
     font-variant-numeric: tabular-nums;
     height: 2rem;
     justify-content: center;
-    opacity: 0.85;
     width: 2rem;
 }
 
 .nutrition-week-button[data-today="true"] .nutrition-week-number {
-    background: var(--ink, #fff);
+    background: var(--ink);
     color: #000;
-    opacity: 1;
 }
 
 .nutrition-week-button[data-selected="true"]:not([data-today="true"]) .nutrition-week-number {
-    box-shadow: inset 0 0 0 1px var(--hairline, rgba(255, 255, 255, 0.26));
-    opacity: 1;
+    box-shadow: inset 0 0 0 1px var(--hairline);
 }
 
 .nutrition-week-dot {
@@ -121,13 +126,17 @@
     width: 0.4rem;
 }
 
+/* Dentro de rango es normal (blanco); pasarse es lo unico que lleva acento. */
 .nutrition-week-dot[data-state="WITHIN"] {
-    background: var(--nutrition-accent);
+    background: var(--ink);
 }
 
-.nutrition-week-dot[data-state="UNDER"],
 .nutrition-week-dot[data-state="OVER"] {
-    box-shadow: inset 0 0 0 1px var(--nutrition-accent);
+    background: var(--accent);
+}
+
+.nutrition-week-dot[data-state="UNDER"] {
+    box-shadow: inset 0 0 0 1px var(--ink-dim);
 }
 
 .nutrition-week-dot[data-state="EMPTY"] {
@@ -139,8 +148,8 @@
 }
 
 .nutrition-gauge {
-    margin: 1rem auto 0;
-    max-width: 26rem;
+    flex: 0 1 26rem;
+    min-width: 16rem;
 }
 
 .nutrition-gauge svg {
@@ -157,24 +166,24 @@
 }
 
 .nutrition-gauge-track {
-    stroke: rgba(255, 255, 255, 0.14);
+    stroke: var(--rule);
 }
 
 .nutrition-gauge-progress {
-    stroke: var(--nutrition-accent);
+    stroke: var(--ink);
 }
 
 .nutrition-gauge-progress[data-status="EXCEEDED"] {
-    stroke: var(--ink, #fff);
+    stroke: var(--accent);
 }
 
 .nutrition-gauge-tick {
-    stroke: rgba(255, 255, 255, 0.28);
+    stroke: var(--hairline);
     stroke-width: 1;
 }
 
 .nutrition-gauge-label {
-    fill: rgba(255, 255, 255, 0.4);
+    fill: var(--ink-faint);
     font-size: 11px;
 }
 
@@ -196,51 +205,24 @@
 .nutrition-macro {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.35rem;
     text-align: center;
 }
 
 .nutrition-macro-name {
+    color: var(--ink-faint);
     font-size: 0.95rem;
-    opacity: 0.45;
 }
 
 .nutrition-macro-amount {
+    color: var(--ink-dim);
     font-size: 1.15rem;
     font-variant-numeric: tabular-nums;
-    opacity: 0.85;
 }
 
 .nutrition-macro .nutrition-bar {
-    margin: 0.5rem auto 0;
+    margin: 0.4rem auto 0;
     width: 60%;
-}
-
-.nutrition-macro .nutrition-bar > span {
-    background: var(--nutrition-accent);
-}
-
-.nutrition-bar {
-    margin-top: 0.55rem;
-    height: 2px;
-    background: rgba(255, 255, 255, 0.12);
-}
-
-.nutrition-bar > span {
-    display: block;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.55);
-}
-
-.nutrition-bar[data-status="EXCEEDED"] {
-    height: 4px;
-}
-
-.nutrition-bar[data-status="EXCEEDED"] > span {
-    background: repeating-linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.95) 0 3px,
-        rgba(255, 255, 255, 0.35) 3px 6px);
 }
 
 .nutrition-intake {
@@ -250,37 +232,29 @@
     gap: 0.9rem;
     padding: 0.55rem 0;
     font-size: 1.1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .nutrition-intake-what {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    opacity: 0.85;
 }
 
 .nutrition-intake-detail {
+    color: var(--ink-faint);
     font-size: 0.9rem;
-    opacity: 0.4;
     font-variant-numeric: tabular-nums;
 }
 
 .nutrition-intake-calories {
-    opacity: 0.6;
+    color: var(--ink-dim);
     font-variant-numeric: tabular-nums;
 }
 
 .nutrition-plan-summary {
     margin: 0;
+    color: var(--ink-dim);
     font-size: 1.15rem;
-    opacity: 0.75;
-}
-
-.nutrition-empty {
-    margin: 0;
-    font-size: 1.05rem;
-    opacity: 0.4;
 }
 
 .nutrition-form {
@@ -298,25 +272,12 @@
 }
 
 .nutrition-form label {
+    color: var(--ink-dim);
     display: flex;
     flex: 1 1 6rem;
     flex-direction: column;
     font-size: 0.85rem;
     gap: 0.3rem;
-    opacity: 0.55;
-}
-
-.nutrition-form input {
-    background: rgba(0, 0, 0, 0.35);
-    border: none;
-    border-radius: 0.4rem;
-    box-sizing: border-box;
-    color: inherit;
-    font: inherit;
-    font-size: 0.95rem;
-    line-height: 1.3;
-    opacity: 1;
-    padding: 0.45rem 0.55rem;
 }
 
 /* Dentro del label el eje es vertical: un flex-basis ahí sería altura, no anchura. */
@@ -331,67 +292,19 @@
 
 .nutrition-live {
     flex-basis: 100%;
+    color: var(--ink-faint);
     font-size: 0.95rem;
     margin: 0;
-    opacity: 0.5;
-}
-
-.nutrition-form button {
-    background: rgba(255, 255, 255, 0.12);
-    border: none;
-    border-radius: 0.4rem;
-    color: inherit;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.95rem;
-    padding: 0.45rem 1rem;
-}
-
-.nutrition-form button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.nutrition-form-error {
-    color: var(--danger, #ff8080);
-    flex-basis: 100%;
-    font-size: 0.9rem;
-    margin: 0;
-}
-
-.nutrition-form-error:empty {
-    display: none;
-}
-
-.nutrition-remove {
-    background: none;
-    border: none;
-    color: inherit;
-    cursor: pointer;
-    font-size: 1.1rem;
-    line-height: 1;
-    opacity: 0.35;
-    padding: 0 0.2rem;
-}
-
-.nutrition-remove:hover {
-    opacity: 1;
-}
-
-/* En una pantalla baja las tres secciones de abajo caben en fila: es eso o el scroll. */
-@media (min-width: 60rem) and (max-height: 62rem) {
-    .nutrition-layout {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .nutrition-log {
-        grid-row: auto;
-    }
 }
 
 @media (max-width: 60rem) {
     .nutrition-layout {
         grid-template-columns: minmax(0, 1fr);
-        gap: 3rem;
+        gap: 2.5rem;
+    }
+
+    .nutrition-log {
+        grid-row: auto;
     }
 
     .nutrition-headline {

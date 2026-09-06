@@ -247,7 +247,7 @@
         const done = current.sets.filter(set => set.actual).length;
         headline.textContent = done + ' / ' + current.sets.length;
         subhead.textContent = current.sets.length === 0
-            ? 'Entreno libre: anade las series segun las hagas.'
+            ? 'Entreno libre: añade las series según las hagas.'
             : 'series hechas';
 
         renderSets(current);
