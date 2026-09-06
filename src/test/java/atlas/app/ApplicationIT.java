@@ -184,8 +184,6 @@ class ApplicationIT {
                 .startsWith("application/json");
             assertThat(head(client, base, "/vendor/mediapipe/gesture_recognizer.task").statusCode())
                 .isEqualTo(200);
-            // El cuerpo va en trozos, asi que conviene comprobar que llega entero y no un
-            // prefijo: un modelo truncado carga sin quejarse y luego no reconoce a nadie.
             var descriptorModel = head(client, base, "/vendor/human/models/faceres.bin");
             assertThat(descriptorModel.statusCode()).isEqualTo(200);
             assertThat(descriptorModel.body()).hasSizeGreaterThan(6_000_000);
