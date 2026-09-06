@@ -334,6 +334,7 @@
                 ? kcal(day.consumedCalories)
                 : kcal(Math.abs(day.remainingCalories));
             summaryRemaining.classList.toggle('negative', Boolean(day.overBudget));
+            window.markUrgent?.(summaryRemaining, Boolean(day.overBudget));
         }
         if (summaryGoal) {
             summaryGoal.textContent = day.targetCalories === null

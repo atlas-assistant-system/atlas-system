@@ -89,6 +89,7 @@
     function breakdownRow(spend, budget) {
         const item = document.createElement('li');
         item.className = 'economy-category';
+        if (budget) item.dataset.status = budget.status;
 
         const head = document.createElement('div');
         head.className = 'economy-category-head';
@@ -248,6 +249,7 @@
         if (summaryNet) {
             summaryNet.textContent = euros(balance.net);
             summaryNet.classList.toggle('negative', Number(balance.net) < 0);
+            window.markUrgent?.(summaryNet, Number(balance.net) < 0);
         }
     }
 

@@ -188,6 +188,10 @@
             ? 'Sin rutinas para hoy'
             : (met === entries.length ? 'Todo cumplido' : 'Cumplidas hoy');
 
+        // Por la mañana quedan rutinas por hacer y eso es lo normal; a las ocho de la tarde
+        // ya no. La urgencia es la hora, no el numero.
+        window.markUrgent?.(summaryProgress, met < entries.length && new Date().getHours() >= 18);
+
         if (entries.length === 0) {
             const empty = document.createElement('li');
             empty.className = 'muted';

@@ -630,6 +630,15 @@ async function refreshInicio() {
     }
 }
 
+/**
+ * Un bloque de Inicio se enciende cuando lo suyo no puede esperar: una cita dentro de una
+ * hora, rutinas sin cumplir a ultima hora, calorias pasadas, saldo en rojo. Lo llaman los
+ * cuatro contextos desde su propio resumen, que es quien sabe si algo es urgente.
+ */
+function markUrgent(node, urgent) {
+    node?.closest('.home-block')?.toggleAttribute('data-urgent', urgent);
+}
+
 function renderNextCountdown() {
     const when = document.getElementById('next-when');
     const title = document.getElementById('next-title');
@@ -637,12 +646,14 @@ function renderNextCountdown() {
     if (!state.next) {
         when.textContent = 'Nada previsto';
         title.textContent = '';
+        markUrgent(when, false);
         return;
     }
 
     const start = new Date(state.next.start);
     const minutes = Math.round((start - Date.now()) / 60000);
     title.textContent = state.next.title;
+    markUrgent(when, minutes < 60);
 
     if (minutes <= 0) {
         when.textContent = 'Ahora';
