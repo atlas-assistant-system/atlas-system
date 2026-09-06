@@ -143,6 +143,73 @@ class ApplicationIT {
         }
     }
 
+    /**
+     * Un espejo colgado en la pared tiene que arrancar sin internet. Si algun dia vuelve a
+     * colarse una URL de un CDN en las paginas, esto lo caza antes de que el fallo sea "no se
+     * puede autenticar y no se sabe por que".
+     */
+    @Test
+    void shouldServeEveryVisionAssetFromAtlasItself() throws Exception {
+        var settings = new PresenceSettings(
+            0,
+            dataDirectory,
+            true,
+            MatchThreshold.of(0.8),
+            SessionDuration.of(Duration.ofMinutes(15)));
+        var application = Application.wire(new PlainLogEntryRenderer(), settings, CLOCK).start(0);
+
+        try {
+            var client = HttpClient.newHttpClient();
+            var base = "http://localhost:" + application.port();
+
+            for (var page : new String[]{"/", "/presence/sandbox"}) {
+                assertThat(get(client, base, page).body())
+                    .as("page %s", page)
+                    .doesNotContain("cdn.jsdelivr.net")
+                    .doesNotContain("storage.googleapis.com")
+                    .contains("/vendor/human/human.js");
+            }
+            for (var script : new String[]{"/assets/app.js", "/presence/sandbox.js"}) {
+                assertThat(get(client, base, script).body())
+                    .as("script %s", script)
+                    .doesNotContain("cdn.jsdelivr.net")
+                    .doesNotContain("storage.googleapis.com")
+                    .contains("/vendor/mediapipe/gesture_recognizer.task");
+            }
+
+            assertThat(head(client, base, "/vendor/human/human.js"))
+                .satisfies(response -> {
+                    assertThat(response.statusCode()).isEqualTo(200);
+                    assertThat(contentType(response)).startsWith("text/javascript");
+                });
+            assertThat(contentType(head(client, base, "/vendor/mediapipe/wasm/vision_wasm_internal.wasm")))
+                .isEqualTo("application/wasm");
+            assertThat(contentType(head(client, base, "/vendor/human/models/blazeface.json")))
+                .startsWith("application/json");
+            assertThat(head(client, base, "/vendor/mediapipe/gesture_recognizer.task").statusCode())
+                .isEqualTo(200);
+            // El cuerpo va en trozos, asi que conviene comprobar que llega entero y no un
+            // prefijo: un modelo truncado carga sin quejarse y luego no reconoce a nadie.
+            var descriptorModel = head(client, base, "/vendor/human/models/faceres.bin");
+            assertThat(descriptorModel.statusCode()).isEqualTo(200);
+            assertThat(descriptorModel.body()).hasSizeGreaterThan(6_000_000);
+            assertThat(head(client, base, "/vendor/human/models/nope.bin").statusCode()).isEqualTo(404);
+            assertThat(head(client, base, "/vendor/../logging.properties").statusCode()).isEqualTo(404);
+        } finally {
+            application.stop();
+        }
+    }
+
+    private static String contentType(HttpResponse<byte[]> response) {
+        return response.headers().firstValue("Content-Type").orElse("");
+    }
+
+    private static HttpResponse<byte[]> head(HttpClient client, String base, String path) throws Exception {
+        return client.send(
+            HttpRequest.newBuilder(URI.create(base + path)).GET().build(),
+            HttpResponse.BodyHandlers.ofByteArray());
+    }
+
     private static void waitUntil(BooleanSupplier condition) throws InterruptedException {
         for (var attempt = 0; attempt < 100 && !condition.getAsBoolean(); attempt++) {
             Thread.sleep(20);

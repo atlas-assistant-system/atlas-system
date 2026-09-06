@@ -9,11 +9,10 @@ const {
     PINCH_DISTANCE_RATIO, fingerMetrics, pinchMetrics, directionMetrics,
     HAND_CONFIDENCE, GESTURE_HOLD_MS, PINCH_HOLD_MS,
 } = AtlasGestures;
-const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
-const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs';
-const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';
-const GESTURE_MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/'
-    + 'gesture_recognizer/float16/1/gesture_recognizer.task';
+const HUMAN_MODELS = '/vendor/human/models/';
+const MEDIAPIPE = '/vendor/mediapipe/vision_bundle.mjs';
+const MEDIAPIPE_WASM = '/vendor/mediapipe/wasm';
+const GESTURE_MODEL = '/vendor/mediapipe/gesture_recognizer.task';
 
 const HUMAN_CONFIG = {
     backend: 'webgl',

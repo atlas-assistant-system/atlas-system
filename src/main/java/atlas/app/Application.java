@@ -12,6 +12,7 @@ import atlas.app.training.TrainingApplication;
 import atlas.application.sharedkernel.logging.LogEntryRenderer;
 import atlas.domain.presence.events.SessionClosedEvent;
 import atlas.domain.presence.events.SessionExpiredEvent;
+import atlas.presentation.common.web.ClasspathAssets;
 import atlas.presentation.sharedkernel.http.WebServer;
 import java.io.IOException;
 import java.time.Clock;
@@ -81,6 +82,7 @@ public final class Application {
         server = WebServer
             .onLoopback(port)
             .mount("/", core.router())
+            .mount("/vendor", new ClasspathAssets("/vendor", "/web-vendor"))
             .mount("/appointments", appointments.router())
             .mount("/reminders", appointments.router())
             .mount("/docs", appointments.router())
