@@ -214,7 +214,9 @@ const AtlasInteraction = (() => {
             }
             return;
         }
-        if (type === 'FIST') {
+        // Pulgar abajo y no el puño: el puño es el desafío de vida de la autenticación, y el
+        // mismo gesto no puede significar "demuéstrame que estás vivo" y "quítalo todo".
+        if (type === 'THUMBS_DOWN') {
             config.toggleMirror();
             return;
         }

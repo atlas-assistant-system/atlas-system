@@ -67,9 +67,10 @@ físico— y su propio bus de comandos y consultas.
   detección baja a 2 fps; cualquier rostro la despierta. No hace falta sensor PIR porque la
   cámara ya está mirando, y basta con vigilarlo en el estado bloqueado —la sesión caduca
   sola al marcharte, así que ahí es donde el espejo pasa las horas vacías.
-  **Modo espejo**: el puño cerrado —o decir "modo espejo"— quita todo y deja solo el reflejo;
-  se sale con el mismo puño o con la palma abierta, que ya era cancelar. Solo con sesión
-  abierta, porque bloqueado el puño es el desafío de vida; al caducar la sesión se sale solo.
+  **Modo espejo**: el pulgar hacia abajo —o decir "modo espejo"— quita todo y deja solo el
+  reflejo; se sale con el mismo gesto o con la palma abierta, que ya era cancelar. **No usa el
+  puño**: el puño es el desafío de vida de la autenticación y un gesto no puede significar dos
+  cosas. Solo con sesión abierta; al caducar la sesión se sale solo.
   Bajo el reloj **saluda por tu nombre** (`GET /profiles/{id}`, que solo pide sesión activa);
   sin sesión saluda igual, a la habitación, sin nombre. Debajo, **una frase al día**
   (`web-core/quotes.js`, servido en `/assets/quotes.js`): 65 frases de dominio público

@@ -252,13 +252,17 @@ function trackPresence(result) {
     }
 }
 
-// Un espejo y nada mas. Solo con sesion abierta: bloqueado ya esta casi vacio y ahi el puno
-// significa otra cosa. Se entra con el puno o diciendo "modo espejo", se sale con lo mismo o
-// con la palma abierta, que ya es el gesto de cancelar.
+// Un espejo y nada mas. Se entra con el pulgar hacia abajo o diciendo "modo espejo", y se sale
+// con lo mismo o con la palma abierta, que ya es el gesto de cancelar. Solo con sesion abierta:
+// bloqueado no hay nada que quitar y la pantalla es la de autenticarse.
 function setMirrorMode(active) {
     if (active && !state.authenticated) {
+        // El gesto se ha reconocido: decirlo evita quedarse haciendolo delante de un espejo
+        // que no responde.
+        AtlasInteraction.status('El modo espejo necesita sesion abierta.');
         return;
     }
+    AtlasInteraction.status(active ? 'Modo espejo' : 'Modo espejo desactivado');
     state.mirrorMode = active;
     document.body.classList.toggle('mirror-only', active);
     document.getElementById('mirror-mode').setAttribute('aria-pressed', String(active));
@@ -373,7 +377,7 @@ function recognizedHandGesture(result) {
     } else {
         type = ({
             Closed_Fist: 'FIST', Open_Palm: 'OPEN_PALM', Pointing_Up: 'POINT',
-            Thumb_Up: 'THUMBS_UP',
+            Thumb_Up: 'THUMBS_UP', Thumb_Down: 'THUMBS_DOWN',
         })[gesture?.categoryName] || null;
     }
 
