@@ -20,25 +20,12 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * La plantilla: "Día de empuje" con sus líneas. Una línea es {@code 4 × (8 reps @ 70 kg)},
- * no cuatro filas — así se escribe una rutina en papel y así se teclea una vez.
- *
- * <p>
- * Una plantilla puede llevar los días en que se entrena —"Empuje los lunes y los jueves"—, y
- * eso es todo lo que sabe del calendario: es una etiqueta para que el espejo sepa qué ofrecer
- * hoy, no un registro de cumplimiento. Si lo hiciste o no lo dice {@code routines}.
- *
- * <p>
- * El plan se reemplaza entero con {@link #setPlan}, en vez de tener añadir, quitar,
- * cambiar y mover por separado: en pantalla editar una rutina es un solo gesto. La posición
- * sale del orden de la lista, así que reordenar no necesita comando propio.
- */
+
 public final class Workout extends AggregateRoot<WorkoutId> {
 
     private final List<PlannedExercise> plan = new ArrayList<>();
 
-    /** EnumSet: itera de lunes a domingo por su propio orden, sin ordenar en cada lectura. */
+    
     private final EnumSet<DayOfWeek> days = EnumSet.noneOf(DayOfWeek.class);
 
     private WorkoutName name;
@@ -86,10 +73,7 @@ public final class Workout extends AggregateRoot<WorkoutId> {
         return Result.success();
     }
 
-    /**
-     * Reemplaza el plan completo. Un plan vacío es válido: vaciarlo es como se empieza de
-     * cero. Se permite repetir ejercicio — press al principio y al final del día es real.
-     */
+    
     public Result<Void> setPlan(List<PlannedLine> lines, Instant now) {
         if (archived) {
             return Result.failure(WorkoutErrors.ALREADY_ARCHIVED);
@@ -111,11 +95,7 @@ public final class Workout extends AggregateRoot<WorkoutId> {
         return Result.success();
     }
 
-    /**
-     * Fija los días de la semana en que toca esta plantilla. Se reemplazan enteros, como el
-     * plan: en pantalla es marcar y desmarcar días. Un conjunto vacío la deja fuera de la
-     * semana, disponible pero sin día asignado.
-     */
+    
     public Result<Void> scheduleOn(Set<DayOfWeek> weekdays, Instant now) {
         if (archived) {
             return Result.failure(WorkoutErrors.ALREADY_ARCHIVED);
@@ -141,7 +121,7 @@ public final class Workout extends AggregateRoot<WorkoutId> {
         return Result.success();
     }
 
-    /** Despliega el plan a una serie por unidad: {@code 4 × (8 @ 70)} son cuatro series. */
+    
     public List<PlannedSet> expand() {
         var sets = new ArrayList<PlannedSet>();
 
@@ -158,7 +138,7 @@ public final class Workout extends AggregateRoot<WorkoutId> {
         return List.copyOf(plan);
     }
 
-    /** Copia en EnumSet, no {@code Set.copyOf}: quien lee la semana la quiere en orden. */
+    
     public Set<DayOfWeek> days() {
         return Collections.unmodifiableSet(EnumSet.copyOf(days));
     }

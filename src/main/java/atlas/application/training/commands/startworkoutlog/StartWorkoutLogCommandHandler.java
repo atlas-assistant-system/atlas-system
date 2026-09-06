@@ -15,11 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * El único handler que toca dos agregados: lee la plantilla, la despliega con
- * {@code expand()} y le pasa el guion al log, todo en la misma unidad de trabajo. La
- * traducción de plan a series vive en el dominio, no aquí.
- */
+
 public final class StartWorkoutLogCommandHandler
     implements CommandHandler<StartWorkoutLogCommand, Result<WorkoutLogDto>> {
 

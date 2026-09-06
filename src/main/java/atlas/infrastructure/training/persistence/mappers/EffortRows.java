@@ -8,11 +8,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Optional;
 
-/**
- * Las cuatro columnas de un Effort van juntas: o las cuatro con valor o las cuatro NULL.
- * NULL significa "esta serie no tiene plan" o "esta serie sigue pendiente". No hay columna
- * de bandera aparte porque permitiria que bandera y valores discrepasen.
- */
+
 public final class EffortRows {
 
     private EffortRows() {}

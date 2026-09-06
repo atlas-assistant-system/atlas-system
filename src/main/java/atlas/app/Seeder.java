@@ -44,21 +44,12 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Deja el espejo con algo que enseñar recién instalado: el catálogo de ejercicios con las tres
- * rutinas de la semana, cuatro hábitos, un plan de nutrición y la agenda de las próximas semanas.
- *
- * <p>
- * Cada contexto se siembra solo si está vacío, así que repetirlo no duplica nada. Con
- * {@code --reset} se tira lo que hubiera antes y se siembra de cero. {@code economy} y
- * {@code presence} no se tocan: el primero tiene su propio {@code gradle seedEconomy} y el
- * segundo guarda tu cara.
- */
+
 public final class Seeder {
 
     private static final List<String> CONTEXTS = List.of("training", "routines", "nutrition", "appointments");
 
-    /** Los ejercicios del catálogo, con la métrica que los define para siempre. */
+    
     private static final List<Exercise> EXERCISES = List.of(
         new Exercise("Press banca", Metric.LOAD),
         new Exercise("Press militar", Metric.LOAD),
@@ -73,7 +64,7 @@ public final class Seeder {
         new Exercise("Plancha", Metric.TIME),
         new Exercise("Correr", Metric.DISTANCE));
 
-    /** Empuje, tiron y pierna, dos dias cada uno: la semana entera menos el domingo. */
+    
     private static final List<Workout> WORKOUTS = List.of(
         new Workout("Empuje", Set.of(DayOfWeek.MONDAY, DayOfWeek.THURSDAY), List.of(
             new Line("Press banca", 4, 70, 12, 0, 0),
@@ -99,7 +90,7 @@ public final class Seeder {
         new Habit("Meditar", "Diez minutos al despertar", 5, "sesiones", RecurrencePeriod.WEEK, Set.of()),
         new Habit("Llamar a casa", "Sin excusas", 4, "llamadas", RecurrencePeriod.MONTH, Set.of()));
 
-    /** Dias desde hoy, hora, duracion en minutos, aviso en minutos. */
+    
     private static final List<Event> EVENTS = List.of(
         new Event(1, 10, 0, 60, "Fisioterapia", "Espalda", 30),
         new Event(1, 19, 30, 90, "Cena con Marta", "", 60),
@@ -141,7 +132,7 @@ public final class Seeder {
         System.out.println(summary.describe(directory, reset));
     }
 
-    /** Borra las bases de los cuatro contextos; las migraciones las vuelven a crear vacias. */
+    
     public static void wipe(Path dataDirectory) {
         for (var context : CONTEXTS) {
             for (var suffix : List.of(".db", ".db-wal", ".db-shm")) {

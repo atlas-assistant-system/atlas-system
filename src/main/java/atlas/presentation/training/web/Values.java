@@ -13,11 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * Los valores tal y como llegan por HTTP en este contexto. No se comparte con los demas:
- * aqui "load" son kilos con decimales y "metric" es un enum del dominio; en routines
- * "weekdays" es otra cosa y en economy "amount" es euros.
- */
+
 public final class Values {
 
     private Values() {}
@@ -49,7 +45,7 @@ public final class Values {
         }
     }
 
-    /** La carga viaja en kilos con decimales: "72.5" son los discos de 2,5. */
+    
     public static BigDecimal kilograms(Map<String, Object> body, String field) {
         var value = body.get(field);
         if (value == null) {
@@ -96,7 +92,7 @@ public final class Values {
         return (List<Map<String, Object>>) items;
     }
 
-    /** Los dias vienen por nombre ingles ("MONDAY"): es como los escribe DayOfWeek. */
+    
     public static Set<DayOfWeek> weekdays(Map<String, Object> body, String field) {
         var value = body.get(field);
         if (value == null) {

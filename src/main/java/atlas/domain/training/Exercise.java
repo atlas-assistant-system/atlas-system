@@ -11,15 +11,7 @@ import atlas.domain.training.events.ExerciseUnarchivedEvent;
 import atlas.domain.training.vos.ExerciseName;
 import java.time.Instant;
 
-/**
- * Un ejercicio del catálogo. Es también la clave por la que se une el histórico: sin él,
- * "mi progreso en press banca" se resolvería juntando cadenas y {@code "Press banca"} no
- * casaría con {@code "press de banca"}.
- *
- * <p>
- * La métrica se fija al definirlo y no se cambia nunca: cambiarla con historial detrás
- * cambiaría el significado de todo lo registrado. Para eso se archiva y se define otro.
- */
+
 public final class Exercise extends AggregateRoot<ExerciseId> {
 
     private final Metric metric;

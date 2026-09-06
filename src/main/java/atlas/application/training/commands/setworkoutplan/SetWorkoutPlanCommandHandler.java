@@ -18,11 +18,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Fija el plan completo. Comprueba contra el catálogo que cada ejercicio existe y no está
- * archivado antes de tocar la plantilla: una línea que apunta a nada rompería el histórico
- * en cuanto se desplegase en un entreno.
- */
+
 public final class SetWorkoutPlanCommandHandler
     implements CommandHandler<SetWorkoutPlanCommand, Result<WorkoutDto>> {
 

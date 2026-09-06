@@ -33,11 +33,7 @@ class HttpApiIT {
     private static HttpClient client;
     private static String base;
 
-    /**
-     * Base de datos nueva por test. Archivar no borra, asi que un catalogo compartido
-     * arrastraria los nombres de un test al siguiente: el indice unico de exercises.name
-     * cubre tambien los archivados, y eso es deliberado.
-     */
+    
     @BeforeEach
     void startServer() throws IOException {
         application = TrainingApplication

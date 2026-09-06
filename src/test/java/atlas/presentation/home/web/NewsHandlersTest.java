@@ -38,11 +38,7 @@ class NewsHandlersTest {
             .extracting(NewsItem::title).containsExactly("Rust 1.9");
     }
 
-    /**
-     * Antes el handler se traia las ocho fuentes en fila cuando la cache caducaba, asi que una
-     * peticion de cada media hora se quedaba colgada hasta un minuto. Ahora nunca sale a la red:
-     * si todavia no ha refrescado, contesta vacio y al momento.
-     */
+    
     @Test
     void answersFromTheCacheWithoutReachingTheNetwork() {
         try (var news = new NewsHandlers()) {

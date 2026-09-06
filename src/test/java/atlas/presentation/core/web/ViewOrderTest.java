@@ -8,11 +8,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
-/**
- * Las pestañas viven en `app.html` y el orden en que las recorre el gesto de deslizar vive en la
- * constante `VIEWS` de `app.js`. Nada en el compilador une las dos mitades, así que este test las
- * cose: una pestaña que falte en `VIEWS` se ve y se puede pulsar, pero el gesto no llega a ella.
- */
+
 class ViewOrderTest {
 
     private static final Pattern NAV_TAB = Pattern.compile("data-view=\"([a-z]+)\"");

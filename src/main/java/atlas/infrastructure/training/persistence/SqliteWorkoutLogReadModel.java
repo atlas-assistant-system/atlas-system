@@ -12,11 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Lee los entrenos con sus series en dos consultas y las une en memoria, en vez de una por
- * entreno. Un mes de entrenos son decenas de filas de cabecera y cientos de series: cabe de
- * sobra, y evita el N+1 que tendria pedir las series log a log.
- */
+
 public final class SqliteWorkoutLogReadModel implements WorkoutLogReadModel {
 
     private static final String BY_ID = "SELECT * FROM workout_logs WHERE id = ?";

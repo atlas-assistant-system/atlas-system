@@ -15,11 +15,7 @@ class WebAssetsTest {
     private static final List<String> EXTERNAL_HOSTS = List.of(
         "cdn.jsdelivr.net", "storage.googleapis.com", "unpkg.com", "cdnjs.cloudflare.com");
 
-    /**
-     * Un espejo colgado en la pared no puede depender de un tercero para arrancar: sin red, una
-     * sola de estas URLs deja la pantalla sin modelos, sin gestos y sin forma de autenticarse.
-     * Los ficheros los baja el build y los sirve Atlas desde {@code /vendor}.
-     */
+    
     @Test
     void shouldNotLoadAnythingFromOutsideAtlas() throws IOException {
         try (Stream<Path> files = Files.walk(RESOURCES)) {
@@ -35,11 +31,7 @@ class WebAssetsTest {
         }
     }
 
-    /**
-     * Las paginas de Swagger quedan fuera a proposito: son documentacion de la API que se abre
-     * desde un portatil, no forman parte del arranque del espejo y su CDN caido no impide
-     * autenticarse ni ver la hora. Todo lo que si pinta la pantalla entra.
-     */
+    
     private static boolean isWebAsset(Path file) {
         var name = file.getFileName().toString();
         if (name.equals("swagger.html")) {

@@ -7,17 +7,12 @@ import atlas.domain.training.TrainingErrors;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * Lo que cuesta una serie, medido de las cuatro únicas formas en que se mide entrenar:
- * carga, repeticiones, tiempo y distancia. Un press de banca es carga y reps, una plancha
- * son segundos, correr son metros. La medida que cuenta para progresar la decide el
- * ejercicio a través de su {@code Metric}, no esta clase.
- */
+
 public record Effort(int loadGrams, int reps, int seconds, int meters) implements ValueObject {
 
     public static final Effort NONE = new Effort(0, 0, 0, 0);
 
-    /** 500 kg. No es un límite fisiológico: atrapa el 72,5 tecleado como 725. */
+    
     public static final int MAX_LOAD_GRAMS = 500_000;
 
     private static final BigDecimal MAX_KILOGRAMS = BigDecimal.valueOf(MAX_LOAD_GRAMS, 3);
@@ -57,7 +52,7 @@ public record Effort(int loadGrams, int reps, int seconds, int meters) implement
         return create(grams.intValueExact(), reps, seconds, meters);
     }
 
-    /** La carga de vuelta en kilos, como la espera quien lee la API. */
+    
     public BigDecimal loadKilograms() {
         return BigDecimal.valueOf(loadGrams, GRAM_SCALE);
     }

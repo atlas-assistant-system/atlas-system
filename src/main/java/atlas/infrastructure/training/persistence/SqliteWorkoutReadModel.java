@@ -8,10 +8,7 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * La plantilla se lee con sus lineas, y quien sabe montarlas es el repositorio. Delegar
- * evita tener el mismo SELECT de workout_exercises escrito en dos sitios.
- */
+
 public final class SqliteWorkoutReadModel implements WorkoutReadModel {
 
     private final SqliteWorkoutRepository workouts;

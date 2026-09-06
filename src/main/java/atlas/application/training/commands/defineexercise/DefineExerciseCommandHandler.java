@@ -52,16 +52,7 @@ public final class DefineExerciseCommandHandler
         });
     }
 
-    /**
-     * Archivar no borra y el nombre sigue cogido, que es lo que mantiene unido el histórico.
-     * Pero entonces volver a darlo de alta no puede ser un callejón sin salida: si el que
-     * tiene el nombre está archivado, definirlo otra vez lo recupera con su id y sus series
-     * detrás, en vez de rebotar con un nombre que ya no se ve en ninguna lista.
-     *
-     * <p>
-     * Con otra métrica no: la de un ejercicio es inmutable porque cambiarla cambiaría el
-     * significado de lo ya registrado. Ahí sí es un conflicto, y con su propio mensaje.
-     */
+    
     private static Result<ExerciseDto> bringBack(
         Exercise sameName, DefineExerciseCommand command, ExerciseRepository exercises,
         Instant now) {

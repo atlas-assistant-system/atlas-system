@@ -7,7 +7,7 @@ import java.time.Clock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/** Mete en data/economy.db el extracto del banco exportado a CSV. No hace nada si ya hay movimientos. */
+
 public final class EconomyImporter {
 
     private EconomyImporter() {}

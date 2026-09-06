@@ -18,14 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-/**
- * Lo que de verdad hiciste un día. Al empezar desde una plantilla, las series previstas se
- * copian aquí y se congelan: editar la plantilla después no reescribe el pasado.
- *
- * <p>
- * No hay máquina de estados. Un log existe, tiene fecha y se le rellenan o corrigen
- * series; no hay nada que cerrar. Si entrenas mañana y tarde son dos logs del mismo día.
- */
+
 public final class WorkoutLog extends AggregateRoot<WorkoutLogId> {
 
     private final List<SetLog> sets = new ArrayList<>();
@@ -46,10 +39,7 @@ public final class WorkoutLog extends AggregateRoot<WorkoutLogId> {
         this.sets.addAll(ObjectGuard.notNull(sets, "sets"));
     }
 
-    /**
-     * El guion llega ya desplegado desde {@code Workout.expand()}; los ids de las series
-     * los pone quien llama, para que el dominio no dependa de la aleatoriedad.
-     */
+    
     public static Result<WorkoutLog> start(
         WorkoutLogId id,
         Optional<WorkoutId> workoutId,
@@ -87,7 +77,7 @@ public final class WorkoutLog extends AggregateRoot<WorkoutLogId> {
         return new WorkoutLog(id, workoutId, performedOn, startedAt, sets);
     }
 
-    /** Rellena o corrige lo realmente levantado. El plan congelado no se toca. */
+    
     public Result<Void> recordSet(SetLogId setId, Effort actual, Instant now) {
         if (actual.isZero()) {
             return Result.failure(WorkoutLogErrors.SET_MEASURES_NOTHING);
@@ -104,7 +94,7 @@ public final class WorkoutLog extends AggregateRoot<WorkoutLogId> {
         return Result.success();
     }
 
-    /** Una serie fuera del guion: no tiene previsto contra el que compararse. */
+    
     public Result<Void> addSet(SetLogId setId, ExerciseId exerciseId, Effort actual, Instant now) {
         if (actual.isZero()) {
             return Result.failure(WorkoutLogErrors.SET_MEASURES_NOTHING);

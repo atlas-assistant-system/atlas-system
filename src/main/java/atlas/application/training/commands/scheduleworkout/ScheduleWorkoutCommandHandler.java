@@ -8,7 +8,7 @@ import atlas.domain.sharedkernel.results.Result;
 import atlas.domain.training.WorkoutErrors;
 import java.time.Clock;
 
-/** Fija en qué días de la semana toca una plantilla: "Empuje los lunes y los jueves". */
+
 public final class ScheduleWorkoutCommandHandler
     implements CommandHandler<ScheduleWorkoutCommand, Result<WorkoutDto>> {
 

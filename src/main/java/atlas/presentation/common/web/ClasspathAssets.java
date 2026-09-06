@@ -7,18 +7,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-/**
- * Sirve ficheros binarios del classpath: los modelos de Human, el runtime de MediaPipe y el
- * reconocedor de gestos. {@link StaticResources} no vale para esto porque lee a {@code String} en
- * UTF-8, y aqui hay {@code .wasm} y {@code .bin} de hasta doce megas.
- *
- * <p>
- * El cuerpo va en trozos y sin pasar por memoria entera: el espejo arranca con 96 MB de heap y un
- * solo {@code byte[]} del wasm se comeria un octavo.
- */
+
 public final class ClasspathAssets implements HttpHandler {
 
-    /** Clavados a una version en el build, asi que nunca cambian bajo la misma URL. */
+    
     public static final String CACHE_FOREVER = "public, max-age=31536000, immutable";
 
     private static final Pattern SAFE_PATH = Pattern.compile("(/[A-Za-z0-9._-]+)+");
@@ -39,10 +31,7 @@ public final class ClasspathAssets implements HttpHandler {
         this.root = root;
     }
 
-    /**
-     * El punto en el nombre esta permitido pero {@code ..} no: sin esa comprobacion, un
-     * {@code /vendor/../../etc} se convertiria en cualquier recurso del jar.
-     */
+    
     static Optional<String> resolve(String prefix, String root, String path) {
         if (!path.startsWith(prefix)) {
             return Optional.empty();

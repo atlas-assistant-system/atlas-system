@@ -143,11 +143,7 @@ class ApplicationIT {
         }
     }
 
-    /**
-     * Un espejo colgado en la pared tiene que arrancar sin internet. Si algun dia vuelve a
-     * colarse una URL de un CDN en las paginas, esto lo caza antes de que el fallo sea "no se
-     * puede autenticar y no se sabe por que".
-     */
+    
     @Test
     void shouldServeEveryVisionAssetFromAtlasItself() throws Exception {
         var settings = new PresenceSettings(

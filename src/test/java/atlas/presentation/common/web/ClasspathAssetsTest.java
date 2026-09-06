@@ -33,7 +33,7 @@ class ClasspathAssetsTest {
             .isEmpty();
     }
 
-    /** El navegador rechaza un .wasm servido como octet-stream al instanciarlo por streaming. */
+    
     @Test
     void namesTheContentTypeThatEachRuntimeNeeds() {
         assertThat(ClasspathAssets.contentTypeOf("/a/vision.wasm")).isEqualTo("application/wasm");

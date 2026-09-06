@@ -23,11 +23,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Las líneas del plan se persisten como en {@code appointments}: al actualizar la raíz se
- * borran sus hijos y se reinsertan. Es una transacción sobre una tabla local con decenas de
- * filas; diffear la colección sería más código para ahorrar una escritura que no duele.
- */
+
 public final class SqliteWorkoutRepository extends AbstractSqlRepository<Workout, WorkoutId>
     implements WorkoutRepository {
 
@@ -107,7 +103,7 @@ public final class SqliteWorkoutRepository extends AbstractSqlRepository<Workout
         return id.value();
     }
 
-    /** Los días se guardan por nombre y separados por comas, igual que en {@code routines}. */
+    
     private static String writeDays(Set<DayOfWeek> days) {
         return days.stream().sorted().map(DayOfWeek::name).collect(Collectors.joining(","));
     }

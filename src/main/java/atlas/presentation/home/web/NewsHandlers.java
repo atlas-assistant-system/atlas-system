@@ -32,12 +32,7 @@ public final class NewsHandlers implements AutoCloseable {
 
     private ScheduledExecutorService scheduler;
 
-    /**
-     * Ocho temas por dos peticiones cada uno, con cinco segundos de espera de lectura, es hasta
-     * un minuto largo de red. Hacerlo dentro del handler dejaba una peticion del espejo colgada
-     * cada media hora y encolaba detras a las demas, asi que se refresca aparte y la vista lee
-     * siempre lo ya guardado, aunque sea de hace un rato.
-     */
+    
     public void start() {
         scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
             var thread = new Thread(runnable, "news-refresher");
@@ -65,10 +60,7 @@ public final class NewsHandlers implements AutoCloseable {
         return HttpResponse.ok(Json.write(response));
     }
 
-    /**
-     * Los ocho temas a la vez: son ocho esperas de red independientes, y en fila costaban la suma
-     * en vez del maximo. Un tema que falle vuelve vacio y no se lleva por delante a los demas.
-     */
+    
     void refresh() {
         var items = new ArrayList<NewsItem>();
         try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -85,7 +77,6 @@ public final class NewsHandlers implements AutoCloseable {
             }
         }
 
-        // Sin red se conserva lo anterior: un titular de ayer dice mas que un hueco vacio.
         if (!items.isEmpty()) {
             cached = List.copyOf(items);
         }
@@ -104,11 +95,7 @@ public final class NewsHandlers implements AutoCloseable {
         return match.find() ? decode(match.group(1)) : "";
     }
 
-    /**
-     * Las ediciones del archivo, de la más reciente a la más antigua. La pantalla necesita varias
-     * por tema para llenar la columna: con dos temas elegidos caben muchas más de cada uno que con
-     * seis, y una sola por tema dejaba el hueco a medias.
-     */
+    
     static List<NewsItem> archiveIssues(NewsCategory category, String html) {
         var pattern = Pattern.compile(
             "<a href=\"/" + Pattern.quote(category.slug())
@@ -139,7 +126,7 @@ public final class NewsHandlers implements AutoCloseable {
             .replace("&#39;", "'");
     }
 
-    /** La edición viva primero y detrás las del archivo, sin repetir la del mismo día. */
+    
     private static List<NewsItem> fetch(NewsCategory category) {
         var issues = new ArrayList<NewsItem>();
         latestIssue(category).ifPresent(issues::add);

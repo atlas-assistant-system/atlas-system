@@ -27,12 +27,12 @@ public final class SetLog extends Entity<SetLogId> {
         this.actual = ObjectGuard.notNull(actual, "actual");
     }
 
-    /** Solo lo llama WorkoutLog: los cambios de una serie pasan por la raíz. */
+    
     public void record(Effort effort) {
         this.actual = Optional.of(effort);
     }
 
-    /** Solo lo llama WorkoutLog al cerrar el hueco que deja una serie borrada. */
+    
     public void moveTo(int newPosition) {
         this.position = newPosition;
     }

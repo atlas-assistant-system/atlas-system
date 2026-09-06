@@ -21,15 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/**
- * Traduce el extracto de CaixaBank exportado a CSV en comandos de registro.
- *
- * <p>
- * El extracto no trae la categoria de gasto: sus columnas de concepto son los codigos AEB/CSB-43
- * del tipo de operacion (12 tarjeta, 04 transferencia, 02 recibo), y 166 de 231 movimientos comparten
- * el mismo. La categoria se deduce del comercio y lo que no casa cae en OTHER para recategorizar
- * desde la interfaz.
- */
+
 public final class BankStatementDeserializer {
 
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/uuuu");

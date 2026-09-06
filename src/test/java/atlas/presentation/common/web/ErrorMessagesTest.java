@@ -12,14 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
-/**
- * El catálogo de errores vive en Java y su traducción en `web-shared/error-messages.js`. Nada
- * en el compilador une las dos mitades, así que este test las cose: un código nuevo sin mensaje
- * se vería en el espejo como "No se pudo completar la operación."
- *
- * Solo se comprueban los códigos literales. Los que `CommonErrors` compone al vuelo
- * (`entityName + ".NotFound"`) no se pueden leer del código fuente.
- */
+
 class ErrorMessagesTest {
 
     private static final Path SOURCES = Path.of("src", "main", "java");

@@ -8,11 +8,7 @@ import atlas.presentation.training.web.Values;
 import java.util.List;
 import java.util.Map;
 
-/**
- * La traduccion de JSON a comandos. Un solo sitio para los seis cuerpos que acepta el
- * contexto: son variaciones de las mismas cuatro medidas y separarlos en seis records de
- * cuatro lineas seria mas ficheros para el mismo trabajo.
- */
+
 public final class TrainingRequests {
 
     private TrainingRequests() {}

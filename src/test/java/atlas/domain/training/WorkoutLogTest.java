@@ -213,7 +213,7 @@ class WorkoutLogTest {
         return WorkoutLog.start(ID, Optional.of(WORKOUT), plan, ids(), TODAY, TODAY, NOW).value();
     }
 
-    /** Ids deterministas: los tests no dependen de la aleatoriedad de UUID. */
+    
     private static Supplier<SetLogId> ids() {
         var counter = new AtomicLong();
 
