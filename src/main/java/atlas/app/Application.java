@@ -106,6 +106,7 @@ public final class Application {
 
         appointments.startBackgroundTasks();
         presence.startBackgroundTasks();
+        home.startBackgroundTasks();
 
         return this;
     }

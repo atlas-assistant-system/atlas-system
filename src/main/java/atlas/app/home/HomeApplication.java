@@ -34,16 +34,19 @@ public final class HomeApplication {
     private final SimpleQueryBus queries;
     private final Router router;
     private final Connection connection;
+    private final NewsHandlers news;
 
     private HomeApplication(
         SimpleCommandBus commands,
         SimpleQueryBus queries,
         Router router,
-        Connection connection) {
+        Connection connection,
+        NewsHandlers news) {
         this.commands = commands;
         this.queries = queries;
         this.router = router;
         this.connection = connection;
+        this.news = news;
     }
 
     public static HomeApplication wire(
@@ -71,7 +74,9 @@ public final class HomeApplication {
         var handlers = new HomeHandlers(commands, queries, profileId -> maintenanceMode
             || activeProfileId.get().map(profileId.value()::equals).orElse(false));
 
-        return new HomeApplication(commands, queries, routes(handlers), connection);
+        var news = new NewsHandlers();
+
+        return new HomeApplication(commands, queries, routes(handlers, news), connection, news);
     }
 
     public Router router() {
@@ -86,7 +91,12 @@ public final class HomeApplication {
         return queries;
     }
 
+    public void startBackgroundTasks() {
+        news.start();
+    }
+
     public void stop() {
+        news.close();
         try {
             connection.close();
         } catch (SQLException exception) {
@@ -94,13 +104,13 @@ public final class HomeApplication {
         }
     }
 
-    private static Router routes(HomeHandlers handlers) {
+    private static Router routes(HomeHandlers handlers, NewsHandlers news) {
         return Router.builder()
             .mount(Routes.at("/home/profiles")
                 .get("/{profileId}", handlers::get)
                 .put("/{profileId}", handlers::configure))
             .mount(Routes.at("/news")
-                .get("/", NewsHandlers::latest))
+                .get("/", news::latest))
             .build();
     }
 }

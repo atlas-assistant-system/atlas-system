@@ -9,37 +9,53 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-public final class NewsHandlers {
+public final class NewsHandlers implements AutoCloseable {
 
-    private static final Duration CACHE_TIME = Duration.ofMinutes(30);
+    public static final Duration REFRESH_EVERY = Duration.ofMinutes(30);
+
     private static final Pattern TITLE = Pattern.compile("<meta property=\"og:title\" content=\"([^\"]+)\"");
     private static final List<NewsCategory> SOURCES = List.of(NewsCategory.values());
     private static final int ISSUES_PER_CATEGORY = 8;
+    private static final System.Logger LOG = System.getLogger("home.news");
 
-    private static List<NewsItem> cached = List.of();
-    private static Instant expiresAt = Instant.EPOCH;
+    private volatile List<NewsItem> cached = List.of();
 
-    private NewsHandlers() {}
+    private ScheduledExecutorService scheduler;
 
-    public static synchronized HttpResponse latest(HttpRequest request) {
-        if (Instant.now().isAfter(expiresAt)) {
-            var items = new ArrayList<NewsItem>();
-            for (var category : SOURCES) {
-                items.addAll(fetch(category));
-            }
-            if (!items.isEmpty()) {
-                cached = List.copyOf(items);
-            }
-            expiresAt = Instant.now().plus(CACHE_TIME);
+    /**
+     * Ocho temas por dos peticiones cada uno, con cinco segundos de espera de lectura, es hasta
+     * un minuto largo de red. Hacerlo dentro del handler dejaba una peticion del espejo colgada
+     * cada media hora y encolaba detras a las demas, asi que se refresca aparte y la vista lee
+     * siempre lo ya guardado, aunque sea de hace un rato.
+     */
+    public void start() {
+        scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            var thread = new Thread(runnable, "news-refresher");
+            thread.setDaemon(true);
+            return thread;
+        });
+        scheduler.scheduleAtFixedRate(
+            this::refreshSafely, 0, REFRESH_EVERY.toMinutes(), TimeUnit.MINUTES);
+    }
+
+    @Override
+    public void close() {
+        if (scheduler != null) {
+            scheduler.shutdownNow();
         }
+    }
 
+    public HttpResponse latest(HttpRequest request) {
         var selected = Values.categories(request.queryParam("categories").orElse(null));
         var response = cached.stream()
             .filter(item -> selected.contains(item.category()))
@@ -47,6 +63,40 @@ public final class NewsHandlers {
             .toList();
 
         return HttpResponse.ok(Json.write(response));
+    }
+
+    /**
+     * Los ocho temas a la vez: son ocho esperas de red independientes, y en fila costaban la suma
+     * en vez del maximo. Un tema que falle vuelve vacio y no se lleva por delante a los demas.
+     */
+    void refresh() {
+        var items = new ArrayList<NewsItem>();
+        try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
+            var pending = SOURCES.stream().map(category -> pool.submit(() -> fetch(category))).toList();
+            for (var issues : pending) {
+                try {
+                    items.addAll(issues.get());
+                } catch (ExecutionException exception) {
+                    LOG.log(System.Logger.Level.WARNING, "A news source failed.", exception.getCause());
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+
+        // Sin red se conserva lo anterior: un titular de ayer dice mas que un hueco vacio.
+        if (!items.isEmpty()) {
+            cached = List.copyOf(items);
+        }
+    }
+
+    private void refreshSafely() {
+        try {
+            refresh();
+        } catch (RuntimeException exception) {
+            LOG.log(System.Logger.Level.ERROR, "News refresh failed.", exception);
+        }
     }
 
     static String extractTitle(String html) {

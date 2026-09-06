@@ -3,6 +3,8 @@ package atlas.presentation.home.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import atlas.domain.home.enums.NewsCategory;
+import atlas.presentation.sharedkernel.http.HttpRequest;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 class NewsHandlersTest {
@@ -34,6 +36,24 @@ class NewsHandlersTest {
 
         assertThat(NewsHandlers.archiveIssues(NewsCategory.DEVELOPMENT, html))
             .extracting(NewsItem::title).containsExactly("Rust 1.9");
+    }
+
+    /**
+     * Antes el handler se traia las ocho fuentes en fila cuando la cache caducaba, asi que una
+     * peticion de cada media hora se quedaba colgada hasta un minuto. Ahora nunca sale a la red:
+     * si todavia no ha refrescado, contesta vacio y al momento.
+     */
+    @Test
+    void answersFromTheCacheWithoutReachingTheNetwork() {
+        try (var news = new NewsHandlers()) {
+            var started = System.nanoTime();
+            var response = news.latest(HttpRequest.of("GET", "/news"));
+            var elapsed = Duration.ofNanos(System.nanoTime() - started);
+
+            assertThat(response.status()).isEqualTo(200);
+            assertThat(response.body()).isEqualTo("[]");
+            assertThat(elapsed).isLessThan(Duration.ofSeconds(1));
+        }
     }
 
     @Test
