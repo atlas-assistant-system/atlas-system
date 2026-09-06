@@ -255,6 +255,12 @@ function setMirrorMode(active) {
         AtlasInteraction.status('El modo espejo necesita sesion abierta.');
         return;
     }
+    // Solo al cambiar de verdad: `setAuthenticated(false)` apaga el modo espejo en cada sondeo
+    // de sesion, cada dos segundos, y sin esto el espejo se pasaba el rato bloqueado anunciando
+    // que acababa de salir de un modo en el que no estaba.
+    if (active === state.mirrorMode) {
+        return;
+    }
     AtlasInteraction.status(active ? 'Modo espejo' : 'Modo espejo desactivado');
     state.mirrorMode = active;
     document.body.classList.toggle('mirror-only', active);
