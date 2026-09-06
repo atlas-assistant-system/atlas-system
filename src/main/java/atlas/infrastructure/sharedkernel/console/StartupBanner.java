@@ -87,8 +87,6 @@ public final class StartupBanner {
             banner.append(paint(row, color)).append(System.lineSeparator());
         }
 
-        // Los datos van en un bloque aireado: una linea en blanco los separa del wordmark de
-        // arriba y otra del filete de abajo, para que no parezcan pegados al marco.
         if (!entries.isEmpty()) {
             banner.append(System.lineSeparator());
             for (var entry : entries) {

@@ -45,8 +45,6 @@ public record Effort(int loadGrams, int reps, int seconds, int meters) implement
     public static Result<Effort> ofKilograms(
         BigDecimal kilograms, int reps, int seconds, int meters) {
 
-        // El límite se comprueba antes de escalar: un BigDecimal con exponente enorme
-        // materializaría mil millones de dígitos en el setScale y nunca llegaría al guard.
         if (kilograms == null
             || kilograms.signum() < 0
             || kilograms.compareTo(MAX_KILOGRAMS) > 0) {

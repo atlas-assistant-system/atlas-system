@@ -5,7 +5,6 @@ const {
     ENROLLMENT_POSES, ENROLLMENT_HOLD_FRAMES, ENROLLMENT_FRONT_FRAMES,
     sleep, faceResultIsRecent, showEnrollmentStep, enrollmentPoseFeedback,
 } = AtlasEnrollment;
-// ponytail: pinned CDN keeps this UI adapter small; serve the same assets locally for offline deployment.
 const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
 const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs';
 const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';

@@ -1,5 +1,3 @@
-// Una frase al día, elegida por la fecha y no al azar: si dependiera del azar, recargar la
-// página te daría otra, y entonces no sería la frase del día. Solo dominio público.
 const AtlasQuotes = (() => {
     const QUOTES = [
         'No es que tengamos poco tiempo, es que perdemos mucho. — Séneca',
@@ -69,7 +67,6 @@ const AtlasQuotes = (() => {
         'Todo fluye. — Heráclito',
     ];
 
-    // Días desde la época contados en local: la frase cambia a medianoche de aquí, no de UTC.
     function today(now = new Date()) {
         const day = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000;
 

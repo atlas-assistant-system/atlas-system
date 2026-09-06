@@ -4,7 +4,6 @@ const AtlasInteraction = (() => {
     const INTERACTIVE = 'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), '
         + 'select:not(:disabled), label:has(input:not(:disabled)), .clickable, .day, .item';
     const VOICE_LANGUAGE = 'es-ES';
-    // ponytail: radio e histéresis calibrados a ojo con la mano puesta; son constantes, no verdades.
     const MAGNET_RADIUS = 120;
     const HYSTERESIS = 0.75;
     const ADJUST_WINDOW_MS = 700;
@@ -39,7 +38,6 @@ const AtlasInteraction = (() => {
         });
     }
 
-    // El puntero se mueve cada frame: si sus mutaciones invalidasen la caché, no habría caché.
     function isChrome(node) {
         const element = node instanceof Element ? node : node.parentElement;
         return Boolean(element?.closest('#gesture-pointer, #interaction-status'));
@@ -214,8 +212,6 @@ const AtlasInteraction = (() => {
             }
             return;
         }
-        // Pulgar abajo y no el puño: el puño es el desafío de vida de la autenticación, y el
-        // mismo gesto no puede significar "demuéstrame que estás vivo" y "quítalo todo".
         if (type === 'THUMBS_DOWN') {
             config.toggleMirror();
             return;
@@ -234,7 +230,6 @@ const AtlasInteraction = (() => {
             startVoiceInput(null);
             return;
         }
-        // Una etiqueta puede envolver el campo: dictar es lo que se espera al tocar el texto.
         const field = isTextField(target) ? target
             : target instanceof HTMLLabelElement && isTextField(target.control) ? target.control
                 : null;
@@ -271,7 +266,6 @@ const AtlasInteraction = (() => {
         return true;
     }
 
-    // 70 kg no pueden ser 70 gestos: repetir el mismo empujón acelera el paso.
     function adjustmentSteps(type) {
         const now = performance.now();
         if (adjustment.type !== type || now - adjustment.at > ADJUST_WINDOW_MS) {
@@ -411,8 +405,6 @@ const AtlasInteraction = (() => {
         startVoiceInput(target);
     }
 
-    // Sin campo de texto delante, lo dicho manda sobre la pantalla: un número al control
-    // enfocado, o el nombre de cualquier cosa que se vea.
     function obeyCommand(transcript) {
         const focused = document.activeElement;
         const number = parseSpokenNumber(transcript);
@@ -539,7 +531,6 @@ const AtlasInteraction = (() => {
     }
 
     function appendDictation(target, transcript) {
-        // La primera dictada sobre un campo sustituye; corregir no puede exigir borrar letra a letra.
         if (dictationTarget !== target) {
             dictationTarget = target;
             target.value = '';

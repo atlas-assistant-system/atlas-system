@@ -86,8 +86,6 @@ const AtlasGestures = (() => {
     }
 
     function directionMetrics(points) {
-        // dx va del dedo hacia la palma a proposito: el video se muestra en espejo (scaleX(-1)),
-        // asi que la izquierda del usuario es la derecha de la imagen cruda.
         const indexBase = pointCoordinates(points[5]);
         const middleBase = pointCoordinates(points[9]);
         const indexTip = pointCoordinates(points[8]);

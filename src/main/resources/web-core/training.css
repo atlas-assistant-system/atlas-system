@@ -1,11 +1,3 @@
-/*
- * Entrenamiento. Lo de hoy manda: la lista de series ocupa la columna ancha y se rellena
- * tocandola. El catalogo y las plantillas se configuran un domingo, no durante el entreno,
- * asi que van plegados en la columna estrecha y no compiten por el sitio.
- *
- * Sin acento propio: el verde decia "hecho" y en el resto del espejo eso ya se dice con
- * blanco lleno contra blanco apagado, que es lo que hace un espejo.
- */
 .training-view {
     --training-pending: var(--ink-faint);
 }
@@ -43,7 +35,6 @@
     font-size: 1rem;
 }
 
-/* --- Las series de hoy --- */
 
 .training-sets {
     list-style: none;
@@ -87,8 +78,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Pendiente: se ve lo que toca, apagado, para que la vista sea el guion del entreno.
-   Hecha: blanco lleno. Es toda la diferencia y se lee desde la esterilla. */
 .training-set[data-state="PENDING"] .training-set-effort {
     color: var(--training-pending);
 }
@@ -98,7 +87,6 @@
     font-weight: 600;
 }
 
-/* La siguiente pendiente es la unica que destaca: es donde estas. */
 .training-set[data-next="true"] {
     background: rgba(255, 255, 255, 0.06);
     border-radius: 0.35rem;
@@ -115,7 +103,6 @@
     gap: 0.4rem;
 }
 
-/* --- La referencia de la ultima vez --- */
 
 .training-reference {
     color: var(--ink-faint);
@@ -123,7 +110,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* --- Formularios --- */
 
 .training-form {
     display: flex;
@@ -153,7 +139,6 @@
     overflow-y: auto;
 }
 
-/* --- Listas laterales --- */
 
 .training-list {
     list-style: none;
@@ -196,7 +181,6 @@
     margin-bottom: 1rem;
 }
 
-/* Lo que toca hoy: el boton que el espejo quiere que pulses. */
 .training-start button[data-today="true"] {
     background: var(--ink);
     color: #000;
@@ -207,7 +191,6 @@
     background: var(--ink-dim);
 }
 
-/* --- El editor de una rutina --- */
 
 .training-editor {
     margin-top: 1rem;
@@ -215,7 +198,6 @@
     border-top: 1px solid var(--hairline);
 }
 
-/* La rutina que se esta editando: sin esto no se sabe de quien es el plan de abajo. */
 .training-item[data-editing="true"] .training-item-name {
     font-weight: 600;
     text-decoration: underline;

@@ -118,7 +118,6 @@ public final class NewsHandlers {
                 connection.disconnect();
             }
         } catch (IOException exception) {
-            // No pasa nada: el archivo se pide igual justo despues y trae tambien la de hoy.
             return Optional.empty();
         }
     }

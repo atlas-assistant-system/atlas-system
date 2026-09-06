@@ -67,7 +67,6 @@ public record FaceDescriptor(ModelVersion modelVersion, float[] values) implemen
             return SimilarityScore.of(1.0);
         }
 
-        // Human 3.3.6 normalizes Euclidean descriptor distance into its public similarity score.
         var distance = Math.round(100.0 * 25.0 * squaredDistance) / 100.0;
         var normalized = (1.0 - Math.sqrt(distance) / 100.0 - 0.2) / (0.8 - 0.2);
         var score = Math.round(100.0 * Math.clamp(normalized, 0.0, 1.0)) / 100.0;

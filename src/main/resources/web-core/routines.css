@@ -1,8 +1,3 @@
-/*
- * Lo de hoy manda y va a todo el ancho: "que me queda por hacer" es la pregunta con la que
- * uno se para delante del espejo. Definir una rutina y repasar el catalogo son cosas de un
- * domingo, asi que se reparten las dos columnas de abajo.
- */
 .routines-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(20rem, 1fr);
@@ -13,7 +8,6 @@
     grid-column: 1 / -1;
 }
 
-/* Las de hoy se leen de pie: nombre grande y cuota al lado, no en la otra punta. */
 .routines-today .routines-card-name {
     font-size: 1.6rem;
 }
@@ -73,16 +67,12 @@
     border-bottom: 1px solid var(--hairline);
 }
 
-/* Nombre y cuota juntos: "Leer · 1/2" es una sola frase y antes estaba partida de punta a
-   punta de la tarjeta, con las acciones en medio. */
 .routines-card-head {
     display: flex;
     align-items: baseline;
     gap: 1rem;
 }
 
-/* Con "Hoy" a todo el ancho, un `space-between` mandaba la cuota a 800 px del nombre y
-   volvia a partir la frase. La columna tiene un tope y las acciones se quedan a la derecha. */
 .routines-today .routines-card-main {
     flex: 0 1 40rem;
 }
@@ -115,7 +105,6 @@
     line-height: 1.5;
 }
 
-/* La racha es el motivo por el que uno vuelve mañana; estaba pintada como metadato. */
 .routines-streak {
     color: var(--ink-dim);
     font-size: 1rem;
@@ -249,8 +238,6 @@
     border-bottom-color: var(--danger);
 }
 
-/* Una letra dentro de una pildora queda descentrada: para un toggle de "L" el circulo es
-   la forma, y ademas es un objetivo de tamaño fijo para apuntar con la mano. */
 .routines-weekdays label {
     border-radius: 50%;
     gap: 0;
@@ -259,7 +246,6 @@
     padding: 0;
 }
 
-/* La casilla sobra: la propia ficha ya dice si esta marcada, igual que las radio de .chips. */
 .routines-weekdays input[type="checkbox"] {
     height: 0;
     opacity: 0;

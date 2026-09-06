@@ -379,7 +379,6 @@
         note: fields.note.value.trim(),
     }));
 
-    // Fijar el plan dos veces es redefinirlo: el comando archiva el anterior por su cuenta.
     onSubmit(planForm, fields => write('POST', '/nutrition/plan', {
         startWeight: weight(fields.startWeight.value),
         targetWeight: weight(fields.targetWeight.value),

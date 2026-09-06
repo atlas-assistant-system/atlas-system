@@ -15,7 +15,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class SqlitePresenceUnitOfWork extends AbstractUnitOfWork implements PresenceUnitOfWork {
 
     private final Connection connection;
-    // ponytail: one SQLite writer is serialized; add a connection pool only if measured throughput requires it.
     private final ReentrantLock transaction = new ReentrantLock();
     private final SqliteBiometricProfileRepository profiles;
     private final SqliteAuthenticationSessionRepository sessions;

@@ -91,8 +91,6 @@
         quota.className = entry.progress.met ? 'routines-quota met' : 'routines-quota';
         quota.textContent = quotaText(entry.progress);
 
-        // "Leer · 1/2" es una frase: el nombre y la cuota juntos, y la barra justo debajo.
-        // Antes la cuota estaba en la otra punta de la tarjeta y la barra caia la ultima.
         const head = document.createElement('div');
         head.className = 'routines-card-head';
         head.append(name, quota);
@@ -197,8 +195,6 @@
             ? 'Sin rutinas para hoy'
             : (met === entries.length ? 'Todo cumplido' : 'Cumplidas hoy');
 
-        // Por la mañana quedan rutinas por hacer y eso es lo normal; a las ocho de la tarde
-        // ya no. La urgencia es la hora, no el numero.
         window.markUrgent?.(summaryProgress, met < entries.length && new Date().getHours() >= 18);
 
         if (entries.length === 0) {

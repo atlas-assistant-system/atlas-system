@@ -64,9 +64,6 @@ class FaceMatcherTest {
 
     @Test
     void shouldSkipAnEnrolledTemplateFromAnotherModelVersionInsteadOfFailing() {
-        // 1:N identification compares against every enrolled profile at once; a profile still
-        // on a superseded model version is routine (it just needs re-enrollment), not corrupt
-        // data, so it must never take down matching for every other enrolled person.
         var foreign = FaceTemplate.create(
             templateId(2), FaceDescriptor.of(ANOTHER_MODEL, new float[]{1.0f, 0.0f}), CAPTURED_AT);
         var enrolled = List.of(foreign, template(1, 1.0f, 0.0f));

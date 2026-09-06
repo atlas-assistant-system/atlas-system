@@ -258,11 +258,6 @@
         return WEEKDAYS[(new Date().getDay() + 6) % 7].key;
     }
 
-    /*
-     * Lo que toca hoy va primero y marcado: si "Empuje" esta asignado al lunes, el lunes es
-     * lo que el espejo ofrece. Sigue siendo un boton, no una imposicion: entrenar otra cosa
-     * vale, y el cumplimiento no se mide aqui sino en rutinas.
-     */
     function renderStartBar(plans) {
         const day = today();
         const ordered = [...plans].sort(
@@ -356,7 +351,6 @@
         }));
     }
 
-    /* --- El editor de una rutina: sus dias de la semana y sus lineas --- */
 
     function planLines(workout) {
         return workout.plan.map(line => ({
@@ -468,7 +462,6 @@
         name: fields.name.value.trim(),
     }));
 
-    /* "Press de banca 4x12" es una linea: el ejercicio, cuantas series y que hay en cada una. */
     onSubmit(lineForm, fields => {
         const workout = workouts.get(editing);
 
@@ -484,10 +477,6 @@
         }]);
     });
 
-    /*
-     * Una serie del guion se rellena (PUT sobre su id); una fuera del guion se anade (POST).
-     * Es la misma pantalla porque para quien entrena es el mismo gesto.
-     */
     onSubmit(setForm, fields => {
         const effort = {
             load: load(fields.load.value),

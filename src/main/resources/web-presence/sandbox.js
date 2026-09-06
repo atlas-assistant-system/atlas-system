@@ -1910,8 +1910,6 @@ function drawVideoRegion(canvas, x, y, width, height) {
 }
 
 function handPoseSelfCheck() {
-    // Las poses las comprueba el propio módulo; aquí solo queda lo que es del sandbox: que el
-    // clasificador que las envuelve siga llamando OPEN_PALM a una palma abierta.
     AtlasGestures.selfCheck();
     const points = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }));
     [5, 9, 13, 17].forEach((base, index) => {

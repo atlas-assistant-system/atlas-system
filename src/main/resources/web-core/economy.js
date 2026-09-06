@@ -176,8 +176,6 @@
         ]);
         const byCategory = new Map(budgets.map(budget => [budget.category, budget]));
 
-        // Un presupuesto recien fijado no aparece en el desglose hasta que haya gasto: sin esta
-        // fila a cero, fijarlo no tendria efecto visible y parecería que no se ha guardado.
         const spent = new Set(spending.map(spend => spend.category));
         const rows = spending.concat(budgets
             .filter(budget => !spent.has(budget.category))
@@ -272,7 +270,6 @@
     }
 
     onSubmit(budgetForm, async fields => {
-        // Fijar dos veces la misma categoria es cambiarle el limite, no definir otro presupuesto.
         const budgets = await read('/economy/budgets');
         const existing = budgets.find(budget => budget.category === fields.category.value);
         const limit = amount(fields.limit.value);

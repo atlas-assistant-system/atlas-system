@@ -36,7 +36,6 @@ public final class RenameExerciseCommandHandler
                 return Result.failure(ExerciseErrors.notFound(command.exerciseId()));
             }
 
-            // Quedarse con el nombre propio no es un choque: el dueño del nombre es él mismo.
             var owner = exercises.findByName(nameResult.value());
             if (owner.isPresent() && !owner.get().id().equals(command.exerciseId())) {
                 return Result.failure(ExerciseErrors.NAME_ALREADY_TAKEN);

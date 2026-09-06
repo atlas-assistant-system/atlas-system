@@ -56,9 +56,7 @@ public final class SseClient implements AutoCloseable {
 
         try {
             output.close();
-        } catch (IOException | RuntimeException ignored) {
-            // Cerrar una conexion que el cliente ya solto no aporta nada nuevo.
-        }
+        } catch (IOException | RuntimeException ignored) {}
     }
 
     private void write(String frame) throws IOException {

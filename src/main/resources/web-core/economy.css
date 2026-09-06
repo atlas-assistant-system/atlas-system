@@ -1,11 +1,3 @@
-/*
- * Economia. El saldo manda y va a todo el ancho: es lo unico que se lee desde la puerta.
- * Los objetivos van pegados a el, porque un objetivo con fecha limite solo significa algo
- * al lado de lo que tienes. Debajo, en dos columnas, en que se va y que ha entrado.
- *
- * El color dice una sola cosa (--accent: te has pasado). Lo demas se dice con peso, no con
- * opacidad: sobre un fondo de camara en movimiento la opacidad no garantiza contraste.
- */
 .economy-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr);
@@ -33,8 +25,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Estar en numeros rojos se decia bajando la opacidad, o sea apagando el numero: lo
-   contrario de lo que tiene que pasar. Ahora lo subraya. */
 .economy-net.negative {
     border-bottom: 2px solid var(--accent);
     padding-bottom: 0.2rem;
@@ -56,8 +46,6 @@
     font-size: 1rem;
 }
 
-/* Los objetivos, al lado del saldo. Al fondo de la pestaña y a todo el ancho no los veia
-   nadie, y son justo lo que da sentido a la cifra de arriba. */
 .economy-goals-section {
     grid-column: 2;
     grid-row: 1;
@@ -118,10 +106,6 @@
     white-space: nowrap;
 }
 
-/*
- * Un ingreso y un gasto se distinguian por opacity .9 contra .6: a dos metros y sobre video
- * eso no es una distincion. Ahora el gasto es texto normal apagado y el ingreso pesa.
- */
 .economy-movement-amount {
     color: var(--ink-dim);
     font-variant-numeric: tabular-nums;

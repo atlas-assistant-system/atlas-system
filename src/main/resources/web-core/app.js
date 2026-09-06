@@ -1,8 +1,5 @@
 const state = {
     view: 'inicio',
-    // La semana por defecto: en la rejilla del mes cada cita cabe en una linea recortada que
-    // a dos metros no se lee. La semana tiene sitio de sobra en vertical y es el horizonte
-    // con el que uno se para delante del espejo. El mes sigue a un toque.
     period: 'WEEK',
     anchor: todayIso(),
     previousAnchor: null,
@@ -55,7 +52,6 @@ const enrollment = AtlasEnrollment.bind({
     faceStatus: (result, options) => faceStatus(result, options),
     center: { get: () => state.faceCenter, set: value => { state.faceCenter = value; } },
 });
-// ponytail: pinned CDN keeps face recognition out of the Agenda build; self-host it if offline use is required.
 const HUMAN_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/human@3.3.6/models/';
 const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs';
 const MEDIAPIPE_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';
@@ -241,9 +237,6 @@ async function detectFaces() {
     requestAnimationFrame(detectFaces);
 }
 
-// La sesion caduca sola al marcharte, asi que el estado bloqueado es donde el espejo pasa las
-// horas vacias: mirar el rostro aqui basta para dormir la pantalla. Cualquier rostro despierta,
-// sin exigir calidad: equivocarse durmiendo cuesta mas que equivocarse despertando.
 function trackPresence(result) {
     if (result?.face?.length) {
         state.lastFaceAt = performance.now();
@@ -255,13 +248,8 @@ function trackPresence(result) {
     }
 }
 
-// Un espejo y nada mas. Se entra con el pulgar hacia abajo o diciendo "modo espejo", y se sale
-// con lo mismo o con la palma abierta, que ya es el gesto de cancelar. Solo con sesion abierta:
-// bloqueado no hay nada que quitar y la pantalla es la de autenticarse.
 function setMirrorMode(active) {
     if (active && !state.authenticated) {
-        // El gesto se ha reconocido: decirlo evita quedarse haciendolo delante de un espejo
-        // que no responde.
         AtlasInteraction.status('El modo espejo necesita sesion abierta.');
         return;
     }
@@ -473,9 +461,6 @@ async function refreshWeather() {
         renderSkyIcon(data.current.weather_code);
         const sky = SKY[data.current.weather_code];
         const range = degrees(data.daily.temperature_2m_max[0]) + ' / ' + degrees(data.daily.temperature_2m_min[0]);
-        // Solo el municipio: el geocodificador añade provincia, comunidad y país detrás, y eso
-        // no cabe de ninguna manera. Lo que quede se corta con puntos suspensivos, nunca salta
-        // de línea (ver .weather-detail).
         const town = place.name.split(',')[0].trim();
         document.getElementById('weather-detail').textContent = (sky ? sky + ' · ' : '') + range + ' · ' + town;
         renderNextRain(nextRain(data.hourly, new Date()));
@@ -485,9 +470,6 @@ async function refreshWeather() {
     }
 }
 
-// En un espejo no cabe una tabla de 24 horas y nadie la leeria: lo unico que cambia lo que
-// haces al salir es cuando vuelve a llover. Open-Meteo devuelve las horas en la zona del
-// sitio (timezone=auto) y con el mismo formato que isoDateTime, asi que comparar cadenas basta.
 function nextRain(hourly, now) {
     const from = isoDateTime(now);
     const start = hourly?.time?.findIndex(time => time > from) ?? -1;
@@ -519,8 +501,6 @@ function renderNextRain(rain) {
     }
 }
 
-// Una columna por tema. Cada una se llena sola hasta el borde de abajo, asi que ya no hay que
-// intercalar ni repartir nada: son cajas independientes.
 function newsGroups(items) {
     const byCategory = new Map();
     for (const item of items) {
@@ -530,8 +510,6 @@ function newsGroups(items) {
     return byCategory;
 }
 
-// Llenar el hueco exacto: se pintan todos y se quita el ultimo mientras desborde. Medir es mas
-// fiable que un numero fijo, porque un titular ocupa una linea o dos segun lo largo que sea.
 function trimToFit(list) {
     while (list.lastElementChild && list.scrollHeight > list.clientHeight) {
         list.lastElementChild.remove();
@@ -600,7 +578,6 @@ function tickClock() {
     renderNextCountdown();
 }
 
-// El espejo ya sabe quien eres; sin nombre saluda igual, a la habitacion.
 function greeting(now, timeZone) {
     const hour = Number(new Intl.DateTimeFormat('es-ES', {
         hour: 'numeric', hourCycle: 'h23', timeZone,
@@ -1280,8 +1257,6 @@ function setAuthenticated(authenticated) {
     document.body.classList.toggle('locked', !authenticated);
 
     if (!authenticated) {
-        // Sin sesion el puno vuelve a ser el desafio de vida, asi que nadie podria salir del
-        // modo espejo: se sale solo al caducar.
         setMirrorMode(false);
         if (!state.authBusy) {
             state.faceCenter = null;
@@ -1763,8 +1738,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(id).addEventListener('change', scheduleAddHint);
     }
 
-    // Duracion y aviso van plegados: el titulo del desplegable dice lo que hay elegido, que
-    // si no, cerrado, mentiria en cuanto se cambiara cualquiera de los dos.
     const addForm = document.getElementById('add-form');
     const renderComposerSummary = () => {
         const chosen = name => addForm.querySelector(
@@ -1776,7 +1749,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? 'aviso ' + reminder.parentElement.textContent.trim().toLowerCase()
                 : 'sin aviso');
     };
-    // `reset()` no dispara `change`, y el formulario se resetea despues de cada cita.
     addForm.addEventListener('change', renderComposerSummary);
     addForm.addEventListener('reset', () => setTimeout(renderComposerSummary));
     renderComposerSummary();

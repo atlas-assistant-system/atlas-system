@@ -1,11 +1,3 @@
-/*
- * Nutricion. La cifra y el arco decian lo mismo apilados uno debajo del otro, en una columna
- * estrecha dentro de un contenedor ancho: se van en fila y la pestaña recupera altura.
- *
- * El acento significa "te has pasado" y nada mas. Antes el titular se ponia amarillo al
- * excederse mientras el arco se ponia blanco: dos elementos superpuestos diciendo lo
- * contrario.
- */
 .nutrition-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr);
@@ -24,8 +16,6 @@
     grid-column: 1 / -1;
 }
 
-/* El registro del dia es lo unico que crece solo: que ocupe las dos filas de al lado
-   le da sitio para varias entradas sin empujar la vista al scroll. */
 .nutrition-log {
     grid-row: span 2;
 }
@@ -126,7 +116,6 @@
     width: 0.4rem;
 }
 
-/* Dentro de rango es normal (blanco); pasarse es lo unico que lleva acento. */
 .nutrition-week-dot[data-state="WITHIN"] {
     background: var(--ink);
 }
@@ -280,7 +269,6 @@
     gap: 0.3rem;
 }
 
-/* Dentro del label el eje es vertical: un flex-basis ahí sería altura, no anchura. */
 .nutrition-form label > input {
     flex: none;
     width: 100%;
