@@ -80,6 +80,25 @@ físico— y su propio bus de comandos y consultas.
   dentro de las 12 siguientes ("Lluvia a las 18:00 · 70%"), o nada. No hay tabla por horas
   —en un espejo no se lee—: lo único que cambia lo que haces al salir es cuándo vuelve a
   llover.
+- **Nada se carga de fuera** — los modelos de Human, el runtime de MediaPipe y el reconocedor
+  de gestos se sirven desde el propio Atlas en `/vendor`, no desde jsdelivr. Un espejo colgado
+  en la pared no puede depender de un tercero para dejarte entrar: sin red no habia deteccion
+  facial, ni gestos, ni forma de autenticarse. Son ~43 MB inmutables clavados a una version, asi
+  que **no van al repositorio**: los baja `gradle downloadWebVendor` a
+  `build/generated-resources` y entran al jar como un recurso mas. Los sirve `ClasspathAssets`,
+  que va en trozos y no a memoria —el heap son 96 MB y el wasm pesa doce—, rechaza `..` y marca
+  `immutable`. `WebAssetsTest` falla si vuelve a colarse una URL externa en cualquier `.html`,
+  `.js` o `.css` de la pantalla; las paginas de Swagger quedan fuera porque se abren desde un
+  portatil y no son el arranque del espejo.
+- **Las noticias se refrescan aparte** — `NewsHandlers` ya no sale a la red dentro del handler:
+  ocho temas por dos peticiones cada uno dejaban una peticion colgada hasta un minuto cada media
+  hora, y `synchronized` encolaba detras a las demas. Ahora un hilo propio las trae cada 30 min
+  con los ocho temas en paralelo sobre hilos virtuales, y la vista lee siempre lo guardado. Sin
+  red se conserva lo anterior: un titular de ayer dice mas que un hueco vacio.
+- **El espejo dormido duerme entero** — el velo negro bajaba la deteccion facial a 2 fps pero
+  MediaPipe seguia inferenciando la mano a la tasa del video, que es la mitad cara. Los dos
+  bucles se frenan ahora, y el de rostros tambien mientras hay sesion abierta, donde no hacia
+  nada mas que girar a 60 fps.
 - **`appointments` migrado** — citas, recordatorios y calendario. Se monta en `/appointments`,
   conserva sus rutas auxiliares de recordatorios y documentación, y su SSE va en `/events`. Su
   API está detrás de la guardia de sesión de `presence`.
