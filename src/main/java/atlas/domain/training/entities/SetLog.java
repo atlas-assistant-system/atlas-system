@@ -27,12 +27,10 @@ public final class SetLog extends Entity<SetLogId> {
         this.actual = ObjectGuard.notNull(actual, "actual");
     }
 
-    
     public void record(Effort effort) {
         this.actual = Optional.of(effort);
     }
 
-    
     public void moveTo(int newPosition) {
         this.position = newPosition;
     }

@@ -10,6 +10,5 @@ public interface ExerciseRepository extends Repository<Exercise, ExerciseId> {
 
     ExerciseId nextId();
 
-    
     Optional<Exercise> findByName(ExerciseName name);
 }

@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
-
 class ErrorMessagesTest {
 
     private static final Path SOURCES = Path.of("src", "main", "java");

@@ -5,7 +5,6 @@ import atlas.domain.sharedkernel.guards.NumberGuard;
 import atlas.domain.sharedkernel.results.Result;
 import atlas.domain.training.WorkoutErrors;
 
-
 public record SetCount(int value) implements ValueObject {
 
     public static final int MINIMUM = 1;

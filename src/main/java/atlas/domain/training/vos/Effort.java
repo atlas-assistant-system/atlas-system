@@ -7,12 +7,10 @@ import atlas.domain.training.TrainingErrors;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-
 public record Effort(int loadGrams, int reps, int seconds, int meters) implements ValueObject {
 
     public static final Effort NONE = new Effort(0, 0, 0, 0);
 
-    
     public static final int MAX_LOAD_GRAMS = 500_000;
 
     private static final BigDecimal MAX_KILOGRAMS = BigDecimal.valueOf(MAX_LOAD_GRAMS, 3);
@@ -52,7 +50,6 @@ public record Effort(int loadGrams, int reps, int seconds, int meters) implement
         return create(grams.intValueExact(), reps, seconds, meters);
     }
 
-    
     public BigDecimal loadKilograms() {
         return BigDecimal.valueOf(loadGrams, GRAM_SCALE);
     }

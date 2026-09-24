@@ -33,7 +33,6 @@ class ClasspathAssetsTest {
             .isEmpty();
     }
 
-    
     @Test
     void namesTheContentTypeThatEachRuntimeNeeds() {
         assertThat(ClasspathAssets.contentTypeOf("/a/vision.wasm")).isEqualTo("application/wasm");

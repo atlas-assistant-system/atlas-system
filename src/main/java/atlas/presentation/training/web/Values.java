@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-
 public final class Values {
 
     private Values() {}
@@ -45,7 +44,6 @@ public final class Values {
         }
     }
 
-    
     public static BigDecimal kilograms(Map<String, Object> body, String field) {
         var value = body.get(field);
         if (value == null) {
@@ -92,7 +90,6 @@ public final class Values {
         return (List<Map<String, Object>>) items;
     }
 
-    
     public static Set<DayOfWeek> weekdays(Map<String, Object> body, String field) {
         var value = body.get(field);
         if (value == null) {

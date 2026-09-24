@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
-
 class ViewOrderTest {
 
     private static final Pattern NAV_TAB = Pattern.compile("data-view=\"([a-z]+)\"");

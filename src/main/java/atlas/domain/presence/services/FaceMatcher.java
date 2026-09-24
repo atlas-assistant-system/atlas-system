@@ -10,7 +10,6 @@ import java.util.Optional;
 
 public final class FaceMatcher {
 
-    
     public Optional<Match> bestMatch(
         FaceDescriptor candidate, List<FaceTemplate> enrolled, MatchThreshold threshold) {
 

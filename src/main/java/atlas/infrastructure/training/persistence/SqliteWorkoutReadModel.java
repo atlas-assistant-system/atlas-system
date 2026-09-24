@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 
-
 public final class SqliteWorkoutReadModel implements WorkoutReadModel {
 
     private final SqliteWorkoutRepository workouts;

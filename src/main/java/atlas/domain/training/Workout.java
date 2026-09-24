@@ -20,12 +20,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-
 public final class Workout extends AggregateRoot<WorkoutId> {
 
     private final List<PlannedExercise> plan = new ArrayList<>();
 
-    
     private final EnumSet<DayOfWeek> days = EnumSet.noneOf(DayOfWeek.class);
 
     private WorkoutName name;
@@ -73,7 +71,6 @@ public final class Workout extends AggregateRoot<WorkoutId> {
         return Result.success();
     }
 
-    
     public Result<Void> setPlan(List<PlannedLine> lines, Instant now) {
         if (archived) {
             return Result.failure(WorkoutErrors.ALREADY_ARCHIVED);
@@ -95,7 +92,6 @@ public final class Workout extends AggregateRoot<WorkoutId> {
         return Result.success();
     }
 
-    
     public Result<Void> scheduleOn(Set<DayOfWeek> weekdays, Instant now) {
         if (archived) {
             return Result.failure(WorkoutErrors.ALREADY_ARCHIVED);
@@ -121,7 +117,6 @@ public final class Workout extends AggregateRoot<WorkoutId> {
         return Result.success();
     }
 
-    
     public List<PlannedSet> expand() {
         var sets = new ArrayList<PlannedSet>();
 
@@ -138,7 +133,6 @@ public final class Workout extends AggregateRoot<WorkoutId> {
         return List.copyOf(plan);
     }
 
-    
     public Set<DayOfWeek> days() {
         return Collections.unmodifiableSet(EnumSet.copyOf(days));
     }

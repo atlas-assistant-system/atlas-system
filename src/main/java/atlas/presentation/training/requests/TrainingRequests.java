@@ -8,7 +8,6 @@ import atlas.presentation.training.web.Values;
 import java.util.List;
 import java.util.Map;
 
-
 public final class TrainingRequests {
 
     private TrainingRequests() {}

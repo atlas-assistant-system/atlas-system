@@ -7,10 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-
 public final class ClasspathAssets implements HttpHandler {
 
-    
     public static final String CACHE_FOREVER = "public, max-age=31536000, immutable";
 
     private static final Pattern SAFE_PATH = Pattern.compile("(/[A-Za-z0-9._-]+)+");
@@ -31,7 +29,6 @@ public final class ClasspathAssets implements HttpHandler {
         this.root = root;
     }
 
-    
     static Optional<String> resolve(String prefix, String root, String path) {
         if (!path.startsWith(prefix)) {
             return Optional.empty();

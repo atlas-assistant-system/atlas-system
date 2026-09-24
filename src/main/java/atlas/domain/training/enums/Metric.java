@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-
 public enum Metric {
 
     LOAD("Carga") {
@@ -67,7 +66,6 @@ public enum Metric {
 
     public abstract long volumeOf(Effort effort);
 
-    
     public Optional<Effort> bestOf(List<Effort> sets) {
         return sets.stream().max(Comparator.comparingLong(this::scoreOf));
     }

@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-
 public final class WorkoutLog extends AggregateRoot<WorkoutLogId> {
 
     private final List<SetLog> sets = new ArrayList<>();
@@ -39,7 +38,6 @@ public final class WorkoutLog extends AggregateRoot<WorkoutLogId> {
         this.sets.addAll(ObjectGuard.notNull(sets, "sets"));
     }
 
-    
     public static Result<WorkoutLog> start(
         WorkoutLogId id,
         Optional<WorkoutId> workoutId,
@@ -77,7 +75,6 @@ public final class WorkoutLog extends AggregateRoot<WorkoutLogId> {
         return new WorkoutLog(id, workoutId, performedOn, startedAt, sets);
     }
 
-    
     public Result<Void> recordSet(SetLogId setId, Effort actual, Instant now) {
         if (actual.isZero()) {
             return Result.failure(WorkoutLogErrors.SET_MEASURES_NOTHING);
@@ -94,7 +91,6 @@ public final class WorkoutLog extends AggregateRoot<WorkoutLogId> {
         return Result.success();
     }
 
-    
     public Result<Void> addSet(SetLogId setId, ExerciseId exerciseId, Effort actual, Instant now) {
         if (actual.isZero()) {
             return Result.failure(WorkoutLogErrors.SET_MEASURES_NOTHING);

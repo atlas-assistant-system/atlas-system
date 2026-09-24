@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-
 public final class SqliteWorkoutLogReadModel implements WorkoutLogReadModel {
 
     private static final String BY_ID = "SELECT * FROM workout_logs WHERE id = ?";

@@ -143,7 +143,6 @@ class ApplicationIT {
         }
     }
 
-    
     @Test
     void shouldServeEveryVisionAssetFromAtlasItself() throws Exception {
         var settings = new PresenceSettings(

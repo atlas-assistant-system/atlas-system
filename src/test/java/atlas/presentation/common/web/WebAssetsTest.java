@@ -15,7 +15,6 @@ class WebAssetsTest {
     private static final List<String> EXTERNAL_HOSTS = List.of(
         "cdn.jsdelivr.net", "storage.googleapis.com", "unpkg.com", "cdnjs.cloudflare.com");
 
-    
     @Test
     void shouldNotLoadAnythingFromOutsideAtlas() throws IOException {
         try (Stream<Path> files = Files.walk(RESOURCES)) {
@@ -31,7 +30,6 @@ class WebAssetsTest {
         }
     }
 
-    
     private static boolean isWebAsset(Path file) {
         var name = file.getFileName().toString();
         if (name.equals("swagger.html")) {

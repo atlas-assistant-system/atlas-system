@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-
 public final class SqliteWorkoutRepository extends AbstractSqlRepository<Workout, WorkoutId>
     implements WorkoutRepository {
 
@@ -103,7 +102,6 @@ public final class SqliteWorkoutRepository extends AbstractSqlRepository<Workout
         return id.value();
     }
 
-    
     private static String writeDays(Set<DayOfWeek> days) {
         return days.stream().sorted().map(DayOfWeek::name).collect(Collectors.joining(","));
     }

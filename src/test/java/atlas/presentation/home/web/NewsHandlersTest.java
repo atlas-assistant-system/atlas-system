@@ -38,7 +38,6 @@ class NewsHandlersTest {
             .extracting(NewsItem::title).containsExactly("Rust 1.9");
     }
 
-    
     @Test
     void answersFromTheCacheWithoutReachingTheNetwork() {
         try (var news = new NewsHandlers()) {

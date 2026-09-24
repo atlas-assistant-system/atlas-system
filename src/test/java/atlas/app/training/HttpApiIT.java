@@ -33,7 +33,6 @@ class HttpApiIT {
     private static HttpClient client;
     private static String base;
 
-    
     @BeforeEach
     void startServer() throws IOException {
         application = TrainingApplication

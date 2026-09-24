@@ -8,7 +8,6 @@ import atlas.domain.sharedkernel.results.Result;
 import atlas.domain.training.WorkoutErrors;
 import java.time.Clock;
 
-
 public final class ScheduleWorkoutCommandHandler
     implements CommandHandler<ScheduleWorkoutCommand, Result<WorkoutDto>> {
 

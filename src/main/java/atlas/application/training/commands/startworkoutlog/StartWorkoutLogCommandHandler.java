@@ -15,7 +15,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-
 public final class StartWorkoutLogCommandHandler
     implements CommandHandler<StartWorkoutLogCommand, Result<WorkoutLogDto>> {
 

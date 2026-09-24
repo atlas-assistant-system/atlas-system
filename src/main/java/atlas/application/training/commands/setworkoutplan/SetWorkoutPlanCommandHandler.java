@@ -18,7 +18,6 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public final class SetWorkoutPlanCommandHandler
     implements CommandHandler<SetWorkoutPlanCommand, Result<WorkoutDto>> {
 

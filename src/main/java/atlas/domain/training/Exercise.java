@@ -11,7 +11,6 @@ import atlas.domain.training.events.ExerciseUnarchivedEvent;
 import atlas.domain.training.vos.ExerciseName;
 import java.time.Instant;
 
-
 public final class Exercise extends AggregateRoot<ExerciseId> {
 
     private final Metric metric;

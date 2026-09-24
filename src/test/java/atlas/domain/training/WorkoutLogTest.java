@@ -213,7 +213,6 @@ class WorkoutLogTest {
         return WorkoutLog.start(ID, Optional.of(WORKOUT), plan, ids(), TODAY, TODAY, NOW).value();
     }
 
-    
     private static Supplier<SetLogId> ids() {
         var counter = new AtomicLong();
 

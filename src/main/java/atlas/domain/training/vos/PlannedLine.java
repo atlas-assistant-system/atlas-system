@@ -5,7 +5,6 @@ import atlas.domain.sharedkernel.guards.ObjectGuard;
 import atlas.domain.training.ExerciseId;
 import atlas.domain.training.entities.PlannedExerciseId;
 
-
 public record PlannedLine(
     PlannedExerciseId id, ExerciseId exerciseId, SetCount sets, Effort target) implements ValueObject {
 

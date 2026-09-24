@@ -32,7 +32,6 @@ public final class NewsHandlers implements AutoCloseable {
 
     private ScheduledExecutorService scheduler;
 
-    
     public void start() {
         scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
             var thread = new Thread(runnable, "news-refresher");
@@ -60,7 +59,6 @@ public final class NewsHandlers implements AutoCloseable {
         return HttpResponse.ok(Json.write(response));
     }
 
-    
     void refresh() {
         var items = new ArrayList<NewsItem>();
         try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -95,7 +93,6 @@ public final class NewsHandlers implements AutoCloseable {
         return match.find() ? decode(match.group(1)) : "";
     }
 
-    
     static List<NewsItem> archiveIssues(NewsCategory category, String html) {
         var pattern = Pattern.compile(
             "<a href=\"/" + Pattern.quote(category.slug())
@@ -126,7 +123,6 @@ public final class NewsHandlers implements AutoCloseable {
             .replace("&#39;", "'");
     }
 
-    
     private static List<NewsItem> fetch(NewsCategory category) {
         var issues = new ArrayList<NewsItem>();
         latestIssue(category).ifPresent(issues::add);

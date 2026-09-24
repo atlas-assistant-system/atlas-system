@@ -52,7 +52,6 @@ public final class DefineExerciseCommandHandler
         });
     }
 
-    
     private static Result<ExerciseDto> bringBack(
         Exercise sameName, DefineExerciseCommand command, ExerciseRepository exercises,
         Instant now) {

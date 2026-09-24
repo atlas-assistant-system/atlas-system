@@ -21,7 +21,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-
 public final class BankStatementDeserializer {
 
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/uuuu");
