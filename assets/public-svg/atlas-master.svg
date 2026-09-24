@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 72" width="250" height="72">
+  <title>ATLAS — Master Lockup</title>
+  <desc>ATLAS personal life assistant — master source file. Full horizontal lockup: color symbol, ATLAS wordmark, Personal Life Assistant tagline.</desc>
+
+  <!-- Symbol -->
+  <defs>
+    <clipPath id="sc">
+      <circle cx="30" cy="25" r="20"/>
+    </clipPath>
+  </defs>
+  <circle cx="30" cy="25" r="20" fill="none" stroke="#246BFD" stroke-width="2.5" stroke-linecap="round"/>
+  <g clip-path="url(#sc)" opacity="0.9">
+    <ellipse cx="30" cy="25" rx="20" ry="6" fill="none" stroke="#36C5F0" stroke-width="1.5"/>
+    <line x1="30" y1="5" x2="30" y2="45" stroke="#36C5F0" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <line x1="30" y1="45" x2="30" y2="58" stroke="#246BFD" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="15" y1="58" x2="45" y2="58" stroke="#246BFD" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Wordmark + Tagline -->
+  <text x="76" y="40"
+    font-family='Inter, "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif'
+    font-size="24" font-weight="600" letter-spacing="5" fill="#0B1F3A">ATLAS</text>
+  <text x="76" y="55"
+    font-family='Inter, "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif'
+    font-size="9" font-weight="400" letter-spacing="2" fill="rgba(11,31,58,0.6)">Personal Life Assistant</text>
+</svg>

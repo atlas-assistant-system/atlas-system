@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 46" width="200" height="46">
+  <title>ATLAS Wordmark (Light / Soft Silver)</title>
+  <desc>ATLAS wordmark with tagline in soft silver (#CBD5E1). For use on dark navy backgrounds. No symbol. Minimum width 160px.</desc>
+
+  <text x="100" y="27"
+    text-anchor="middle"
+    font-family='Inter, "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif'
+    font-size="24" font-weight="600" letter-spacing="5" fill="#CBD5E1">ATLAS</text>
+  <text x="100" y="42"
+    text-anchor="middle"
+    font-family='Inter, "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif'
+    font-size="9" font-weight="400" letter-spacing="2" fill="rgba(203,213,225,0.65)">Personal Life Assistant</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 114" width="140" height="114">
+  <title>ATLAS — Vertical Lockup</title>
+  <desc>ATLAS vertical stacked lockup. Symbol above, ATLAS wordmark and tagline centered below. Light-mode version. Minimum width 140px.</desc>
+
+  <defs>
+    <clipPath id="sc">
+      <circle cx="70" cy="25" r="20"/>
+    </clipPath>
+  </defs>
+
+  <!-- Symbol centered at x=70 -->
+  <circle cx="70" cy="25" r="20" fill="none" stroke="#246BFD" stroke-width="2.5" stroke-linecap="round"/>
+  <g clip-path="url(#sc)" opacity="0.9">
+    <ellipse cx="70" cy="25" rx="20" ry="6" fill="none" stroke="#36C5F0" stroke-width="1.5"/>
+    <line x1="70" y1="5" x2="70" y2="45" stroke="#36C5F0" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <line x1="70" y1="45" x2="70" y2="58" stroke="#246BFD" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="55" y1="58" x2="85" y2="58" stroke="#246BFD" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Wordmark + Tagline -->
+  <text x="70" y="84"
+    text-anchor="middle"
+    font-family='Inter, "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif'
+    font-size="22" font-weight="600" letter-spacing="5" fill="#0B1F3A">ATLAS</text>
+  <text x="70" y="100"
+    text-anchor="middle"
+    font-family='Inter, "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif'
+    font-size="8.5" font-weight="400" letter-spacing="2" fill="rgba(11,31,58,0.6)">Personal Life Assistant</text>
+</svg>

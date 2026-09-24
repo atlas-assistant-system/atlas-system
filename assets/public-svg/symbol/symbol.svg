@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 72" width="60" height="72">
+  <title>ATLAS Symbol — Black</title>
+  <desc>ATLAS symbol in pure black. For use on light or white backgrounds. Single-color applications including print, emboss, and stamp. Minimum 32×32px.</desc>
+
+  <defs>
+    <clipPath id="sc">
+      <circle cx="30" cy="25" r="20"/>
+    </clipPath>
+  </defs>
+  <circle cx="30" cy="25" r="20" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>
+  <g clip-path="url(#sc)" opacity="0.7">
+    <ellipse cx="30" cy="25" rx="20" ry="6" fill="none" stroke="#000000" stroke-width="1.5"/>
+    <line x1="30" y1="5" x2="30" y2="45" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <line x1="30" y1="45" x2="30" y2="58" stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="15" y1="58" x2="45" y2="58" stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

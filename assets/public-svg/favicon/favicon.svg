@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>ATLAS Favicon</title>
+  <desc>ATLAS favicon 32×32. Symbol simplified for small-size legibility. Color treatment. Core silhouette preserved.</desc>
+
+  <defs>
+    <clipPath id="fc">
+      <circle cx="16" cy="12" r="10"/>
+    </clipPath>
+  </defs>
+  <circle cx="16" cy="12" r="10" fill="none" stroke="#246BFD" stroke-width="1.5" stroke-linecap="round"/>
+  <g clip-path="url(#fc)" opacity="0.9">
+    <ellipse cx="16" cy="12" rx="10" ry="3" fill="none" stroke="#36C5F0" stroke-width="0.9"/>
+    <line x1="16" y1="2" x2="16" y2="22" stroke="#36C5F0" stroke-width="0.9" stroke-linecap="round"/>
+  </g>
+  <line x1="16" y1="22" x2="16" y2="28" stroke="#246BFD" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="10" y1="28" x2="22" y2="28" stroke="#246BFD" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
