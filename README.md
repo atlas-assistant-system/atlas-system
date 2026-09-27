@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./assets/public-png/lockup/lockup-horizontal-monochrome.png" alt="Atlas — Personal Life Assistant" width="480" />
+  <img src="assets/public-png/lockup/lockup-horizontal-dark.png" alt="Atlas" width="100%" />
 </div>
 
 <div align="center">
@@ -13,17 +13,14 @@
 </div>
 
 <div align="center">
-  <a href="./src/main/java/atlas/">source</a> ·
-  <a href="./src/test/java/atlas/">tests</a> ·
-  <a href="./docs/">docs</a> ·
-  <a href="./assets/">assets</a>
+  <a href="src/">source</a> · <a href="docs/">docs</a>
 </div>
 
 <br />
 
 <div align="center">
   <a href="https://go-skill-icons.vercel.app/">
-    <img src="https://go-skill-icons.vercel.app/api/icons?i=java,gradle,sqlite,js,html,css,git&titles=true" alt="Java, Gradle, SQLite, JavaScript, HTML, CSS, and Git" />
+    <img src="https://go-skill-icons.vercel.app/api/icons?i=java,gradle,sqlite,js,html,css,git&titles=true" alt="Technology stack" />
   </a>
 </div>
 
@@ -31,7 +28,7 @@
 
 <div align="center">
 
-## 🪞 About
+## 🎯 Purpose
 
 </div>
 
@@ -146,7 +143,7 @@ The process runs with a **96 MB heap** and the serial GC: it's a mirror, not a s
 
 <div align="center">
 
-## 🚀 Getting started
+## 🚀 Development setup
 
 </div>
 
@@ -187,16 +184,6 @@ resource.
 
 <div align="center">
 
-## 🔬 Status
-
-</div>
-
-All six contexts are wired and in use. `economy` (budgets and savings goals) and `training`
-(progression: personal bests, per-exercise history, and volume) have cycles designed but not yet
-implemented.
-
-<div align="center">
-
 ## 📚 Documentation
 
 </div>
@@ -221,10 +208,18 @@ The technical documentation is written in Spanish.
 | [docs/conventions.md](docs/conventions.md) | Code, naming, and workflow |
 | [assets/README.md](assets/README.md) | Visual identity, palette, and logo usage |
 
----
 
-<div align="center">
+
   <img src="./assets/public-svg/symbol/symbol-color.svg" alt="Atlas symbol" width="48" />
   <br />
   <em>Atlas: you look up, and it's already there.</em>
+
+<div align="center">
+
+## 🔬 Scope and status
+
 </div>
+
+All six contexts are wired and in use. `economy` (budgets and savings goals) and `training`
+(progression: personal bests, per-exercise history, and volume) have cycles designed but not yet
+implemented.
